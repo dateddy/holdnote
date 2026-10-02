@@ -10,3 +10,6 @@ dist/
 # du lieu that tu app cu (co ten doi thu) - khong commit
 legacy/data/
 *.tsbuildinfo
+
+# Python bytecode
+__pycache__/

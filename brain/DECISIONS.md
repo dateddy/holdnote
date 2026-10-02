@@ -190,3 +190,17 @@ Append-only. Không sửa, không xóa mục cũ. Muốn đảo một quyết đ
 - Quyết định: Đạt xác nhận các quyết định kỹ thuật DEC-020, DEC-021, DEC-022, DEC-023, DEC-024 (trước đó ghi "Claude Code (chờ Đạt xác nhận)"). Từ nay coi như đã chốt.
 - Lý do: Đạt duyệt sau báo cáo audit ngày 02/10/2026.
 - Ai quyết: Đạt
+
+## DEC-028 — Tiền tệ MTT và phiên đang mở
+
+- Ngày: 2026-10-03
+- Quyết định: Phiên MTT dùng `sessions.currency` cho buy-in và tiền thưởng; blind và stack tính bằng chip. Phiên "đang mở" là `start_at` có giá trị và `end_at` còn trống; phiên mới tạo chưa bấm Vào bàn có `start_at` null. Tên giải, loại (regular/bounty/turbo/satellite), re-entry, level vào, stack vào lưu trong `sessions.mtt`; blind và ante của level vào lưu ở `sb/bb/ante_mode/ante`.
+- Lý do: Spec 3.4 và DEC-013/014 chưa nói rõ; khớp dữ liệu MTT thật trong legacy (buy-in $1.08, stack 10k chip).
+- Ai quyết: Đạt
+
+## DEC-029 — Thu quyền mặc định của anon, .gitignore, README
+
+- Ngày: 2026-10-03
+- Quyết định: Migration `20261003120000` thu mặc định quyền `anon` trên bảng, sequence, function mới trong `public` (không đổi bảng nào). Thêm `__pycache__/` vào `.gitignore`; thêm `pnpm test:rls` vào README.
+- Lý do: Bắt buộc đăng nhập (DEC-004): bảng tạo sau này không được vô tình mở cho `anon`. Ba mục PROPOSED trong STATUS ngày 02/10.
+- Ai quyết: Đạt

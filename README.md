@@ -22,12 +22,13 @@ pnpm dev                     # web on http://localhost:3000
 
 ## Scripts
 
-| Command                         | What it does                             |
-| ------------------------------- | ---------------------------------------- |
-| `pnpm test`                     | all tests (Vitest)                       |
-| `pnpm --filter poker-core test` | core tests only                          |
-| `pnpm typecheck`                | `tsc --noEmit` in every package          |
-| `pnpm lint`                     | ESLint in every package + Prettier check |
-| `pnpm format`                   | Prettier write                           |
+| Command                         | What it does                                                 |
+| ------------------------------- | ------------------------------------------------------------ |
+| `pnpm test`                     | all tests (Vitest)                                           |
+| `pnpm --filter poker-core test` | core tests only                                              |
+| `pnpm typecheck`                | `tsc --noEmit` in every package                              |
+| `pnpm test:rls`                 | RLS tests against the linked Supabase project (2 temp users) |
+| `pnpm lint`                     | ESLint in every package + Prettier check                     |
+| `pnpm format`                   | Prettier write                                               |
 
 Tests that compare against real legacy hands read `legacy/data/` directly and are skipped when that folder is absent.
