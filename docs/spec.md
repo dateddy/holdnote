@@ -102,18 +102,18 @@ Ngôn ngữ, đơn vị tiền, hiển thị tiền/bb, chế độ nhập mặc
 ## 4. Database
 Postgres trên Supabase, 8 bảng. Mọi bảng dữ liệu người dùng có `user_id` và RLS `user_id = auth.uid()`.
 
-**Lưu tiền:** đơn vị của phiên, `numeric(14,2)`. Số bb tính khi hiển thị, trừ MTT lưu `level_bb` mỗi hand.
+**Lưu tiền:** đơn vị của phiên (`sessions.currency`), `numeric(14,2)`. Số bb tính khi hiển thị, trừ MTT lưu `level_bb` mỗi hand.
 
 | Bảng | Trường chính |
 |---|---|
 | `profiles` | `id` (= auth user), `display_name`, `locale`, `currency`, `display_unit` (money/bb), `entry_mode` (buttons/shorthand), `plan` (free/byok/pro), `created_at` |
-| `sessions` | `id`, `user_id`, `kind` (cash/mtt), `mode` (live/online), `venue`, `date`, `start_at`, `end_at`, `stake_label`, `sb`, `bb`, `straddle`, `seats`, `buyin`, `cashout`, `stop_loss`, `table_read` jsonb, `self_state`, `mtt` jsonb (tên giải, loại, re-entry, level vào, hạng, số người, tiền thưởng, giai đoạn bị loại), `summary` jsonb (điểm, điểm tốt, leak tags, luật phiên sau, nhận xét), `created_at`, `updated_at` |
-| `hands` | `id`, `user_id`, `session_id`, `num`, `hero_cards`, `board` (≤5 lá), `villain_cards`, `hero_pos`, `villain_pos`, `opponent_id`, `actions` jsonb, `raw_line`, `outcome`, `result`, `pot_final`, `hero_stack`, `villain_stack`, `eff_stack`, `level_bb`, `ante`, `stage`, `players_left`, `thought`, `question`, `flagged`, `tags` text[], `missing_data`, `created_at`, `updated_at` |
+| `sessions` | `id`, `user_id`, `kind` (cash/mtt), `mode` (live/online), `venue`, `date`, `start_at`, `end_at`, `currency` (đơn vị tiền của phiên, mặc định lấy từ profile), `stake_label`, `sb`, `bb`, `straddle`, `ante_mode` (none/each/bb), `ante`, `seats`, `buyin`, `cashout`, `stop_loss`, `table_read` jsonb, `self_state`, `mtt` jsonb (tên giải, loại, re-entry, level vào, hạng, số người, tiền thưởng, giai đoạn bị loại), `summary` jsonb (điểm, điểm tốt, leak tags, luật phiên sau, nhận xét), `created_at`, `updated_at` |
+| `hands` | `id`, `user_id`, `session_id`, `num`, `hero_cards`, `board` (≤5 lá), `villain_cards`, `hero_pos`, `villain_pos`, `opponent_id`, `actions` jsonb, `raw_line`, `outcome`, `result`, `pot_final`, `hero_stack`, `villain_stack`, `eff_stack`, `level_bb`, `ante_mode` (null = theo phiên), `ante`, `players_dealt` (số người được chia bài hand đó), `stage`, `players_left`, `thought`, `question`, `flagged`, `tags` text[], `missing_data`, `created_at`, `updated_at` |
 | `reviews` | `id`, `user_id`, `hand_id`, `source` (manual/ai), `model`, `range_text`, `math_text`, `line_text`, `icm_text`, `error_tags` text[], `ev_verdict` (correct/mistake/unsure), `lesson`, `accepted`, `is_current`, `created_at` |
 | `opponents` | `id`, `user_id`, `name`, `player_type`, `venue`, `notes`, `updated_at` |
 | `user_rules` | `id`, `user_id`, `text`, `source_session_id`, `active`, `sort` |
 | `ai_usage` | `id`, `user_id`, `kind` (hand_review/rebuttal/session_summary), `model`, `tokens_in`, `tokens_out`, `cost_usd`, `created_at` |
-| `user_api_keys` | `user_id`, `provider`, `key_encrypted` (Supabase Vault), `created_at`. Client không bao giờ đọc lại key. |
+| `user_api_keys` | `user_id`, `provider`, `vault_secret_id` (uuid trỏ tới secret trong Supabase Vault; key không nằm trong bảng), `created_at`. Client không bao giờ đọc lại key. |
 
 Quan hệ: user → nhiều phiên → nhiều hand → nhiều review (chỉ một `is_current = true`). Hand có thể trỏ tới một đối thủ. Xóa phiên thì xóa theo hand và review.
 
