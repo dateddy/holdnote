@@ -1,6 +1,7 @@
 import path from 'node:path';
 import { loadEnvConfig } from '@next/env';
 import type { NextConfig } from 'next';
+import createNextIntlPlugin from 'next-intl/plugin';
 
 // One .env.local at the repo root serves the web app, scripts and the Supabase CLI.
 // forceReload: Next has already loaded (and cached) env from apps/web by the time this runs.
@@ -16,4 +17,7 @@ const nextConfig: NextConfig = {
   transpilePackages: ['poker-core'],
 };
 
-export default nextConfig;
+// Uses src/i18n/request.ts.
+const withNextIntl = createNextIntlPlugin();
+
+export default withNextIntl(nextConfig);

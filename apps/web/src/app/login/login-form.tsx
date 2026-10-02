@@ -1,11 +1,14 @@
 'use client';
 
+import { useLocale, useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 
 type Status = 'idle' | 'sending' | 'sent' | 'error';
 
 export function LoginForm({ next }: { next: string }) {
+  const t = useTranslations('login');
+  const locale = useLocale();
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<Status>('idle');
 
@@ -27,7 +30,8 @@ export function LoginForm({ next }: { next: string }) {
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithOtp({
       email: email.trim(),
-      options: { emailRedirectTo: callbackUrl() },
+      // `locale` becomes user metadata, which the profile trigger reads for new accounts.
+      options: { emailRedirectTo: callbackUrl(), data: { locale } },
     });
     setStatus(error ? 'error' : 'sent');
   }
@@ -35,7 +39,7 @@ export function LoginForm({ next }: { next: string }) {
   if (status === 'sent') {
     return (
       <p className="rounded-md bg-green-500/10 p-4 text-center text-sm">
-        Đã gửi link đăng nhập tới <b>{email}</b>. Mở email và bấm vào link.
+        {t.rich('sent', { email, b: (chunks) => <b>{chunks}</b> })}
       </p>
     );
   }
@@ -47,18 +51,18 @@ export function LoginForm({ next }: { next: string }) {
         onClick={signInWithGoogle}
         className="h-12 rounded-md border border-current/20 font-medium"
       >
-        Đăng nhập bằng Google
+        {t('google')}
       </button>
 
       <div className="flex items-center gap-3 text-xs opacity-60">
         <span className="h-px flex-1 bg-current/20" />
-        hoặc
+        {t('or')}
         <span className="h-px flex-1 bg-current/20" />
       </div>
 
       <form onSubmit={sendMagicLink} className="flex flex-col gap-3">
         <label className="flex flex-col gap-1 text-sm">
-          Email
+          {t('email')}
           <input
             type="email"
             required
@@ -74,13 +78,13 @@ export function LoginForm({ next }: { next: string }) {
           disabled={status === 'sending'}
           className="h-12 rounded-md bg-foreground font-medium text-background disabled:opacity-50"
         >
-          {status === 'sending' ? 'Đang gửi…' : 'Gửi link đăng nhập'}
+          {status === 'sending' ? t('sending') : t('sendLink')}
         </button>
       </form>
 
       {status === 'error' && (
         <p role="alert" className="text-center text-sm text-red-600">
-          Không gửi được. Kiểm tra email rồi thử lại.
+          {t('sendFailed')}
         </p>
       )}
     </div>

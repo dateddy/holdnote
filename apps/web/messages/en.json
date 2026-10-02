@@ -1,0 +1,21 @@
+{
+  "common": {
+    "appName": "HoldNote",
+    "tagline": "Your poker hand journal",
+    "language": "Language",
+    "signOut": "Sign out"
+  },
+  "login": {
+    "google": "Continue with Google",
+    "or": "or",
+    "email": "Email",
+    "sendLink": "Email me a sign-in link",
+    "sending": "Sending…",
+    "sent": "We sent a sign-in link to <b>{email}</b>. Open the email and tap the link.",
+    "sendFailed": "Could not send. Check the email address and try again.",
+    "authFailed": "Sign-in failed or the link has expired. Please try again."
+  },
+  "home": {
+    "greeting": "Hi {name}"
+  }
+}

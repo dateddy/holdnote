@@ -9,7 +9,7 @@ Mỗi task cỡ một phiên làm việc. Làm theo thứ tự trừ khi chủ d
 - [x] **1.4 Pot / kết quả / eff / SPR:** `computePot`, `computeResult`, `computeEff`, `computeSpr`, `potOddsAtDecisions`. Ca vàng −360bb phải pass. Test đối chiếu `result` các hand thật (ghi rõ hand nào không khớp và vì sao).
 - [x] **1.5 Supabase:** `supabase/` init, migration đủ 8 bảng spec mục 4 + RLS + view leak; client server/browser trong `apps/web`; hướng dẫn chủ dự án điền key.
 - [x] **1.6 Auth:** đăng nhập Google + email magic link, middleware chặn mọi route khi chưa đăng nhập, tạo `profiles` khi user mới.
-- [ ] **1.7 i18n:** next-intl, `vi` + `en`, chọn ngôn ngữ theo profile.
+- [x] **1.7 i18n:** next-intl, `vi` + `en`, chọn ngôn ngữ theo profile.
 
 ## Giai đoạn 2 — Ghi hand
 - [ ] 2.1 Tạo phiên cash + MTT, màn Trước phiên.

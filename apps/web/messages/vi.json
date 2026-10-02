@@ -1,0 +1,21 @@
+{
+  "common": {
+    "appName": "HoldNote",
+    "tagline": "Sổ Tay Hand — nhật ký học poker",
+    "language": "Ngôn ngữ",
+    "signOut": "Đăng xuất"
+  },
+  "login": {
+    "google": "Đăng nhập bằng Google",
+    "or": "hoặc",
+    "email": "Email",
+    "sendLink": "Gửi link đăng nhập",
+    "sending": "Đang gửi…",
+    "sent": "Đã gửi link đăng nhập tới <b>{email}</b>. Mở email và bấm vào link.",
+    "sendFailed": "Không gửi được. Kiểm tra email rồi thử lại.",
+    "authFailed": "Đăng nhập không thành công hoặc link đã hết hạn. Thử lại."
+  },
+  "home": {
+    "greeting": "Xin chào {name}"
+  }
+}
