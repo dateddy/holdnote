@@ -183,3 +183,10 @@ Append-only. Không sửa, không xóa mục cũ. Muốn đảo một quyết đ
 - Quyết định: Bỏ policy select và mọi quyền của `authenticated`/`anon` trên `user_api_keys`. Màn Cài đặt hỏi server route để biết đã có key hay chưa (task 3.2).
 - Lý do: Đúng spec "client không bao giờ đọc lại key" và checklist audit.
 - Ai quyết: Đạt
+
+## DEC-027 — Xác nhận DEC-020 → DEC-024
+
+- Ngày: 2026-10-02
+- Quyết định: Đạt xác nhận các quyết định kỹ thuật DEC-020, DEC-021, DEC-022, DEC-023, DEC-024 (trước đó ghi "Claude Code (chờ Đạt xác nhận)"). Từ nay coi như đã chốt.
+- Lý do: Đạt duyệt sau báo cáo audit ngày 02/10/2026.
+- Ai quyết: Đạt
