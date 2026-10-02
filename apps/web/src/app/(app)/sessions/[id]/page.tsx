@@ -10,7 +10,11 @@ export default async function SessionPage({ params }: PageProps<'/sessions/[id]'
   const { data: session } = await supabase.from('sessions').select('*').eq('id', id).maybeSingle();
   if (!session) notFound();
 
-  const [t, locale] = await Promise.all([getTranslations('sessions'), getLocale()]);
+  const [t, tHand, locale] = await Promise.all([
+    getTranslations('sessions'),
+    getTranslations('hand'),
+    getLocale(),
+  ]);
   const kind = t(session.kind === 'mtt' ? 'mtt' : 'cash');
   const startedAt = session.start_at
     ? new Date(session.start_at).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
@@ -48,6 +52,12 @@ export default async function SessionPage({ params }: PageProps<'/sessions/[id]'
           {t('goBefore')}
         </Link>
       )}
+      <Link
+        href={`/sessions/${id}/hands`}
+        className="flex h-12 items-center justify-center rounded-md border border-current/20"
+      >
+        {tHand('handsList')}
+      </Link>
     </main>
   );
 }

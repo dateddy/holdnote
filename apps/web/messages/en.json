@@ -146,6 +146,20 @@
     "parseError_bad_amount": "Bad amount: “{token}”",
     "parseError_too_many_streets": "More than 4 streets (/)",
     "fixLineFirst": "Fix the shorthand line before switching to buttons.",
-    "fixLineToSave": "Fix the shorthand errors to save."
+    "fixLineToSave": "Fix the shorthand errors to save.",
+    "statHands": "Hands",
+    "statBb": "Total bb",
+    "statMissing": "Missing",
+    "statReviewed": "Reviewed",
+    "filters": "Filters",
+    "filter_all": "All",
+    "filter_flagged": "⚑",
+    "filter_missing": "Missing data",
+    "filter_unreviewed": "Unreviewed",
+    "filter_reviewed": "Reviewed",
+    "noHands": "No hands yet.",
+    "effShort": "eff {bb} bb",
+    "missingLabel": "Missing data",
+    "reviewedLabel": "Reviewed"
   }
 }

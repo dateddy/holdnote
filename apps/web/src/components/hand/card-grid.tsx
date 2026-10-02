@@ -4,19 +4,7 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { RANKS, SUITS } from 'poker-core';
 import { SLOT_COUNT } from '@/lib/hands/build';
-
-const SUIT_SYMBOL: Record<string, string> = { s: '♠', h: '♥', d: '♦', c: '♣', '?': '?' };
-const RED = new Set(['h', 'd']);
-
-export const cardLabel = (card: string) => {
-  const suit = card.slice(1);
-  return (
-    <span className={RED.has(suit) ? 'text-red-600' : undefined}>
-      {card.slice(0, 1)}
-      {SUIT_SYMBOL[suit] ?? ''}
-    </span>
-  );
-};
+import { cardLabel, RED, SUIT_SYMBOL } from './card-label';
 
 const BTN = 'h-11 min-w-0 flex-1 rounded-md border border-current/20 text-base';
 

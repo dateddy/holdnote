@@ -146,6 +146,20 @@
     "parseError_bad_amount": "Số tiền sai: “{token}”",
     "parseError_too_many_streets": "Quá 4 street (dấu /)",
     "fixLineFirst": "Sửa dòng ghi tắt trước khi chuyển sang chế độ nút.",
-    "fixLineToSave": "Sửa lỗi ở dòng ghi tắt để lưu."
+    "fixLineToSave": "Sửa lỗi ở dòng ghi tắt để lưu.",
+    "statHands": "Hand",
+    "statBb": "Tổng bb",
+    "statMissing": "Thiếu DL",
+    "statReviewed": "Đã review",
+    "filters": "Bộ lọc",
+    "filter_all": "Tất cả",
+    "filter_flagged": "⚑",
+    "filter_missing": "Thiếu dữ liệu",
+    "filter_unreviewed": "Chưa review",
+    "filter_reviewed": "Đã review",
+    "noHands": "Chưa có hand nào.",
+    "effShort": "eff {bb} bb",
+    "missingLabel": "Thiếu dữ liệu",
+    "reviewedLabel": "Đã review"
   }
 }
