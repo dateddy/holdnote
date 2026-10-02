@@ -39,3 +39,9 @@ Chủ dự án: Đạt (dateddy). Trao đổi với chủ dự án bằng **ti�
 Phiên BB = 50, stack mình 18000, đối thủ 20000, mình MP, đối thủ BTN, kết quả Thua:
 `H lp V o500 H c / H x V b500 H c / H x V b1k H c / H b5000 V ai H c`
 → kết quả **−360bb (−18000 chip)**, eff stack **360bb**, stack mình sau hand **0**.
+
+## Routing — đọc file nào khi nào
+- Đầu mỗi phiên: brain/STATUS.md, rồi docs/tasks.md.
+- Trước khi đề xuất thay đổi thiết kế: brain/DECISIONS.md (đừng đề xuất lại điều đã chốt).
+- Đổi database: dùng skill db-migration.
+- Kết thúc phiên: dùng skill session-compress.

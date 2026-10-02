@@ -1,0 +1,15 @@
+#!/bin/sh
+# Secret scan on staged files. Installed by `pnpm install` (prepare: git config core.hooksPath .githooks).
+root="$(git rev-parse --show-toplevel)"
+script="$root/scripts/precommit_scan.py"
+
+if python --version >/dev/null 2>&1; then
+  exec python -B "$script"
+elif py -3 --version >/dev/null 2>&1; then
+  exec py -3 -B "$script"
+elif python3 --version >/dev/null 2>&1; then
+  exec python3 -B "$script"
+fi
+
+echo "pre-commit: Python 3 not found, so the secret scan cannot run. Install Python 3 (python.org) and commit again." >&2
+exit 1
