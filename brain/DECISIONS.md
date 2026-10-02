@@ -169,3 +169,17 @@ Append-only. Không sửa, không xóa mục cũ. Muốn đảo một quyết đ
 - Quyết định: Ante từng người mà thiếu `players_dealt`: hand thua/fold vẫn có kết quả (chỉ cần tiền mình bỏ), hand thắng/chia không có kết quả và gắn "Thiếu dữ liệu".
 - Lý do: Không đoán bừa số người; vẫn giữ được kết quả chắc chắn.
 - Ai quyết: Claude Code (chờ Đạt xác nhận)
+
+## DEC-025 — Tách policy for all thành 4 policy
+
+- Ngày: 2026-10-02
+- Quyết định: `sessions`, `hands`, `reviews`, `opponents`, `user_rules` dùng 4 policy riêng select/insert/update/delete (`<bảng>_<lệnh>_own`) thay cho một policy `for all`. Migration `20261002120000_split_policies_lock_api_keys.sql`.
+- Lý do: Cùng hiệu lực, nhưng khớp checklist skill db-migration và dễ audit.
+- Ai quyết: Đạt
+
+## DEC-026 — Client không đọc user_api_keys
+
+- Ngày: 2026-10-02
+- Quyết định: Bỏ policy select và mọi quyền của `authenticated`/`anon` trên `user_api_keys`. Màn Cài đặt hỏi server route để biết đã có key hay chưa (task 3.2).
+- Lý do: Đúng spec "client không bao giờ đọc lại key" và checklist audit.
+- Ai quyết: Đạt

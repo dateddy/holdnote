@@ -14,7 +14,8 @@
     "typecheck": "pnpm -r --if-present typecheck",
     "format": "prettier --write .",
     "db:push": "supabase db push",
-    "db:types": "supabase gen types typescript --linked --schema public > apps/web/src/lib/supabase/database.types.ts && prettier --write apps/web/src/lib/supabase/database.types.ts"
+    "db:types": "supabase gen types typescript --linked --schema public > apps/web/src/lib/supabase/database.types.ts && prettier --write apps/web/src/lib/supabase/database.types.ts",
+    "test:rls": "pnpm --filter web test:rls"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
