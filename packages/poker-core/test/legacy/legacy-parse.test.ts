@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseShorthand } from '../../src/index';
+import { formatShorthand, parseShorthand } from '../../src/index';
 import { hasHeroVillainLine, hasLegacyData, loadLegacy, pos } from './loader';
 
 /** Free-text words players typed inside lines ("fold tới SB" = "fold to SB"). */
@@ -29,5 +29,16 @@ describe.skipIf(!hasLegacyData)('legacy lines: parseShorthand', () => {
     if (boardFromLine.flop) expect(boardFromLine.flop.join('')).toBe(h.flop);
     if (boardFromLine.turn) expect(boardFromLine.turn).toBe(h.turn);
     if (boardFromLine.river) expect(boardFromLine.river).toBe(h.river);
+  });
+});
+
+describe.skipIf(!hasLegacyData)('legacy lines: formatShorthand round trip', () => {
+  const hands = hasLegacyData ? loadLegacy().hands.filter((h) => hasHeroVillainLine(h.line)) : [];
+
+  it.each(hands.map((h) => [h.id, h] as const))('%s survives format then parse', (_id, h) => {
+    const ctx = { heroPos: pos(h.heroPos), villPos: pos(h.villPos) };
+    const first = parseShorthand(h.line ?? '', ctx);
+    const again = parseShorthand(formatShorthand(first.actions), ctx);
+    expect(again.actions).toEqual(first.actions);
   });
 });

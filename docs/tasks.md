@@ -15,7 +15,7 @@ Mỗi task cỡ một phiên làm việc. Làm theo thứ tự trừ khi chủ d
 - [x] 2.1 Tạo phiên cash + MTT, màn Trước phiên.
 - [x] 2.2 Ghi nhanh: lưới bài + board, vị trí, kết quả, stack, lưu.
 - [x] 2.3 Ghi nhanh: chế độ nút từng street.
-- [ ] 2.4 Ghi nhanh: chế độ ghi tắt + hàng phím, chuyển qua lại với chế độ nút.
+- [x] 2.4 Ghi nhanh: chế độ ghi tắt + hàng phím, chuyển qua lại với chế độ nút.
 - [ ] 2.5 Danh sách hand + bộ lọc + nhãn Thiếu dữ liệu.
 - [ ] 2.6 Chi tiết hand + khối review tay.
 - [ ] 2.7 Offline: hàng đợi IndexedDB, đồng bộ lại, Hoàn tác.

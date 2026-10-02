@@ -18,7 +18,7 @@ export default async function RecordPage({ params }: PageProps<'/sessions/[id]/r
   if (!session.start_at) redirect(`/sessions/${id}/before`);
 
   const venue = session.venue?.trim() ?? '';
-  const [{ data: last }, { data: opponents }, t, locale] = await Promise.all([
+  const [{ data: last }, { data: opponents }, { data: profile }, t, locale] = await Promise.all([
     supabase
       .from('hands')
       .select('num, hero_stack, result, level_bb, players_dealt')
@@ -33,6 +33,7 @@ export default async function RecordPage({ params }: PageProps<'/sessions/[id]/r
           .ilike('venue', venue.replace(/[\%_]/g, '\$&'))
           .order('name')
       : Promise.resolve({ data: [] }),
+    supabase.from('profiles').select('entry_mode').single(),
     getTranslations('hand'),
     getLocale(),
   ]);
@@ -52,6 +53,7 @@ export default async function RecordPage({ params }: PageProps<'/sessions/[id]/r
         lastNum={last?.num ?? 0}
         previous={last ?? null}
         opponents={opponents ?? []}
+        entryMode={profile?.entry_mode === 'shorthand' ? 'shorthand' : 'buttons'}
       />
     </main>
   );

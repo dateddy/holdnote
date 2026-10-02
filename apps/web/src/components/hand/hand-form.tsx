@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useMemo, useRef, useState } from 'react';
-import { parseAmount, POSITIONS } from 'poker-core';
+import { formatShorthand, parseAmount, parseShorthand, POSITIONS, type Card } from 'poker-core';
 import {
   boardCards,
   canSave,
@@ -14,10 +14,13 @@ import {
   type HandSession,
   type PreviousHand,
 } from '@/lib/hands/build';
+import { applyShorthand } from '@/lib/hands/shorthand';
+import { isOneOf } from '@/lib/sessions/form';
 import { formatMoney } from '@/lib/sessions/format';
 import { createClient } from '@/lib/supabase/client';
 import { ActionRows } from './action-rows';
 import { CardGrid } from './card-grid';
+import { ShorthandInput } from './shorthand-input';
 
 export type OpponentOption = { id: string; name: string };
 
@@ -34,11 +37,22 @@ type Props = {
   lastNum: number;
   previous: PreviousHand | null;
   opponents: OpponentOption[];
+  entryMode: 'buttons' | 'shorthand';
 };
 
-export function HandForm({ sessionId, session, locale, lastNum, previous, opponents }: Props) {
+export function HandForm({
+  sessionId,
+  session,
+  locale,
+  lastNum,
+  previous,
+  opponents,
+  entryMode,
+}: Props) {
   const t = useTranslations('hand');
-  const [draft, setDraft] = useState<HandDraft>(() => emptyDraft(session, previous));
+  const [raw, setDraft] = useState<HandDraft>(() => emptyDraft(session, previous));
+  const [mode, setMode] = useState(entryMode);
+  const [switchBlocked, setSwitchBlocked] = useState(false);
   const [num, setNum] = useState(lastNum + 1);
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'failed'>('idle');
   const [savedNum, setSavedNum] = useState<number | null>(null);
@@ -47,12 +61,44 @@ export function HandForm({ sessionId, session, locale, lastNum, previous, oppone
   const set = <K extends keyof HandDraft>(key: K, value: HandDraft[K]) =>
     setDraft((d) => ({ ...d, [key]: value }));
 
+  // In shorthand mode the line is the source of truth; actions and board come from parsing it.
+  const parsed = useMemo(
+    () =>
+      mode === 'shorthand'
+        ? parseShorthand(raw.rawLine, {
+            ...(isOneOf(POSITIONS, raw.heroPos) && { heroPos: raw.heroPos }),
+            ...(isOneOf(POSITIONS, raw.villPos) && { villPos: raw.villPos }),
+          })
+        : null,
+    [mode, raw.rawLine, raw.heroPos, raw.villPos],
+  );
+  const draft = useMemo(
+    () => (parsed ? applyShorthand(raw, parsed) : { ...raw, rawLine: '' }),
+    [raw, parsed],
+  );
+  const lineErrors = parsed?.errors ?? [];
   const derived = useMemo(() => deriveHand(session, draft), [session, draft]);
+
+  function switchMode(next: 'buttons' | 'shorthand') {
+    if (next === mode) return;
+    if (next === 'shorthand') {
+      const line = formatShorthand(draft.actions, boardCards(draft) as Card[]);
+      setDraft({ ...raw, rawLine: line });
+    } else {
+      if (lineErrors.length > 0) {
+        setSwitchBlocked(true);
+        return;
+      }
+      setDraft({ ...raw, slots: draft.slots, actions: draft.actions, rawLine: '' });
+    }
+    setSwitchBlocked(false);
+    setMode(next);
+  }
   const isMtt = session.kind === 'mtt';
   const money = (n: number) => formatMoney(n, session.currency, locale);
 
   async function save() {
-    if (locked.current || !canSave(draft)) return;
+    if (locked.current || !canSave(draft) || lineErrors.length > 0) return;
     locked.current = true;
     setStatus('saving');
     const supabase = createClient();
@@ -156,16 +202,46 @@ export function HandForm({ sessionId, session, locale, lastNum, previous, oppone
       </section>
 
       <section className="space-y-2">
-        <h3 className="font-medium">{t('actions')}</h3>
-        <ActionRows
-          actions={draft.actions}
-          onChange={(actions) => setDraft((d) => ({ ...d, actions }))}
-          input={derived.input}
-          heroPos={draft.heroPos}
-          villPos={draft.villPos}
-          boardCount={boardCards(draft).length}
-          money={money}
-        />
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="font-medium">{t('actions')}</h3>
+          <div className="flex gap-1" role="group" aria-label={t('actions')}>
+            {(['buttons', 'shorthand'] as const).map((m) => (
+              <button
+                key={m}
+                type="button"
+                aria-pressed={mode === m}
+                onClick={() => switchMode(m)}
+                className={`${chip(mode === m)} h-9`}
+              >
+                {t(m === 'buttons' ? 'modeButtons' : 'modeShorthand')}
+              </button>
+            ))}
+          </div>
+        </div>
+        {mode === 'shorthand' ? (
+          <>
+            <ShorthandInput
+              value={raw.rawLine}
+              onChange={(rawLine) => set('rawLine', rawLine)}
+              errors={lineErrors}
+            />
+            {switchBlocked && (
+              <p role="alert" className="text-sm text-red-700">
+                {t('fixLineFirst')}
+              </p>
+            )}
+          </>
+        ) : (
+          <ActionRows
+            actions={draft.actions}
+            onChange={(actions) => setDraft((d) => ({ ...d, actions }))}
+            input={derived.input}
+            heroPos={draft.heroPos}
+            villPos={draft.villPos}
+            boardCount={boardCards(draft).length}
+            money={money}
+          />
+        )}
       </section>
 
       <section className="space-y-2">
@@ -296,11 +372,12 @@ export function HandForm({ sessionId, session, locale, lastNum, previous, oppone
       <button
         type="button"
         onClick={save}
-        disabled={!canSave(draft) || status === 'saving'}
+        disabled={!canSave(draft) || lineErrors.length > 0 || status === 'saving'}
         className="h-14 rounded-md bg-foreground text-lg font-medium text-background disabled:opacity-40"
       >
         {status === 'saving' ? t('saving') : t('save')}
       </button>
+      {lineErrors.length > 0 && <p className="text-sm opacity-70">{t('fixLineToSave')}</p>}
       {!canSave(draft) && <p className="text-sm opacity-70">{t('needCards')}</p>}
       {canSave(draft) && derived.missing && (
         <p className="text-sm opacity-70">{t('willBeMissing')}</p>

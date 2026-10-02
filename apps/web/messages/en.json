@@ -137,6 +137,15 @@
     "amountTo": "Amount (total)",
     "confirm": "OK",
     "street_preflop": "preflop",
-    "actionsHint": "Tap who acts, then tap the action."
+    "actionsHint": "Tap who acts, then tap the action.",
+    "modeButtons": "Buttons",
+    "modeShorthand": "Shorthand",
+    "keys": "Quick keys",
+    "parseError_unknown_token": "Unknown “{token}”",
+    "parseError_missing_actor": "“{token}” needs an actor (H or V)",
+    "parseError_bad_amount": "Bad amount: “{token}”",
+    "parseError_too_many_streets": "More than 4 streets (/)",
+    "fixLineFirst": "Fix the shorthand line before switching to buttons.",
+    "fixLineToSave": "Fix the shorthand errors to save."
   }
 }

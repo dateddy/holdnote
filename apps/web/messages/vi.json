@@ -137,6 +137,15 @@
     "amountTo": "Số tiền (tổng)",
     "confirm": "OK",
     "street_preflop": "preflop",
-    "actionsHint": "Chạm người hành động, rồi chạm hành động."
+    "actionsHint": "Chạm người hành động, rồi chạm hành động.",
+    "modeButtons": "Nút",
+    "modeShorthand": "Ghi tắt",
+    "keys": "Phím nhanh",
+    "parseError_unknown_token": "Không hiểu “{token}”",
+    "parseError_missing_actor": "“{token}” thiếu người hành động (H hoặc V)",
+    "parseError_bad_amount": "Số tiền sai: “{token}”",
+    "parseError_too_many_streets": "Quá 4 street (dấu /)",
+    "fixLineFirst": "Sửa dòng ghi tắt trước khi chuyển sang chế độ nút.",
+    "fixLineToSave": "Sửa lỗi ở dòng ghi tắt để lưu."
   }
 }
