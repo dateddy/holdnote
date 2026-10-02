@@ -1,0 +1,12 @@
+node_modules/
+.next/
+.env
+.env.local
+.env*.local
+coverage/
+dist/
+.vercel/
+.DS_Store
+# du lieu that tu app cu (co ten doi thu) - khong commit
+legacy/data/
+*.tsbuildinfo

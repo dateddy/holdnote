@@ -1,0 +1,12 @@
+node_modules
+.next
+coverage
+dist
+pnpm-lock.yaml
+legacy
+docs
+CLAUDE.md
+PROMPTS.md
+apps/web/AGENTS.md
+apps/web/CLAUDE.md
+apps/web/next-env.d.ts

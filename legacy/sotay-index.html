@@ -1,0 +1,1254 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Sổ Tay Hand</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+:root{
+  --bg:#EEF2F0; --surface:#FFFFFF; --sunk:#E4EAE7; --ink:#15201C; --muted:#56655F; --line:#CBD6D1;
+  --accent:#1D6A50; --accent-ink:#FFFFFF; --accent-soft:#D6EAE1;
+  --red:#C0392F; --win:#1D7A4A; --loss:#B23A2E; --warn:#9A6A00; --warn-soft:#F6EBCD;
+  --shadow:0 1px 0 rgba(20,40,30,.06);
+  --f-display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0E1412; --surface:#161F1C; --sunk:#1D2824; --ink:#E4ECE8; --muted:#8C9E97; --line:#2B3833;
+    --accent:#4DB38A; --accent-ink:#0B1411; --accent-soft:#1F3A30;
+    --red:#EF6F63; --win:#5BC98C; --loss:#EF7B6E; --warn:#E3B54B; --warn-soft:#3A3120;
+    --shadow:none;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0E1412; --surface:#161F1C; --sunk:#1D2824; --ink:#E4ECE8; --muted:#8C9E97; --line:#2B3833;
+  --accent:#4DB38A; --accent-ink:#0B1411; --accent-soft:#1F3A30;
+  --red:#EF6F63; --win:#5BC98C; --loss:#EF7B6E; --warn:#E3B54B; --warn-soft:#3A3120;
+  --shadow:none;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font:15px/1.45 var(--f-body);padding-inline:12px;padding-block:0 96px}
+.wrap{max-width:720px;margin:0 auto}
+h1,h2,h3{font-family:var(--f-display);font-weight:700;letter-spacing:.01em;text-wrap:balance;margin:0}
+h1{font-size:26px;line-height:1}
+h2{font-size:21px}
+h3{font-size:16px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);margin-inline:-12px;padding:10px 12px 0;border-bottom:1px solid var(--line)}
+.top-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.sess-pick{display:flex;gap:6px;align-items:center;flex:1;justify-content:flex-end;min-width:0}
+.sess-pick select{max-width:220px;flex:1;min-width:0}
+.tabs{display:flex;gap:2px;margin-top:6px;overflow-x:auto}
+.tab{background:none;border:0;border-bottom:3px solid transparent;padding:6px 10px 7px;font-family:var(--f-display);font-size:17px;font-weight:600;letter-spacing:.03em;color:var(--muted);cursor:pointer;white-space:nowrap}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tab .n{font-family:var(--f-mono);font-size:12px;margin-left:4px;color:var(--muted)}
+.status{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex:none}
+.dot.ok{background:var(--win)} .dot.warn{background:var(--warn)}
+
+.panel{padding-top:12px;display:flex;flex-direction:column;gap:12px}
+.block{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:12px;box-shadow:var(--shadow)}
+.block-head{display:flex;align-items:baseline;gap:10px}
+.block-head .num{font-family:var(--f-mono);font-size:12px;color:var(--accent);font-weight:600}
+.hint{font-size:12.5px;color:var(--muted);margin:0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field>span,.lbl{font-size:11.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+input[type=text],input[type=number],input[type=date],input[type=time],select,textarea{width:100%;background:var(--sunk);border:1px solid var(--line);border-radius:7px;padding:8px 10px;min-height:42px}
+textarea{min-height:56px;resize:vertical;line-height:1.4}
+.mono,input.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+input::placeholder,textarea::placeholder{color:var(--muted);opacity:.75}
+
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{position:relative}
+.chip input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.chip span{display:inline-block;padding:6px 11px;border:1px solid var(--line);border-radius:999px;font-size:13.5px;background:var(--sunk);cursor:pointer;user-select:none}
+.chip input:checked+span{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+.chip input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}
+
+/* ===== quick entry ===== */
+.q{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:8px;box-shadow:var(--shadow)}
+.qh{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:20px}
+.qh .aux{font-size:12px;color:var(--muted);text-align:right}
+.seg{display:grid;gap:4px}
+.seg.c9{grid-template-columns:repeat(9,1fr)}
+.seg.c7{grid-template-columns:repeat(7,1fr)}
+.seg.c6{grid-template-columns:repeat(6,1fr)}
+.seg.c5{grid-template-columns:repeat(5,1fr)}
+.seg.c4{grid-template-columns:repeat(4,1fr)}
+.seg.names{grid-template-columns:repeat(auto-fill,minmax(72px,1fr))}
+.k{border:1px solid var(--line);background:var(--sunk);border-radius:7px;min-height:40px;padding:0 2px;font-size:13px;font-weight:600;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.k.mono{font-family:var(--f-mono)}
+.k[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.k.pend{outline:2px solid var(--accent);outline-offset:-2px}
+.k.r{color:var(--red)} .k[aria-pressed="true"].r{color:var(--accent-ink)}
+.k.suit{font-size:20px;min-height:44px}
+.k:disabled{opacity:.3;cursor:not-allowed}
+.slotrow{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+.sgroup{display:flex;flex-direction:column;gap:3px}
+.sgroup>.lbl{font-size:10.5px}
+.slots{display:flex;gap:4px}
+.slot{width:40px;height:46px;border:1.5px dashed var(--line);border-radius:7px;background:var(--surface);font:600 16px var(--f-mono);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+.slot.filled{border-style:solid;border-color:var(--ink)}
+.slot.active{border-color:var(--accent);border-style:solid;box-shadow:0 0 0 2px var(--accent-soft)}
+.slot.r{color:var(--red)} .slot.u{color:var(--muted)}
+@media (max-width:380px){.slot{width:36px}}
+.picker{display:flex;flex-direction:column;gap:4px}
+.linein{font-family:var(--f-mono);font-size:15px}
+.keys{display:grid;grid-template-columns:repeat(10,1fr);gap:4px}
+.keys .k{min-height:36px;font-family:var(--f-mono);font-size:13px}
+.parsed{display:flex;flex-direction:column;gap:2px;font-size:12.5px;min-height:18px}
+.parsed .st b{font-family:var(--f-display);font-size:14px;margin-right:4px}
+.parsed .pot{font-family:var(--f-mono);color:var(--muted)}
+.parsed .warnline{color:var(--warn)}
+.legend{font-size:11.5px;color:var(--muted);font-family:var(--f-mono);line-height:1.55}
+.resrow{display:grid;grid-template-columns:48px 1fr;gap:6px}
+.resrow .k{font-size:18px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.calc{font-family:var(--f-mono);font-size:12.5px;color:var(--muted)}
+.calc b{color:var(--ink)}
+
+/* ===== MTT / online ===== */
+body:not(.online) .onlineOnly{display:none!important}
+.addrow{display:flex;gap:6px;margin-top:6px}
+.addrow input{flex:1;min-width:0}
+label.btn{display:inline-flex;align-items:center}
+.tagp.img{border-style:dashed}
+.vh{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;clip:rect(0 0 0 0);pointer-events:none}
+.bars.wide .bar{grid-template-columns:minmax(0,150px) 1fr 28px}
+.bars.wide .bar span:first-child{overflow-wrap:anywhere}
+body:not(.mtt) .mttOnly{display:none!important}
+body.mtt .cashOnly{display:none!important}
+.seg.c8{grid-template-columns:repeat(8,1fr)}
+.seg.c3{grid-template-columns:repeat(3,1fr)}
+.three{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;align-items:end}
+.lvstep{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+.lvstep .k{width:40px;font-size:18px}
+.lvstep input{width:64px;text-align:center;font-size:17px;font-weight:600}
+.k.bust{min-height:40px;font-weight:600}
+.k.bust[aria-pressed="true"]{background:var(--loss);border-color:var(--loss);color:var(--accent-ink)}
+.tagp.bust{color:var(--loss);border-color:var(--loss);font-weight:600}
+.newpick{display:flex;gap:6px}
+.bars{display:flex;flex-direction:column;gap:6px}
+.bar{display:grid;grid-template-columns:88px 1fr 28px;gap:8px;align-items:center;font-size:13px}
+.bar .tr{background:var(--sunk);border-radius:3px;height:12px;overflow:hidden}
+.bar .tr i{display:block;height:100%;background:var(--accent);border-radius:3px}
+.bar .tr i.hot{background:var(--loss)}
+.bar b{font-family:var(--f-mono);font-variant-numeric:tabular-nums;text-align:right}
+
+.cards{font-family:var(--f-mono);font-weight:600;letter-spacing:.02em}
+.cards .r{color:var(--red)} .cards .u{color:var(--muted)}
+.pcard{display:inline-block;min-width:1.9em;text-align:center;padding:0 3px;margin-right:2px;border:1px solid var(--line);border-radius:4px;background:var(--surface)}
+.cards-prev{font-size:13px;min-height:18px}
+
+.street{display:grid;grid-template-columns:80px 1fr 80px;gap:8px;align-items:start}
+.street .sname{font-family:var(--f-display);font-weight:700;font-size:18px;padding-top:9px}
+@media (max-width:520px){.street{grid-template-columns:1fr 80px}.street .sname{grid-column:1/-1;padding-top:0}}
+
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:9px 14px;min-height:44px;cursor:pointer;font-weight:500}
+.btn:hover{border-color:var(--muted)}
+.btn:disabled{opacity:.5;cursor:wait}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+.btn.danger{color:var(--loss)}
+.btn.danger.arm{background:var(--loss);color:#fff;border-color:var(--loss)}
+.btn.sm{min-height:34px;padding:5px 10px;font-size:13.5px}
+.btn.flag[aria-pressed="true"]{background:var(--warn-soft);border-color:var(--warn);color:var(--warn);font-weight:700}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.savebar{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surface);border-top:1px solid var(--line);padding:8px 12px calc(8px + env(safe-area-inset-bottom,0px))}
+.savebar .wrap{display:flex;gap:8px;align-items:center}
+.savebar .btn.primary{flex:1;font-size:16px}
+.savebar .ed{font-size:12.5px;color:var(--muted);font-family:var(--f-mono)}
+
+details.review{border:1px dashed var(--line);border-radius:10px;padding:0 14px;background:var(--surface)}
+details.review[open]{padding-bottom:14px}
+details.review summary{cursor:pointer;padding:13px 0;font-family:var(--f-display);font-weight:700;font-size:19px;list-style:none;display:flex;justify-content:space-between;align-items:center}
+details.review summary::after{content:"+";font-family:var(--f-mono);color:var(--muted)}
+details.review[open] summary::after{content:"–"}
+details.review .inner{display:flex;flex-direction:column;gap:12px}
+
+.strip{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.strip div{background:var(--surface);padding:10px 12px}
+.strip b{display:block;font-family:var(--f-mono);font-size:19px;font-variant-numeric:tabular-nums}
+.strip span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+@media (max-width:460px){.strip{grid-template-columns:repeat(2,1fr)}}
+.pos{color:var(--win)} .neg{color:var(--loss)}
+
+.hlist{display:flex;flex-direction:column;gap:8px}
+.hrow{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:grid;grid-template-columns:40px 1fr auto;gap:4px 10px;cursor:pointer;text-align:left;width:100%}
+.hrow:hover{border-color:var(--muted)}
+.hrow .hn{font-family:var(--f-mono);font-size:13px;color:var(--muted);grid-row:span 2;padding-top:2px}
+.hrow .line1{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.hrow .res{font-family:var(--f-mono);font-weight:600;font-variant-numeric:tabular-nums;text-align:right}
+.hrow .line2{font-size:13px;color:var(--muted);grid-column:2/4;overflow-wrap:anywhere}
+.tagp{font-size:11.5px;padding:2px 7px;border-radius:999px;background:var(--sunk);border:1px solid var(--line);color:var(--muted)}
+.tagp.q{background:var(--warn-soft);border-color:transparent;color:var(--warn);font-weight:600}
+.tagp.ok{background:var(--accent-soft);border-color:transparent;color:var(--accent);font-weight:600}
+.tagp.ex{border-style:dashed}
+.empty{padding:28px 16px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:10px}
+
+.note{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.note-h{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.note-h b{font-family:var(--f-display);font-size:18px}
+.note p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.warnbox{background:var(--warn-soft);color:var(--ink);border-radius:8px;padding:10px 12px;font-size:13.5px}
+.warnbox b{color:var(--warn)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(72px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:8px 8px 8px 14px;border-radius:8px;font-size:14px;z-index:9;max-width:calc(100% - 32px);display:flex;gap:10px;align-items:center}
+.toast button{background:none;border:1px solid currentColor;color:inherit;border-radius:6px;padding:4px 10px;font-weight:600;cursor:pointer}
+.copybox{width:100%;min-height:180px;font-family:var(--f-mono);font-size:12.5px}
+@media (prefers-reduced-motion:no-preference){.btn,.chip span,.tab,.k{transition:background .1s,border-color .1s,color .1s}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="top-row">
+      <h1>Sổ Tay Hand</h1>
+      <div class="sess-pick">
+        <select id="sessSel" aria-label="Chọn phiên"></select>
+        <button class="btn sm" id="newSess" type="button">+ Phiên</button>
+        <span class="newpick" id="newPick" hidden><button class="btn sm" type="button" data-kind="cash">Cash</button><button class="btn sm" type="button" data-kind="mtt">MTT</button></span>
+        <span class="newpick" id="newPick2" hidden><button class="btn sm" type="button" data-mode="live">Live</button><button class="btn sm primary" type="button" data-mode="online">Online</button></span>
+      </div>
+    </div>
+    <nav class="tabs" role="tablist">
+      <button class="tab" role="tab" data-tab="quick" aria-selected="true">Ghi nhanh</button>
+      <button class="tab" role="tab" data-tab="list" aria-selected="false">Danh sách<span class="n" id="nHands">0</span></button>
+      <button class="tab" role="tab" data-tab="sess" aria-selected="false">Phiên</button>
+      <button class="tab" role="tab" data-tab="opp" aria-selected="false">Đối thủ<span class="n" id="nNotes">0</span></button>
+    </nav>
+  </header>
+
+  <!-- ============ GHI NHANH ============ -->
+  <section class="panel" id="tab-quick">
+    <div class="q onlineOnly" id="impBox">
+      <div class="qh"><span class="lbl">Nhập từ ảnh</span><span class="aux" id="impAux">Mỗi ảnh là 1 hand, chọn được nhiều ảnh</span></div>
+      <div class="actions">
+        <button type="button" class="btn primary" id="impPick" disabled>Chọn ảnh hand</button>
+        <input id="impFile" class="vh" type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple tabindex="-1" aria-hidden="true">
+        <button type="button" class="btn sm" id="impStop" hidden>Dừng</button>
+      </div>
+      <div id="impStatus" class="hint" aria-live="polite">Đang kết nối Claude…</div>
+      <div id="impBanner" hidden class="warnbox"></div>
+    </div>
+    <div class="q mttOnly" id="lvBox">
+      <div class="qh"><span class="lbl">Level</span><span class="aux mono" id="lvAux"></span></div>
+      <div class="lvstep">
+        <button type="button" class="k mono" id="lvMinus" aria-label="Level trước">−</button>
+        <input id="lv_lv" type="text" inputmode="numeric" class="mono" aria-label="Level" placeholder="1" autocomplete="off">
+        <button type="button" class="k mono" id="lvPlus" aria-label="Level sau">+</button>
+        <span class="hint" style="margin-left:6px">Blinds giữ nguyên cho các hand sau</span>
+      </div>
+      <div class="three">
+        <label class="field"><span>SB</span><input id="lv_sb" type="text" inputmode="decimal" class="mono" placeholder="150" autocomplete="off"></label>
+        <label class="field"><span>BB</span><input id="lv_bb" type="text" inputmode="decimal" class="mono" placeholder="300" autocomplete="off"></label>
+        <label class="field"><span>Ante (BB trả)</span><input id="lv_ante" type="text" inputmode="decimal" class="mono" placeholder="= BB" autocomplete="off"></label>
+      </div>
+      <div class="qh"><span class="lbl">Giai đoạn</span></div>
+      <div class="seg c5" id="q_stage"></div>
+      <div class="three">
+        <label class="field"><span>Còn lại</span><input id="lv_left" type="text" inputmode="numeric" class="mono" placeholder="45" autocomplete="off"></label>
+        <label class="field"><span>Được trả</span><input id="lv_paid" type="text" inputmode="numeric" class="mono" placeholder="30" autocomplete="off"></label>
+        <div class="field"><span class="lbl">Bàn</span><div class="seg c3" id="q_seats"></div></div>
+      </div>
+      <button type="button" class="k bust" id="bustBtn" data-k="bust" data-v="1" aria-pressed="false">Đây là hand bị loại</button>
+    </div>
+    <div class="q">
+      <div class="slotrow">
+        <div class="sgroup"><span class="lbl">Mình</span><div class="slots" id="sl_hero"></div></div>
+        <div class="sgroup"><span class="lbl">Flop</span><div class="slots" id="sl_flop"></div></div>
+        <div class="sgroup"><span class="lbl">Turn</span><div class="slots" id="sl_turn"></div></div>
+        <div class="sgroup"><span class="lbl">River</span><div class="slots" id="sl_river"></div></div>
+        <div class="sgroup" id="villGroup" hidden><span class="lbl">Đối thủ</span><div class="slots" id="sl_vill"></div></div>
+      </div>
+      <div class="picker">
+        <div class="seg c7" id="ranksA"></div>
+        <div class="seg c6" id="ranksB"></div>
+        <div class="seg c5" id="suits"></div>
+      </div>
+      <p class="hint" id="pickHint">Chạm ô cần điền → chạm số → chạm chất. Không nhớ chất thì chạm “?”.</p>
+    </div>
+
+    <div class="q">
+      <div class="qh"><span class="lbl">Mình ở</span></div>
+      <div class="seg c9" id="q_heroPos"></div>
+      <div class="qh"><span class="lbl">Đối thủ ở</span></div>
+      <div class="seg c9" id="q_villPos"></div>
+      <div class="qh"><span class="lbl">Ghế / tên đối thủ</span><span class="aux" id="seatHint"></span></div>
+      <div class="seg c9" id="q_seat"></div>
+      <div class="seg names" id="q_names" hidden></div>
+      <div class="seg c6" id="q_type"></div>
+    </div>
+
+    <div class="q">
+      <div class="qh"><span class="lbl">Diễn biến (chip)</span><button type="button" class="btn sm" id="legendBtn" aria-expanded="false">Quy ước</button></div>
+      <input id="q_line" type="text" class="linein" placeholder="H o600 V c / V x H b800 V c / x x / V b2k H c" autocapitalize="off" autocorrect="off" spellcheck="false" autocomplete="off">
+      <div class="keys" id="lineKeys"></div>
+      <div class="parsed" id="parsed"></div>
+      <div class="legend" id="legend" hidden>H = mình · V = đối thủ chính · UTG…BB = người khác · / tách street<br>o open · lp limp · x check · b bet · c call · r raise · 3b 4b · l lead · cr check-raise · ai (all-in) · f fold<br>Số là chip: b600 · r1300 · b1k5 (=1.500) · b2k. Ghi H/V trước hành động để trang tự tính pot và kết quả. BTN-o600 cũng được.</div>
+    </div>
+
+    <div class="q">
+      <div class="qh"><span class="lbl">Kết quả</span><span class="aux" id="resAux"></span></div>
+      <div class="seg c4" id="q_outcome"></div>
+      <div class="resrow">
+        <button type="button" class="k mono" id="signBtn" aria-label="Đổi dấu">±</button>
+        <input id="q_result" type="text" inputmode="decimal" class="mono" placeholder="bb · tự tính khi có H" autocomplete="off">
+      </div>
+      <div class="two">
+        <label class="field"><span>Stack mình (chip)</span><input id="q_heroStack" type="text" inputmode="decimal" class="mono" placeholder="18k" autocomplete="off"></label>
+        <label class="field"><span>Stack đối thủ</span><input id="q_villStack" type="text" inputmode="decimal" class="mono" placeholder="20k" autocomplete="off"></label>
+      </div>
+      <div class="calc" id="effLine"></div>
+    </div>
+
+    <div class="q">
+      <div class="qh"><span class="lbl">Một câu suy nghĩ</span><span class="aux">Chạm micro trên bàn phím để đọc</span></div>
+      <textarea id="q_thought" rows="2" placeholder="Turn check vì sợ check-raise. River nghĩ nó bluff draw trượt."></textarea>
+    </div>
+    <p class="hint">Không kịp? Chỉ cần bài + ⚑ rồi lưu. Hand thiếu kết quả hoặc eff stack sẽ có nhãn “Thiếu dữ liệu” trong Danh sách.</p>
+  </section>
+
+  <!-- ============ HOÀN THIỆN (chi tiết) ============ -->
+  <section class="panel" id="tab-detail" hidden>
+    <div class="actions"><button class="btn sm" type="button" id="backList">← Danh sách</button><h2 id="detailTitle" style="flex:1">Hand</h2></div>
+    <form id="handForm" autocomplete="off">
+      <div class="panel" style="padding-top:0">
+        <div class="block">
+          <div class="block-head"><span class="num">⚡</span><h2>Ghi nhanh</h2></div>
+          <label class="field"><span>Dòng ghi tắt</span>
+            <input id="h_line" name="line" type="text" class="linein" autocapitalize="off" autocorrect="off" spellcheck="false"></label>
+          <div class="actions"><button type="button" class="btn sm" id="reparse">Tách lại vào các street bên dưới</button>
+            <label class="chip"><input type="checkbox" id="h_flag" name="flag"><span>⚑ Cần xem lại</span></label></div>
+        </div>
+
+        <div class="block">
+          <div class="block-head"><span class="num">1</span><h2>Bối cảnh</h2></div>
+          <div class="grid">
+            <label class="field"><span>Vị trí mình</span><select id="h_heroPos" name="heroPos"></select></label>
+            <label class="field"><span>Vị trí đối thủ</span><select id="h_villPos" name="villPos"></select></label>
+            <label class="field"><span>Eff. stack (bb)</span><input id="h_eff" name="eff" type="text" inputmode="decimal" class="mono"></label>
+            <label class="field"><span>Số người vào pot</span><input id="h_players" name="players" type="text" inputmode="numeric" class="mono" placeholder="2"></label>
+          </div>
+        </div>
+
+        <div class="block mttOnly">
+          <div class="block-head"><span class="num">Lv</span><h2>Level và giai đoạn</h2></div>
+          <div class="grid">
+            <label class="field"><span>Level</span><input id="h_level" name="level" type="text" inputmode="numeric" class="mono"></label>
+            <label class="field"><span>SB</span><input id="h_sb" name="sb" type="text" inputmode="decimal" class="mono"></label>
+            <label class="field"><span>BB</span><input id="h_bb" name="bb" type="text" inputmode="decimal" class="mono"></label>
+            <label class="field"><span>Ante</span><input id="h_ante" name="ante" type="text" inputmode="decimal" class="mono"></label>
+            <label class="field"><span>Giai đoạn</span><select id="h_stage" name="stage"></select></label>
+            <label class="field"><span>Còn lại</span><input id="h_left" name="left" type="text" inputmode="numeric" class="mono"></label>
+            <label class="field"><span>Được trả</span><input id="h_paid" name="paid" type="text" inputmode="numeric" class="mono"></label>
+            <label class="field"><span>Số người trên bàn</span><input id="h_tableSize" name="tableSize" type="text" inputmode="numeric" class="mono"></label>
+          </div>
+        </div>
+
+        <div class="block">
+          <div class="block-head"><span class="num">2</span><h2>Đối thủ</h2></div>
+          <div class="field"><span class="lbl">Loại người chơi</span><div class="chips" id="h_villType"></div></div>
+          <div class="grid">
+            <label class="field"><span>Ghế số</span><input id="h_villSeatNo" name="villSeatNo" type="text" inputmode="numeric" class="mono"></label>
+            <label class="field"><span>Tên / đặc điểm</span><input id="h_villSeat" name="villSeat" type="text" placeholder="Nghĩa, áo xanh…"></label>
+          </div>
+          <label class="field"><span>Hành vi đã thấy trước đó</span><textarea id="h_villRead" name="villRead" rows="2"></textarea></label>
+          <label class="field"><span>Hình ảnh của mình trong mắt họ</span><input id="h_image" name="image" type="text"></label>
+        </div>
+
+        <div class="block">
+          <div class="block-head"><span class="num">3–4</span><h2>Bài và từng street</h2></div>
+          <div class="grid">
+            <label class="field"><span>Bài của mình</span><input id="h_hero" name="hero" type="text" class="mono" autocapitalize="off"><div class="cards-prev" id="p_hero"></div></label>
+            <label class="field"><span>Pot sau preflop</span><input id="h_potPF" name="potPF" type="text" inputmode="decimal" class="mono"></label>
+          </div>
+          <label class="field"><span>Preflop</span><input id="h_pf" name="pf" type="text"></label>
+          <div class="street"><div class="sname">Flop</div>
+            <div class="field"><input id="h_flop" name="flop" type="text" class="mono" aria-label="Board flop" autocapitalize="off"><div class="cards-prev" id="p_flop"></div><input id="h_flopA" name="flopA" type="text" aria-label="Hành động flop"></div>
+            <input id="h_flopPot" name="flopPot" type="text" inputmode="decimal" class="mono" placeholder="pot" aria-label="Pot flop"></div>
+          <div class="street"><div class="sname">Turn</div>
+            <div class="field"><input id="h_turn" name="turn" type="text" class="mono" aria-label="Lá turn" autocapitalize="off"><div class="cards-prev" id="p_turn"></div><input id="h_turnA" name="turnA" type="text" aria-label="Hành động turn"></div>
+            <input id="h_turnPot" name="turnPot" type="text" inputmode="decimal" class="mono" placeholder="pot" aria-label="Pot turn"></div>
+          <div class="street"><div class="sname">River</div>
+            <div class="field"><input id="h_river" name="river" type="text" class="mono" aria-label="Lá river" autocapitalize="off"><div class="cards-prev" id="p_river"></div><input id="h_riverA" name="riverA" type="text" aria-label="Hành động river"></div>
+            <input id="h_riverPot" name="riverPot" type="text" inputmode="decimal" class="mono" placeholder="pot" aria-label="Pot river"></div>
+        </div>
+
+        <div class="block">
+          <div class="block-head"><span class="num">5</span><h2>Kết quả</h2></div>
+          <div class="grid">
+            <label class="field"><span>Thắng/thua (bb)</span><input id="h_result" name="result" type="text" inputmode="decimal" class="mono"></label>
+            <label class="field"><span>Bài đối thủ</span><input id="h_villCards" name="villCards" type="text" class="mono" placeholder="Trống nếu không showdown" autocapitalize="off"><div class="cards-prev" id="p_villCards"></div></label>
+          </div>
+        </div>
+
+        <div class="block">
+          <div class="block-head"><span class="num">6–7</span><h2>Suy nghĩ và câu hỏi</h2></div>
+          <label class="field"><span>Suy nghĩ lúc đó</span><textarea id="h_thought" name="thought" rows="3"></textarea></label>
+          <label class="field"><span>Câu hỏi review</span><textarea id="h_question" name="question" rows="2"></textarea></label>
+          <div class="field"><span class="lbl">Vì sao ghi tay này</span><div class="chips" id="h_tags"></div><div class="chips mttOnly" id="h_tagsM"></div></div>
+        </div>
+
+        <details class="review" id="reviewBox">
+          <summary>Review ở nhà</summary>
+          <div class="inner">
+            <div class="actions" id="aiRow" hidden><button type="button" class="btn primary" id="aiReview">Nhờ Claude review hand này</button><button type="button" class="btn sm" id="aiStop" hidden>Dừng</button></div>
+            <div id="aiStatus" class="hint" aria-live="polite"></div>
+            <label class="field"><span>1 · Range đối thủ từng street</span><textarea id="r_range" name="rRange" rows="3"></textarea></label>
+            <label class="field"><span>2 · Toán: pot odds / MDF / equity</span><textarea id="r_math" name="rMath" rows="2"></textarea></label>
+            <label class="field"><span>3 · Solver / trainer nói gì</span><textarea id="r_solver" name="rSolver" rows="2"></textarea></label>
+            <label class="field mttOnly"><span>ICM / push-fold: đúng chart không, áp lực bubble ra sao</span><textarea id="r_icm" name="rIcm" rows="2"></textarea></label>
+            <div class="field"><span class="lbl">4 · Loại lỗi</span><div class="chips" id="r_err"></div></div>
+            <div class="field"><span class="lbl">5 · Đánh giá theo EV (không theo kết quả)</span><div class="chips" id="r_ev"></div></div>
+            <label class="field"><span>Bài học rút ra</span><textarea id="r_lesson" name="rLesson" rows="2"></textarea></label>
+            <label class="chip" style="align-self:flex-start"><input type="checkbox" id="r_done" name="rDone"><span>Đã review xong</span></label>
+            <label class="chip" style="align-self:flex-start" id="chkWrap" hidden><input type="checkbox" id="h_checked" name="checked"><span>Đã kiểm tra dữ liệu từ ảnh</span></label>
+          </div>
+        </details>
+      </div>
+    </form>
+  </section>
+
+  <!-- ============ DANH SÁCH ============ -->
+  <section class="panel" id="tab-list" hidden>
+    <div class="status" id="status"><span class="dot"></span><span>Đang kết nối…</span></div>
+    <div class="strip" id="strip"></div>
+    <div class="actions">
+      <div class="chips" id="listFilter"></div>
+      <span style="flex:1"></span>
+      <button class="btn sm" id="copyBtn" type="button">Sao chép để review</button>
+    </div>
+    <div id="copyWrap" hidden><p class="hint">Không sao chép tự động được. Chọn hết đoạn dưới rồi copy.</p><textarea class="copybox" id="copyBox" readonly></textarea></div>
+    <div class="hlist" id="hlist"></div>
+  </section>
+
+  <!-- ============ PHIÊN ============ -->
+  <section class="panel" id="tab-sess" hidden>
+    <form id="sessForm" autocomplete="off" class="panel" style="padding-top:0">
+      <div class="block">
+        <h3>Thông tin phiên</h3>
+        <div class="field"><span class="lbl">Loại phiên</span><div class="chips" id="s_kind">
+          <label class="chip"><input type="radio" name="kind" value="cash" id="kind_0"><span>Cash</span></label>
+          <label class="chip"><input type="radio" name="kind" value="mtt" id="kind_1"><span>MTT</span></label>
+        </div></div>
+        <div class="field"><span class="lbl">Hình thức</span><div class="chips" id="s_mode">
+          <label class="chip"><input type="radio" name="mode" value="live" id="mode_0"><span>Live</span></label>
+          <label class="chip"><input type="radio" name="mode" value="online" id="mode_1"><span>Online</span></label>
+        </div></div>
+        <label class="field onlineOnly"><span>Tên tài khoản của bạn (để đọc ảnh)</span><input id="s_heroName" name="heroName" type="text" placeholder="dateddyy" autocapitalize="off" spellcheck="false"></label>
+        <div class="grid">
+          <label class="field"><span>Ngày</span><input id="s_date" name="date" type="date"></label>
+          <label class="field"><span>Địa điểm / nền tảng</span><input id="s_venue" name="venue" type="text" placeholder="Tên sòng / app"></label>
+          <label class="field cashOnly"><span>Stake</span><input id="s_stake" name="stake" type="text" class="mono" placeholder="20/50"></label>
+          <label class="field cashOnly"><span>Số người trên bàn</span><input id="s_seats" name="seats" type="text" inputmode="numeric" class="mono" placeholder="9"></label>
+          <label class="field"><span>Bắt đầu</span><input id="s_start" name="start" type="time"></label>
+          <label class="field"><span>Kết thúc</span><input id="s_end" name="end" type="time"></label>
+        </div>
+      </div>
+      <div class="block mttOnly">
+        <h3>Thông tin MTT</h3>
+        <div class="grid">
+          <label class="field"><span>Tên giải</span><input id="s_tName" name="tName" type="text" placeholder="Daily $1 Deepstack"></label>
+          <label class="field"><span>Buy-in ($)</span><input id="s_tBuyin" name="tBuyin" type="text" inputmode="decimal" class="mono" placeholder="1"></label>
+          <label class="field"><span>Số lần mua vào</span><input id="s_tEntries" name="tEntries" type="text" inputmode="numeric" class="mono" placeholder="1"></label>
+          <label class="field"><span>Stack đầu (chip)</span><input id="s_tStartStack" name="tStartStack" type="text" inputmode="decimal" class="mono" placeholder="20k"></label>
+        </div>
+        <div class="field"><span class="lbl">Thể thức</span><div class="chips" id="s_tType"></div></div>
+        <div class="grid">
+          <label class="field"><span>Late reg: vào ở level</span><input id="s_tLateLv" name="tLateLv" type="text" inputmode="numeric" class="mono" placeholder="Trống nếu vào từ đầu"></label>
+          <label class="field"><span>Stack lúc vào (bb)</span><input id="s_tLateStack" name="tLateStack" type="text" inputmode="decimal" class="mono"></label>
+        </div>
+      </div>
+      <div class="block mttOnly">
+        <h3>Kết quả MTT</h3>
+        <div class="grid">
+          <label class="field"><span>Hạng về</span><input id="s_tPlace" name="tPlace" type="text" inputmode="numeric" class="mono"></label>
+          <label class="field"><span>Tổng người chơi</span><input id="s_tField" name="tField" type="text" inputmode="numeric" class="mono"></label>
+          <label class="field"><span>Tiền thưởng ($)</span><input id="s_tPrize" name="tPrize" type="text" inputmode="decimal" class="mono" placeholder="0"></label>
+          <label class="field"><span>Tiền bounty ($)</span><input id="s_tBounty" name="tBounty" type="text" inputmode="decimal" class="mono" placeholder="0"></label>
+          <label class="field"><span>Bị loại ở level</span><input id="s_bustLevel" name="bustLevel" type="text" inputmode="numeric" class="mono"></label>
+          <label class="field"><span>Giai đoạn bị loại</span><select id="s_bustStage" name="bustStage"></select></label>
+        </div>
+        <label class="field"><span>Hand bị loại</span><select id="s_bustHand" name="bustHand"></select></label>
+        <div id="tMoney" class="hint"></div>
+        <div id="bustWarn"></div>
+      </div>
+      <div class="block cashOnly">
+        <h3>Tiền</h3>
+        <div class="grid">
+          <label class="field"><span>Big blind (chip)</span><input id="s_bb" name="bb" type="text" inputmode="decimal" class="mono" placeholder="50"></label>
+          <label class="field"><span>Tổng buy-in</span><input id="s_buyin" name="buyin" type="text" inputmode="decimal" class="mono"></label>
+          <label class="field"><span>Cash-out</span><input id="s_cashout" name="cashout" type="text" inputmode="decimal" class="mono"></label>
+          <label class="field"><span>Stop-loss (tiền lỗ tối đa)</span><input id="s_stop" name="stop" type="text" inputmode="decimal" class="mono"></label>
+        </div>
+        <div id="sessMoney" class="hint"></div>
+      </div>
+      <div class="block">
+        <h3>Đọc bàn</h3>
+        <div class="field"><span class="lbl">Bàn chơi</span><div class="chips" id="s_table"></div></div>
+        <div class="grid">
+          <label class="field"><span>Số người chơi giải trí</span><input id="s_recs" name="recs" type="text" inputmode="numeric" class="mono"></label>
+          <label class="field"><span>Số reg</span><input id="s_regs" name="regs" type="text" inputmode="numeric" class="mono"></label>
+        </div>
+        <label class="field"><span>Nhận xét bàn</span><textarea id="s_tableNote" name="tableNote" rows="4"></textarea></label>
+      </div>
+      <div class="block">
+        <h3>Trạng thái bản thân</h3>
+        <div class="chips" id="s_self"></div>
+        <label class="field"><span>Ghi chú</span><input id="s_selfNote" name="selfNote" type="text"></label>
+      </div>
+      <div class="block" id="sumBlock">
+        <h3>Tổng kết phiên</h3>
+        <div class="field"><span class="lbl">Tự chấm</span><div class="chips" id="s_grade">
+          <label class="chip"><input type="radio" name="sumGrade" value="A" id="grade_0"><span>A game</span></label>
+          <label class="chip"><input type="radio" name="sumGrade" value="B" id="grade_1"><span>B game</span></label>
+          <label class="chip"><input type="radio" name="sumGrade" value="C" id="grade_2"><span>C game</span></label>
+        </div></div>
+        <label class="field"><span>Đánh giá chung</span><textarea id="s_sumOverall" name="sumOverall" rows="4" placeholder="Kết quả, diễn biến stack, bối cảnh…"></textarea></label>
+        <label class="field"><span>Điểm tốt</span><textarea id="s_sumGood" name="sumGood" rows="3"></textarea></label>
+        <label class="field"><span>Leak / lỗi cần sửa</span><textarea id="s_sumLeaks" name="sumLeaks" rows="4"></textarea></label>
+        <div class="field"><span class="lbl">Nhãn leak</span><div class="chips" id="s_leak"></div>
+          <div class="addrow"><input id="leakNew" type="text" placeholder="Thêm nhãn leak mới" autocomplete="off"><button type="button" class="btn sm" id="leakAdd">Thêm</button></div></div>
+        <label class="field"><span>Quy tắc cho phiên sau</span><textarea id="s_sumRules" name="sumRules" rows="4"></textarea></label>
+      </div>
+      <div class="actions">
+        <button class="btn primary" type="submit">Lưu phiên</button>
+        <button class="btn danger" type="button" id="delSess">Xóa phiên</button>
+      </div>
+    </form>
+    <details class="review" id="leakBox" open hidden>
+      <summary>Leak lặp lại qua các phiên</summary>
+      <div class="inner" id="leakOv"></div>
+    </details>
+    <details class="review" id="ovBox" open hidden>
+      <summary>Tổng quan MTT</summary>
+      <div class="inner" id="ov"></div>
+    </details>
+  </section>
+
+  <!-- ============ ĐỐI THỦ ============ -->
+  <section class="panel" id="tab-opp" hidden>
+    <form id="noteForm" class="block" autocomplete="off">
+      <h3 id="noteFormTitle">Ghi chú đối thủ</h3>
+      <p class="hint">Dùng chung cho mọi phiên. Tên ở đây hiện thành nút chạm nhanh trong Ghi nhanh.</p>
+      <label class="field"><span>Tên / ghế / đặc điểm</span><input id="n_who" name="who" type="text" placeholder="Nghĩa"></label>
+      <div class="field"><span class="lbl">Loại</span><div class="chips" id="n_type"></div></div>
+      <label class="field"><span>Ghi chú</span><textarea id="n_text" name="text" rows="2"></textarea></label>
+      <div class="actions">
+        <button class="btn primary" type="submit">Lưu ghi chú</button>
+        <button class="btn" type="button" id="noteCancel" hidden>Hủy sửa</button>
+      </div>
+    </form>
+    <div class="hlist" id="nlist"></div>
+  </section>
+</div>
+
+<div class="savebar" id="barQuick">
+  <div class="wrap">
+    <span class="ed" id="quickLabel">#1</span>
+    <button class="btn" type="button" id="clearQuick">Xóa trắng</button>
+    <button class="btn flag" type="button" id="flagBtn" aria-pressed="false">⚑</button>
+    <button class="btn primary" type="button" id="saveQuick">Lưu hand</button>
+  </div>
+</div>
+<div class="savebar" id="barDetail" hidden>
+  <div class="wrap">
+    <button class="btn danger" type="button" id="delHand">Xóa</button>
+    <button class="btn primary" type="button" id="saveHand">Lưu thay đổi</button>
+  </div>
+</div>
+<div class="toast" id="toast" hidden><span id="toastText"></span><button type="button" id="toastBtn" hidden></button></div>
+
+<script>
+(function(){
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const LS={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}},del(k){try{localStorage.removeItem(k)}catch(e){}}};
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const today=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
+function parseAmt(s){if(s==null)return null;s=String(s).trim().toLowerCase().replace(/\s/g,"");if(!s)return null;
+  let m=s.match(/^([+-]?\d+(?:[.,]\d+)?)k(\d*)$/);if(m){const b=parseFloat(m[1].replace(",","."))*1000;const f=m[2]?parseFloat("0."+m[2])*1000*(b<0?-1:1):0;return b+f}
+  const n=parseFloat(s.replace(/\.(?=\d{3}\b)/g,"").replace(",","."));return isNaN(n)?null:n}
+const num=v=>{if(v==null||v==="")return null;const n=parseFloat(String(v).replace(",",".").replace(/[^\d.\-+]/g,""));return isNaN(n)?null:n};
+const fmtN=n=>n==null?"":String(Math.round(n*10)/10);
+const r2=n=>Math.round(n*100)/100;
+const fmtMoney=n=>n==null?"—":(Math.abs(n)<100&&Math.round(n)!==r2(n)?r2(n).toFixed(2):Math.round(n).toLocaleString("vi-VN"));
+
+const POS=["UTG","UTG+1","MP","LJ","HJ","CO","BTN","SB","BB"];
+const POS_SHORT={"UTG+1":"U+1"};
+const VTYPE=["Nit","TAG","LAG","Station","Maniac","Chưa rõ"];
+const VSHORT={"Station":"Stat","Maniac":"Mani","Chưa rõ":"?"};
+const TAGS=["Pot > 30bb","Phân vân lâu","Đối thủ lạ","Show bài bất ngờ","Đang tilt"];
+const ERR=["Preflop","Sizing","Đọc sai range","Cảm xúc","Toán","Không lỗi"];
+const EV=["Đúng","Sai","Chưa chắc"];
+const TABLE=["Loose-passive","Loose-aggr","Tight-passive","Tight-aggr","Lẫn lộn"];
+const SELF=["Tỉnh táo","Hơi mệt","Mệt","Tilt nhẹ","Tilt"];
+const OUTCOMES=[["win","Thắng"],["lose","Thua"],["fold","Fold"],["split","Chia"]];
+const POS8=["UTG","UTG+1","LJ","HJ","CO","BTN","SB","BB"],POS6=["UTG","HJ","CO","BTN","SB","BB"];
+const STAGES=["Early","Mid","Gần bubble","ITM","Bàn cuối"];const STAGE_SHORT={"Gần bubble":"Bubble","Bàn cuối":"FT"};
+const TAGS_M=["Push/fold","Bubble","3-bet shove","Hand bị loại"];
+const TTYPE=["Freezeout","Re-entry","Bounty","Satellite"];
+const isMtt=s=>!!s&&s.kind==="mtt";
+const isOnline=s=>!!s&&s.mode==="online";
+const LEAKS=["Size quá nhỏ","Thụ động khi short","Call lỏng multiway","Đọc check là mạnh","Sai preflop","Chơi khi mệt/tilt"];
+
+function opts(sel,list){sel.innerHTML=["",...list].map(p=>`<option value="${esc(p)}">${p||"—"}</option>`).join("")}
+function chips(el,name,list,multi,pre){el.innerHTML=list.map((v,i)=>`<label class="chip"><input type="${multi?"checkbox":"radio"}" name="${name}" value="${esc(v)}" id="${pre||name}_${i}"><span>${esc(v)}</span></label>`).join("")}
+opts($("#h_heroPos"),POS);opts($("#h_villPos"),POS);
+opts($("#h_stage"),STAGES);opts($("#s_bustStage"),STAGES);
+chips($("#h_tagsM"),"tags",TAGS_M,true,"tagsM");chips($("#s_tType"),"tType",TTYPE);
+chips($("#h_villType"),"villType",VTYPE);chips($("#h_tags"),"tags",TAGS,true);
+chips($("#r_err"),"rErr",ERR,true);chips($("#r_ev"),"rEv",EV);
+chips($("#s_table"),"table",TABLE);chips($("#s_self"),"self",SELF);chips($("#n_type"),"ntype",VTYPE);
+document.addEventListener("click",e=>{const i=e.target.closest(".chip")?.querySelector("input[type=radio]");if(!i||e.target!==i)return;if(i.dataset.was==="1"){i.checked=false;i.dataset.was="0";i.dispatchEvent(new Event("input",{bubbles:true}))}else{document.querySelectorAll(`input[name="${i.name}"]`).forEach(x=>x.dataset.was="0");i.dataset.was="1"}});
+
+/* ---------- cards ---------- */
+const SUIT={s:"♠",h:"♥",d:"♦",c:"♣","?":"?"};
+function cardList(str){const s=String(str||"").replace(/10/g,"T");const re=/([2-9TJQKAtjqka])([shdcSHDC?])/g;let m,o=[];while((m=re.exec(s)))o.push(m[1].toUpperCase()+m[2].toLowerCase());return o}
+function cardCls(c){return c[1]==="?"?" u":("hd".includes(c[1])?" r":"")}
+function cardsHTML(str){if(!str)return"";const cs=cardList(str);if(!cs.length)return`<span class="cards">${esc(str)}</span>`;
+  return`<span class="cards">${cs.map(c=>`<span class="pcard${cardCls(c)}">${c[0]}${SUIT[c[1]]}</span>`).join("")}</span>`}
+["hero","flop","turn","river","villCards"].forEach(k=>{const inp=$("#h_"+k);inp.addEventListener("input",()=>$("#p_"+k).innerHTML=cardsHTML(inp.value))});
+
+/* ---------- session money units ---------- */
+const LV0=()=>({lv:"",sb:"",bb:"",ante:"",anteAuto:true,stage:"",left:"",paid:"",seats:"9",map:{}});
+let LV=LV0();
+function blinds(){const s=curSession()||{};
+  if(isMtt(s)){const bb=num(LV.bb);if(!bb)return{bb:1,sb:0.5,ante:0,known:false};const sb=num(LV.sb);return{bb,sb:sb==null?bb/2:sb,ante:num(LV.ante)||0,known:true}}
+  let bb=num(s.bb),sb=null;const m=String(s.stake||"").match(/(\d+(?:[.,]\d+)?)\s*\/\s*(\d+(?:[.,]\d+)?)/);
+  if(m){sb=parseFloat(m[1].replace(",","."));if(!bb)bb=parseFloat(m[2].replace(",","."))}
+  if(!bb)return{bb:1,sb:0.5,ante:0,known:false};if(sb==null)sb=bb/2;return{bb,sb,ante:0,known:true}}
+function blindsFor(h){const bb=num(h.bb);if((h.mtt||isMtt(curSession()))&&bb){const sb=num(h.sb);return{bb,sb:sb==null?bb/2:sb,ante:num(h.ante)||0,known:true}}return blinds()}
+function chipTxt(n){const {bb,known}=blinds();if(n==null)return"";return known?`${fmtMoney(n)} (${fmtN(n/bb)}bb)`:fmtN(n)}
+
+/* ---------- shorthand parser v2 (chip, actors) ---------- */
+const ACT={o:"open",lp:"limp",x:"check",b:"bet",c:"call",r:"raise",l:"lead","3b":"3bet","4b":"4bet","5b":"5bet",cr:"check-raise",ai:"all-in",f:"fold",d:"donk"};
+const AGG=new Set(["o","b","r","l","3b","4b","5b","cr","ai","d"]);
+const CARDTOK=/^(?:(?:10|[2-9TJQKAtjqka])[shdcSHDC?]?){1,5}$/;
+const POSMAP={"UTG":"UTG","UTG+1":"UTG+1","+1":"UTG+1","U+1":"UTG+1","MP":"MP","LJ":"LJ","HJ":"HJ","CO":"CO","BTN":"BTN","BU":"BTN","SB":"SB","BB":"BB"};
+function actorOf(t){const u=t.toUpperCase().replace(/:$/,"");if(u==="H")return"H";if(u==="V")return"V";return POSMAP[u]||null}
+function actTok(t){const m=t.toLowerCase().match(/^(3b|4b|5b|ai|lp|cr|o|b|c|x|r|l|f|d)(\d[\d.,k]*)?$/);if(!m)return null;return{a:m[1],n:m[2]?parseAmt(m[2]):null}}
+function tokenize(seg){const out=[];String(seg).replace(/all[\s-]?in/gi,"ai").split(/\s+/).filter(Boolean).forEach(t=>{
+  const dash=t.indexOf("-");if(dash>0){const a=actorOf(t.slice(0,dash));if(a){out.push({actor:a,raw:t.slice(0,dash)});const rest=t.slice(dash+1);if(rest){const x=actTok(rest);out.push(x?Object.assign(x,{raw:rest}):{raw:rest})}return}}
+  const a=actorOf(t);if(a){out.push({actor:a,raw:t});return}
+  const x=actTok(t);out.push(x?Object.assign(x,{raw:t}):{raw:t})});return out}
+function parseLine(line,ctx){
+  const bl=ctx.bl||blinds();const bb=bl.bb,sb=bl.sb,ante=bl.ante||0;const heroK=ctx.heroPos||"H",villK=ctx.villPos||"V";
+  const keyOf=a=>a==="H"?heroK:a==="V"?villK:a;
+  const labelOf=k=>k===heroK?"Mình":k===villK?"Đối thủ":k;
+  const stackOf=k=>k===heroK?ctx.heroStack:k===villK?ctx.villStack:null;
+  const invested={};let pot=0,exactAll=true,heroSeen=false,heroFolded=false,approx=false;const streets=[];
+  String(line||"").split("/").slice(0,4).forEach((seg,i)=>{
+    let toks=tokenize(seg);let cards="";
+    if(i>0){while(toks.length&&!toks[0].actor&&!toks[0].a&&CARDTOK.test(toks[0].raw)){cards+=cardList(toks.shift().raw).join("")}}
+    const isPF=i===0;const c={};let level=0;
+    if(isPF){c.SB=sb;c.BB=bb;level=bb}
+    let hL=isPF?bb:0,hAggr=false,hCalls=0,hLimps=0,anyAct=false,anyAnon=false,cur=null;const words=[];
+    toks.forEach(t=>{
+      if(t.actor){cur=t.actor;return}
+      if(!t.a){words.push(t.raw);cur=null;return}
+      anyAct=true;const k=cur?keyOf(cur):null;if(!k&&t.a!=="x"&&t.a!=="f")anyAnon=true;if(k===heroK)heroSeen=true;
+      let amt=t.n;
+      if(t.a==="ai"&&amt==null){const st=k?stackOf(k):null;if(st!=null)amt=st-(invested[k]||0);else approx=true}
+      if(k){
+        const st=stackOf(k),cap=st!=null?st-(invested[k]||0):Infinity;
+        if(AGG.has(t.a)&&amt!=null){level=Math.max(level,amt);c[k]=Math.min(amt,cap)}
+        else if(t.a==="c"||t.a==="lp"){c[k]=Math.min(level,cap)}
+        else if(t.a==="f"){if(k===heroK)heroFolded=true}
+        else if(t.a==="x"){if(!(k in c))c[k]=0}
+      }else if(t.a==="f"){}
+      if(AGG.has(t.a)&&amt!=null){hL=amt;hAggr=true;hCalls=0}else if(t.a==="c")hCalls++;else if(t.a==="lp")hLimps++;
+      words.push((k?labelOf(k)+" ":"")+ACT[t.a]+(amt!=null?" "+fmtMoney(amt):""));cur=null});
+    const before=pot;let add;const exact=!anyAnon;
+    if(!exact)exactAll=false;
+    if(exact){
+      if(anyAct){const e=Object.entries(c).sort((a,b)=>b[1]-a[1]);if(e.length>1&&e[0][1]>e[1][1])c[e[0][0]]=e[1][1];}
+      add=Object.values(c).reduce((a,b)=>a+b,0);for(const[k,v]of Object.entries(c))invested[k]=(invested[k]||0)+v;
+    }else{
+      if(isPF){const inv=[ctx.heroPos,ctx.villPos];const dead=(inv.includes("SB")?0:sb)+(inv.includes("BB")?0:bb);add=hAggr?hL*(1+hCalls)+dead:bb*(hLimps+hCalls+1)+(inv.includes("SB")?0:sb)}
+      else add=hAggr&&hCalls>0?hL*(1+hCalls):0}
+    if(isPF&&ante){add+=ante;invested.BB=(invested.BB||0)+ante}
+    pot=before+add;
+    if(seg.trim()||isPF)streets.push({i,cards,text:words.join(", "),before:isPF?null:before,after:pot,exact});
+  });
+  return{streets,pot,heroInv:invested[heroK]||0,heroKnown:heroSeen&&exactAll,heroFolded,exactAll,approx}}
+function applyParsed(h,line,ctx){const p=parseLine(line,ctx);const st=p.streets;
+  if(st[0]){h.pf=st[0].text;h.potPF=st[0].after?String(r2(st[0].after)):""}
+  [["flop",1],["turn",2],["river",3]].forEach(([k,i])=>{const s=st.find(x=>x.i===i);if(s){if(s.cards&&!h[k])h[k]=s.cards;h[k+"A"]=s.text;h[k+"Pot"]=s.before?String(r2(s.before)):""}});
+  return p}
+
+/* ---------- store ---------- */
+let db=null;const remote={sessions:{},hands:{},notes:{}};
+let pending=LS.get("sth_pending",{sessions:{},hands:{},notes:{}});
+function view(col){const m=Object.assign({},remote[col]);for(const[id,v]of Object.entries(pending[col]||{})){if(v===null)delete m[id];else m[id]=v}return Object.values(m)}
+function savePending(){LS.set("sth_pending",pending)}
+function pendingCount(){return Object.values(pending).reduce((a,o)=>a+Object.keys(o).length,0)}
+async function put(col,id,data){data.id=id;
+  if(!db){remote[col][id]=data;LS.set("sth_local_"+col,remote[col]);render();return}
+  pending[col][id]=data;savePending();render();
+  try{await db.collection(col).doc(id).set(data);if(pending[col][id]===data){delete pending[col][id];savePending()}}
+  catch(e){if(e&&e.code==="quota_exceeded")toast("Bộ nhớ đã đầy. Xóa bớt hand cũ rồi lưu lại.");else toast("Chưa gửi lên được. Đã giữ trên máy, sẽ tự thử lại.")}
+  render()}
+async function del(col,id){
+  if(!db){delete remote[col][id];LS.set("sth_local_"+col,remote[col]);render();return}
+  pending[col][id]=null;savePending();render();
+  try{await db.collection(col).doc(id).delete();delete pending[col][id];savePending()}catch(e){toast("Chưa xóa được trên máy chủ, sẽ tự thử lại.")}
+  render()}
+async function flush(){if(!db||!pendingCount())return;
+  for(const col of Object.keys(pending))for(const[id,v]of Object.entries(pending[col])){
+    try{if(v===null)await db.collection(col).doc(id).delete();else await db.collection(col).doc(id).set(v);delete pending[col][id];savePending()}catch(e){return}}
+  render()}
+setInterval(()=>{if(pendingCount())flush()},20000);
+window.addEventListener("online",flush);
+function setStatus(kind,text){$("#status").innerHTML=`<span class="dot ${kind}"></span><span>${esc(text)}</span>`}
+function statusRefresh(){const p=pendingCount();
+  if(!db)setStatus("warn","Chỉ lưu trên trình duyệt này. Không đồng bộ sang máy khác.");
+  else if(p)setStatus("warn",`${p} thay đổi chưa gửi lên. Sẽ tự gửi khi có mạng.`);
+  else setStatus("ok","Đã đồng bộ.")}
+
+/* ---------- state ---------- */
+let curSess=LS.get("sth_cur",null);let editing=null;let listFilter="Tất cả";
+function sessions(){return view("sessions").sort((a,b)=>(b.date||"").localeCompare(a.date||"")||(b.createdAt||0)-(a.createdAt||0))}
+function handsOf(sid){return view("hands").filter(h=>h.sessionId===sid).sort((a,b)=>(a.num||0)-(b.num||0))}
+function curSession(){return view("sessions").find(s=>s.id===curSess)||null}
+function nextNum(){return handsOf(curSess).reduce((m,x)=>Math.max(m,x.num||0),0)+1}
+function toast(t,btnLabel,fn){const el=$("#toast");$("#toastText").textContent=t;const b=$("#toastBtn");
+  if(btnLabel){b.textContent=btnLabel;b.hidden=false;b.onclick=()=>{el.hidden=true;fn()}}else{b.hidden=true;b.onclick=null}
+  el.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>el.hidden=true,btnLabel?6000:2400)}
+
+function showTab(t){document.querySelectorAll(".tab").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===t||(t==="detail"&&b.dataset.tab==="list")?"true":"false"));
+  ["quick","detail","list","sess","opp"].forEach(x=>$("#tab-"+x).hidden=x!==t);
+  $("#barQuick").hidden=t!=="quick";$("#barDetail").hidden=t!=="detail";
+  if(t!=="detail")LS.set("sth_tab",t);window.scrollTo(0,0)}
+document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>showTab(b.dataset.tab)));
+
+/* ================= QUICK ENTRY ================= */
+const Q={hero:["",""],board:["","","","",""],vill:["",""],target:{g:"hero",i:0},rank:"",heroPos:"",villPos:"",seat:"",name:"",type:"",outcome:"",flag:false,manual:false,bust:""};
+const ORDER=[["hero",0],["hero",1],["board",0],["board",1],["board",2],["board",3],["board",4]];
+function segButtons(el,items,key,short){el.innerHTML=items.map(v=>`<button type="button" class="k" data-k="${key}" data-v="${esc(v)}" aria-pressed="false">${esc((short&&short[v])||v)}</button>`).join("")}
+segButtons($("#q_heroPos"),POS,"heroPos",POS_SHORT);
+segButtons($("#q_villPos"),POS,"villPos",POS_SHORT);
+segButtons($("#q_seat"),["1","2","3","4","5","6","7","8","9"],"seat");
+segButtons($("#q_type"),VTYPE,"type",VSHORT);
+$("#q_outcome").innerHTML=OUTCOMES.map(([v,l])=>`<button type="button" class="k" data-k="outcome" data-v="${v}" aria-pressed="false">${l}</button>`).join("");
+const RANKS="AKQJT98765432".split("");
+$("#ranksA").innerHTML=RANKS.slice(0,7).map(r=>`<button type="button" class="k mono" data-rank="${r}">${r}</button>`).join("");
+$("#ranksB").innerHTML=RANKS.slice(7).map(r=>`<button type="button" class="k mono" data-rank="${r}">${r}</button>`).join("");
+$("#suits").innerHTML=["s","h","d","c","?"].map(s=>`<button type="button" class="k suit${"hd".includes(s)?" r":""}" data-suit="${s}" aria-label="${{s:"bích",h:"cơ",d:"rô",c:"chuồn","?":"không nhớ chất"}[s]}">${SUIT[s]}</button>`).join("");
+$("#sl_hero").innerHTML=[0,1].map(i=>`<button type="button" class="slot" data-g="hero" data-i="${i}" aria-label="Bài mình ${i+1}"></button>`).join("");
+$("#sl_flop").innerHTML=[0,1,2].map(i=>`<button type="button" class="slot" data-g="board" data-i="${i}" aria-label="Flop ${i+1}"></button>`).join("");
+$("#sl_turn").innerHTML=`<button type="button" class="slot" data-g="board" data-i="3" aria-label="Turn"></button>`;
+$("#sl_river").innerHTML=`<button type="button" class="slot" data-g="board" data-i="4" aria-label="River"></button>`;
+$("#sl_vill").innerHTML=[0,1].map(i=>`<button type="button" class="slot" data-g="vill" data-i="${i}" aria-label="Bài đối thủ ${i+1}"></button>`).join("");
+const KEYS=["H","V","x","c","b","r","f","ai","/","⌫"];
+$("#lineKeys").innerHTML=KEYS.map(k=>`<button type="button" class="k" data-key="${k}">${k}</button>`).join("");
+
+/* ----- level (giải) ----- */
+$("#q_stage").innerHTML=STAGES.map(v=>`<button type="button" class="k" data-lk="stage" data-v="${esc(v)}" aria-pressed="false">${esc(STAGE_SHORT[v]||v)}</button>`).join("");
+$("#q_seats").innerHTML=["9","8","6"].map(v=>`<button type="button" class="k mono" data-lk="seats" data-v="${v}" aria-pressed="false">${v}</button>`).join("");
+const LVF=["lv","sb","bb","ante","left","paid"];
+function saveLV(){if(curSess)LS.set("sth_lv_"+curSess,LV)}
+function fillLV(){LVF.forEach(k=>{const el=$("#lv_"+k);if(document.activeElement!==el)el.value=LV[k]||""})}
+function loadLV(){const d=curSess?LS.get("sth_lv_"+curSess,null):null;LV=Object.assign(LV0(),d||{});
+  if(!d){const last=handsOf(curSess).filter(h=>h.mtt).pop();if(last)Object.assign(LV,{lv:last.level||"",sb:last.sb||"",bb:last.bb||"",ante:last.ante||"",anteAuto:!last.ante||last.ante===last.bb,stage:last.stage||"",left:last.left||"",paid:last.paid||"",seats:last.tableSize||"9"})}
+  fillLV()}
+function posList(){const n=isMtt(curSession())?String(LV.seats||"9"):"9";return n==="6"?POS6:n==="8"?POS8:POS}
+function renderPos(){const list=posList();["heroPos","villPos"].forEach(k=>{const el=$("#q_"+k);el.className="seg c"+list.length;segButtons(el,list,k,POS_SHORT);if(Q[k]&&!list.includes(Q[k]))Q[k]=""})}
+function renderLV(){
+  document.querySelectorAll(".k[data-lk]").forEach(b=>b.setAttribute("aria-pressed",String(LV[b.dataset.lk]||"")===b.dataset.v?"true":"false"));
+  const bl=blinds();const hs=parseAmt($("#q_heroStack").value);
+  $("#lvAux").textContent=bl.known?`${LV.lv?"Lv"+LV.lv+" · ":""}${fmtMoney(bl.sb)}/${fmtMoney(bl.bb)}${bl.ante?" · ante "+fmtMoney(bl.ante):""}${hs!=null?" · stack "+fmtN(hs/bl.bb)+"bb":""}`:"Nhập blinds của level hiện tại"}
+function stepLv(d){const n=(parseInt(LV.lv,10)||0)+d;if(n<1)return;
+  if(LV.lv&&LV.bb)LV.map[LV.lv]={sb:LV.sb,bb:LV.bb,ante:LV.ante,anteAuto:LV.anteAuto};
+  LV.lv=String(n);
+  if(LV.map[LV.lv])Object.assign(LV,LV.map[LV.lv]);
+  else if(d>0){toast(`Lv${n}: sửa SB/BB nếu blinds đã tăng`);const el=$("#lv_bb");setTimeout(()=>{el.focus();try{el.select()}catch(_){}},30)}
+  saveLV();fillLV();renderLV();renderParsed()}
+$("#lvMinus").addEventListener("click",()=>stepLv(-1));
+$("#lvPlus").addEventListener("click",()=>stepLv(1));
+LVF.forEach(k=>$("#lv_"+k).addEventListener("input",e=>{LV[k]=e.target.value.trim();
+  if(k==="ante")LV.anteAuto=LV.ante==="";
+  if(k==="bb"&&LV.anteAuto){LV.ante=LV.bb;$("#lv_ante").value=LV.ante}
+  if(k==="lv"&&LV.map[LV.lv]){Object.assign(LV,LV.map[LV.lv]);fillLV()}
+  else if(["sb","bb","ante"].includes(k)&&LV.lv)LV.map[LV.lv]={sb:LV.sb,bb:LV.bb,ante:LV.ante,anteAuto:LV.anteAuto};
+  saveLV();renderLV();renderParsed()}));
+
+function usedCards(ex){const all=[];["hero","board","vill"].forEach(g=>Q[g].forEach((c,i)=>{if(c&&c[1]!=="?"&&!(ex&&ex.g===g&&ex.i===i))all.push(c)}));return all}
+function nextTarget(){const t=Q.target;
+  if(t.g==="vill"){return Q.vill[1-t.i]?t:{g:"vill",i:1-t.i}}
+  const idx=ORDER.findIndex(o=>o[0]===t.g&&o[1]===t.i);
+  for(let k=idx+1;k<ORDER.length;k++){const[g,i]=ORDER[k];if(!Q[g][i])return{g,i}}
+  return t}
+function showVill(){return["win","lose","split"].includes(Q.outcome)}
+
+function renderQuick(){
+  document.querySelectorAll(".slot").forEach(s=>{const g=s.dataset.g,i=+s.dataset.i,c=Q[g][i];
+    s.textContent=c?c[0]+SUIT[c[1]]:"";s.className="slot"+(c?" filled"+cardCls(c):"")+(Q.target.g===g&&Q.target.i===i?" active":"")});
+  $("#villGroup").hidden=!showVill();
+  document.querySelectorAll("[data-rank]").forEach(b=>b.classList.toggle("pend",b.dataset.rank===Q.rank));
+  const used=usedCards(Q.target);
+  document.querySelectorAll("[data-suit]").forEach(b=>{const s=b.dataset.suit;b.disabled=!!Q.rank&&s!=="?"&&used.includes(Q.rank+s)});
+  document.querySelectorAll(".k[data-k]").forEach(b=>{const k=b.dataset.k;b.setAttribute("aria-pressed",String(Q[k])===b.dataset.v?"true":"false")});
+  $("#flagBtn").setAttribute("aria-pressed",Q.flag?"true":"false");
+  $("#quickLabel").textContent="#"+nextNum();
+  renderNames();renderParsed()}
+
+function renderNames(){const ns=view("notes").filter(n=>n.who).sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0)).slice(0,9);
+  const el=$("#q_names");el.hidden=!ns.length;
+  el.innerHTML=ns.map(n=>`<button type="button" class="k" data-k="name" data-v="${esc(n.who)}" aria-pressed="${Q.name===n.who}">${esc(n.who)}</button>`).join("")}
+
+function ctxNow(){return{heroPos:Q.heroPos,villPos:Q.villPos,heroStack:parseAmt($("#q_heroStack").value),villStack:parseAmt($("#q_villStack").value)}}
+let lastParse=null;
+function renderParsed(){
+  const line=$("#q_line").value;const ctx=ctxNow();const {bb,known}=blinds();
+  const p=parseLine(line,ctx);lastParse=p;const names=["PF","F","T","R"];
+  const boardFor=i=>i===1?Q.board.slice(0,3).join(""):i===2?Q.board[3]:i===3?Q.board[4]:"";
+  let html="";
+  if(line.trim()){
+    html=p.streets.map(s=>{const bc=s.cards||boardFor(s.i);return`<span class="st"><b>${names[s.i]}</b>${bc?cardsHTML(bc)+" ":""}${esc(s.text)||"—"} <span class="pot">→ pot ${chipTxt(s.after)}${s.exact?"":" ≈"}</span></span>`}).join("");
+    if(!p.heroKnown)html+=`<span class="warnline">Ghi “H” trước hành động của mình để trang tự tính kết quả.</span>`;
+    if(!known)html+=`<span class="warnline">${isMtt(curSession())?"Chưa có blinds: nhập SB/BB ở ô Level phía trên.":"Chưa có BB của phiên: điền ở tab Phiên để đổi chip sang bb."}</span>`}
+  $("#parsed").innerHTML=html;
+  // auto result
+  let rc=null;
+  if(p.heroKnown&&Q.outcome){rc=Q.outcome==="win"?p.pot-p.heroInv:Q.outcome==="split"?p.pot/2-p.heroInv:-p.heroInv}
+  if(!Q.manual){$("#q_result").value=rc==null?"":(rc>0?"+":"")+fmtN(rc/bb)}
+  const r=num($("#q_result").value);
+  $("#resAux").textContent=r==null?"":`${r>0?"+":""}${fmtMoney(r*bb)} chip${Q.manual?" · sửa tay":""}`;
+  // eff
+  const hs=ctx.heroStack,vs=ctx.villStack;
+  $("#effLine").innerHTML=hs!=null&&vs!=null?`Eff stack: <b>${fmtMoney(Math.min(hs,vs))}</b> = <b>${fmtN(Math.min(hs,vs)/bb)}bb</b>`:hs!=null?`Stack mình ${fmtN(hs/bb)}bb · thêm stack đối thủ để tính eff`:"Nhập stack để tính eff (hỗ trợ 18k, 1k5)";
+  renderLV()}
+
+$("#tab-quick").addEventListener("click",e=>{
+  const b=e.target.closest("button");if(!b||b.disabled)return;
+  if(b.dataset.lk){const k=b.dataset.lk,v=b.dataset.v;LV[k]=(k!=="seats"&&LV[k]===v)?"":v;saveLV();if(k==="seats")renderPos();renderQuick();return}
+  if(b.classList.contains("slot")){const g=b.dataset.g,i=+b.dataset.i;if(Q.target.g===g&&Q.target.i===i&&Q[g][i])Q[g][i]="";Q.target={g,i};Q.rank="";renderQuick();saveDraft();return}
+  if(b.dataset.rank){Q.rank=Q.rank===b.dataset.rank?"":b.dataset.rank;renderQuick();return}
+  if(b.dataset.suit){if(!Q.rank){toast("Chạm số trước, rồi mới chạm chất.");return}
+    const c=Q.rank+b.dataset.suit;if(b.dataset.suit!=="?"&&usedCards(Q.target).includes(c)){toast("Lá này đã chọn rồi.");return}
+    Q[Q.target.g][Q.target.i]=c;Q.rank="";Q.target=nextTarget();renderQuick();saveDraft();return}
+  if(b.dataset.k){const k=b.dataset.k,v=b.dataset.v;Q[k]=String(Q[k])===v?"":v;
+    if(k==="seat")seatAuto();
+    if(k==="name")nameAuto();
+    if(k==="heroPos"&&Q.villPos===Q.heroPos&&Q.heroPos)Q.villPos="";
+    if(k==="outcome"){Q.manual=false;if(showVill()&&!Q.vill[0]&&!Q.vill[1])Q.target={g:"vill",i:0}}
+    renderQuick();saveDraft();return}
+  if(b.dataset.key){const inp=$("#q_line");const k=b.dataset.key;const st=inp.selectionStart??inp.value.length,en=inp.selectionEnd??inp.value.length;let v=inp.value,pos;
+    if(k==="⌫"){if(st!==en){v=v.slice(0,st)+v.slice(en);pos=st}else{v=v.slice(0,Math.max(0,st-1))+v.slice(st);pos=Math.max(0,st-1)}}
+    else{const before=v.slice(0,st);let ins=k;
+      if(k==="/")ins=(before.endsWith(" ")||!st?"":" ")+"/ ";
+      else{if(st&&!/\s$/.test(before))ins=" "+ins;if(k==="H"||k==="V")ins+=" "}
+      v=v.slice(0,st)+ins+v.slice(en);pos=st+ins.length}
+    inp.value=v;try{inp.setSelectionRange(pos,pos)}catch(_){}renderParsed();saveDraft();return}
+});
+$("#q_line").addEventListener("input",()=>{renderParsed();saveDraft()});
+["#q_heroStack","#q_villStack"].forEach(s=>$(s).addEventListener("input",()=>{renderParsed();saveDraft()}));
+$("#q_result").addEventListener("input",()=>{Q.manual=$("#q_result").value.trim()!=="";renderParsed();saveDraft()});
+$("#q_thought").addEventListener("input",saveDraft);
+$("#signBtn").addEventListener("click",()=>{const i=$("#q_result");let v=i.value.trim();v=v.startsWith("-")?v.slice(1):(v.startsWith("+")?"-"+v.slice(1):"-"+v);i.value=v;Q.manual=true;renderParsed();i.focus();saveDraft()});
+$("#flagBtn").addEventListener("click",()=>{Q.flag=!Q.flag;renderQuick();saveDraft()});
+$("#legendBtn").addEventListener("click",e=>{const l=$("#legend");l.hidden=!l.hidden;e.currentTarget.setAttribute("aria-expanded",String(!l.hidden))});
+
+function noteByName(n){return view("notes").find(x=>x.who===n)}
+function seatAuto(){const hint=$("#seatHint");if(!Q.seat){hint.textContent=Q.name?hint.textContent:"";return}
+  const prev=handsOf(curSess).filter(h=>String(h.villSeatNo)===String(Q.seat)).pop();
+  if(prev){if(!Q.type&&prev.villType)Q.type=prev.villType;if(!Q.name&&prev.villName)Q.name=prev.villName;hint.textContent=`Ghế ${Q.seat}: ${prev.villName||prev.villType||"đã gặp"} (hand #${prev.num})`}else hint.textContent=`Ghế ${Q.seat}: chưa ghi lần nào`}
+function nameAuto(){const hint=$("#seatHint");if(!Q.name){hint.textContent="";return}const n=noteByName(Q.name);
+  if(n){if(!Q.type&&n.type)Q.type=n.type;hint.textContent=(n.text||"").split("\n")[0].slice(0,70)}}
+
+function snapshotQ(){return{sessionId:curSess,hero:[...Q.hero],board:[...Q.board],vill:[...Q.vill],heroPos:Q.heroPos,villPos:Q.villPos,seat:Q.seat,name:Q.name,type:Q.type,outcome:Q.outcome,flag:Q.flag,manual:Q.manual,bust:Q.bust,
+  line:$("#q_line").value,result:$("#q_result").value,thought:$("#q_thought").value,villStack:$("#q_villStack").value}}
+function restoreQ(d){Object.assign(Q,{hero:d.hero||["",""],board:d.board||["","","","",""],vill:d.vill||["",""],heroPos:d.heroPos||"",villPos:d.villPos||"",seat:d.seat||"",name:d.name||"",type:d.type||"",outcome:d.outcome||"",flag:!!d.flag,manual:!!d.manual,bust:d.bust||"",rank:""});
+  $("#q_line").value=d.line||"";$("#q_result").value=d.result||"";$("#q_thought").value=d.thought||"";$("#q_villStack").value=d.villStack||"";
+  const firstEmpty=ORDER.find(([g,i])=>!Q[g][i]);Q.target=firstEmpty?{g:firstEmpty[0],i:firstEmpty[1]}:{g:"hero",i:0}}
+let draftT;function saveDraft(){clearTimeout(draftT);draftT=setTimeout(()=>{LS.set("sth_qdraft2",snapshotQ());LS.set("sth_stack_"+curSess,$("#q_heroStack").value)},300)}
+function loadDraft(){$("#q_heroStack").value=LS.get("sth_stack_"+curSess,"")||"";const d=LS.get("sth_qdraft2",null);if(!d||d.sessionId!==curSess)return;restoreQ(d)}
+function clearQuick(){restoreQ({});$("#seatHint").textContent="";LS.del("sth_qdraft2");renderQuick()}
+$("#clearQuick").addEventListener("click",e=>arm(e.currentTarget,"Chắc chưa?",clearQuick));
+
+$("#saveQuick").addEventListener("click",async e=>{
+  const btn=e.currentTarget;if(btn.disabled)return;
+  if(!curSess)newSession(true);
+  const line=$("#q_line").value.trim();
+  if(!Q.hero[0]&&!line&&!$("#q_result").value.trim()&&!Q.flag){toast("Chưa có gì để lưu.");return}
+  const {bb}=blinds();const ctx=ctxNow();const snap=snapshotQ();
+  const r=num($("#q_result").value);const hs=ctx.heroStack,vs=ctx.villStack;
+  const eff=hs!=null&&vs!=null?fmtN(Math.min(hs,vs)/bb):"";
+  const h={sessionId:curSess,num:nextNum(),createdAt:Date.now(),updatedAt:Date.now(),quick:true,unit:"chip",
+    hero:Q.hero.join(""),flop:Q.board.slice(0,3).join(""),turn:Q.board[3],river:Q.board[4],villCards:Q.vill.join(""),
+    heroPos:Q.heroPos,villPos:Q.villPos,villSeatNo:Q.seat,villName:Q.name,villSeat:Q.name,villType:Q.type,
+    line,outcome:Q.outcome,result:r==null?"":fmtN(r),resultChips:r==null?"":String(r2(r*bb)),
+    heroStack:hs==null?"":String(hs),villStack:vs==null?"":String(vs),eff,
+    thought:$("#q_thought").value.trim(),flag:Q.flag,tags:[],rErr:[]};
+  const S=curSession();const mtt=isMtt(S);const isBust=mtt&&!!Q.bust;
+  if(mtt){const bl=blinds();Object.assign(h,{mtt:true,level:LV.lv,sb:LV.sb||(bl.known?String(bl.sb):""),bb:LV.bb,ante:LV.ante,stage:LV.stage,left:LV.left,paid:LV.paid,tableSize:LV.seats});if(isBust)h.tags=["Hand bị loại"]}
+  if(line){const p=applyParsed(h,line,ctx);const fl=p.streets.find(s=>s.i===1);if(fl)h.players="";}
+  const imp=IMP.cur;if(imp)Object.assign(h,impExtra(imp.data,true));
+  h.missing=(h.result===""||h.eff==="");
+  btn.disabled=true;setTimeout(()=>btn.disabled=false,2000);
+  const id=uid();const n=h.num;const prevStack=$("#q_heroStack").value;
+  await put("hands",id,h);
+  let prevSess=null;
+  if(isBust&&S){prevSess=Object.assign({},S);const ns=Object.assign({},S,{bustHand:id,updatedAt:Date.now()});if(!ns.bustLevel)ns.bustLevel=LV.lv;if(!ns.bustStage)ns.bustStage=LV.stage;if(!ns.tPlace&&LV.left)ns.tPlace=LV.left;await put("sessions",curSess,ns);render(true)}
+  if(hs!=null&&r!=null){const ns=r2(hs+r*bb);$("#q_heroStack").value=String(ns);LS.set("sth_stack_"+curSess,String(ns))}
+  clearQuick();
+  if(imp){setTimeout(()=>nextImportAfter(imp),50)}
+  toast(`Đã lưu #${n}${h.flag?" ⚑":""}${isBust?" · hand bị loại":""}${h.missing?" · thiếu dữ liệu":""}`,"Hoàn tác",async()=>{await del("hands",id);if(prevSess){await put("sessions",prevSess.id,prevSess);render(true)}restoreQ(snap);$("#q_heroStack").value=prevStack;LS.set("sth_stack_"+curSess,prevStack);renderQuick();saveDraft();toast(`Đã hoàn tác #${n}`)});
+});
+
+/* ================= DETAIL ================= */
+const hf=$("#handForm");
+function readForm(form){const o={};form.querySelectorAll("input,select,textarea").forEach(el=>{if(!el.name)return;
+  if(el.type==="checkbox"){if(el.closest("#h_tags,#h_tagsM,#r_err,#s_leak")){(o[el.name]=o[el.name]||[]);if(el.checked)o[el.name].push(el.value)}else o[el.name]=el.checked}
+  else if(el.type==="radio"){if(el.checked)o[el.name]=el.value;else if(!(el.name in o))o[el.name]=""}
+  else o[el.name]=el.value.trim()});return o}
+function fillForm(form,d){form.querySelectorAll("input,select,textarea").forEach(el=>{if(!el.name)return;const v=d[el.name];
+  if(el.type==="checkbox"){el.checked=Array.isArray(v)?v.includes(el.value):!!v}
+  else if(el.type==="radio"){el.checked=v===el.value;el.dataset.was=el.checked?"1":"0"}
+  else el.value=v??""})}
+function refreshPreviews(){["hero","flop","turn","river","villCards"].forEach(k=>$("#p_"+k).innerHTML=cardsHTML($("#h_"+k).value))}
+function openDetail(h){editing=h.id;fillForm(hf,h);refreshPreviews();$("#chkWrap").hidden=!h.fromImage;$("#aiRow").hidden=!sampleFn;$("#aiStatus").textContent="";
+  $("#reviewBox").open=!!(h.rRange||h.rMath||h.rLesson||h.rDone);$("#detailTitle").textContent=`Hand #${h.num||"?"}${h.example?" · ví dụ":""}`;
+  disarm($("#delHand"));showTab("detail")}
+$("#backList").addEventListener("click",()=>{editing=null;showTab("list")});
+$("#reparse").addEventListener("click",()=>{const d=readForm(hf);const old=view("hands").find(x=>x.id===editing)||{};
+  const tmp={flop:d.flop,turn:d.turn,river:d.river};applyParsed(tmp,d.line,{heroPos:d.heroPos,villPos:d.villPos,heroStack:parseAmt(old.heroStack),villStack:parseAmt(old.villStack),bl:blindsFor(Object.assign({},old,d))});
+  fillForm(hf,Object.assign(d,tmp));refreshPreviews();toast("Đã tách lại các street")});
+$("#saveHand").addEventListener("click",async()=>{if(!editing)return;const old=view("hands").find(x=>x.id===editing);if(!old)return;
+  const h=Object.assign({},old,readForm(hf),{updatedAt:Date.now()});h.missing=(String(h.result||"")===""||String(h.eff||"")==="");await put("hands",editing,h);toast(`Đã lưu hand #${h.num}`)});
+function arm(btn,label,fn){if(btn.classList.contains("arm")){disarm(btn);fn()}else{btn.classList.add("arm");btn.dataset.orig=btn.textContent;btn.textContent=label;clearTimeout(btn._t);btn._t=setTimeout(()=>disarm(btn),3500)}}
+function disarm(btn){if(btn.classList.contains("arm")){btn.classList.remove("arm");btn.textContent=btn.dataset.orig}}
+$("#delHand").addEventListener("click",e=>arm(e.currentTarget,"Chạm lần nữa để xóa",async()=>{if(!editing)return;await del("hands",editing);editing=null;toast("Đã xóa hand");showTab("list")}));
+
+/* ================= SESSION ================= */
+const sf=$("#sessForm");
+function newSession(silent,kind,mode){const id=uid();const s={date:today(),stake:"",venue:"",createdAt:Date.now(),start:new Date().toTimeString().slice(0,5)};if(kind==="mtt")s.kind="mtt";
+  s.mode=mode==="online"?"online":"live";
+  if(s.mode==="online"){const prev=sessions().find(x=>isOnline(x)&&x.heroName);if(prev){s.heroName=prev.heroName;s.venue=prev.venue||""}}
+  curSess=id;LS.set("sth_cur",id);LV=LV0();fillLV();put("sessions",id,s);$("#q_heroStack").value="";clearQuick();renderPos();renderQuick();
+  if(!silent){showTab("sess");toast(kind==="mtt"?"Đã tạo MTT mới. Điền tên, buy-in, stack đầu rồi sang Ghi nhanh.":"Đã tạo phiên mới. Điền stake, BB, buy-in rồi quay lại Ghi nhanh.")}}
+let pickT,pickKind="";function closePick(){$("#newPick").hidden=true;$("#newPick2").hidden=true;$("#newSess").hidden=false}
+$("#newSess").addEventListener("click",()=>{$("#newPick").hidden=false;$("#newSess").hidden=true;clearTimeout(pickT);pickT=setTimeout(closePick,8000)});
+$("#newPick").addEventListener("click",e=>{const b=e.target.closest("button[data-kind]");if(!b)return;pickKind=b.dataset.kind;$("#newPick").hidden=true;$("#newPick2").hidden=false;clearTimeout(pickT);pickT=setTimeout(closePick,8000)});
+$("#newPick2").addEventListener("click",e=>{const b=e.target.closest("button[data-mode]");if(!b)return;clearTimeout(pickT);closePick();newSession(false,pickKind,b.dataset.mode)});
+$("#sessSel").addEventListener("change",e=>{curSess=e.target.value;LS.set("sth_cur",curSess);clearQuick();$("#q_heroStack").value=LS.get("sth_stack_"+curSess,"")||"";render(true);loadLV();renderPos();renderQuick()});
+sf.addEventListener("submit",async e=>{e.preventDefault();if(!curSess){newSession(true)}const d=readForm(sf);const s=Object.assign({},curSession()||{},d,{updatedAt:Date.now()});await put("sessions",curSess,s);
+  const init=isMtt(s)?parseAmt(d.tStartStack):parseAmt(d.buyin);
+  if(!$("#q_heroStack").value&&init!=null){$("#q_heroStack").value=String(init);LS.set("sth_stack_"+curSess,$("#q_heroStack").value)}
+  render(true);renderPos();renderQuick();
+  if(needBust(s))toast("Đã lưu MTT. Còn thiếu hand bị loại.","Ghi ngay",goBust);else toast(isMtt(s)?"Đã lưu MTT":"Đã lưu phiên")});
+sf.addEventListener("input",e=>{if(e.target.name==="kind")document.body.classList.toggle("mtt",e.target.checked&&e.target.value==="mtt");if(e.target.name==="mode")document.body.classList.toggle("online",e.target.checked&&e.target.value==="online");moneyLine()});
+sf.addEventListener("click",e=>{if(e.target.closest("#goBust"))goBust()});
+function needBust(s){return isMtt(s)&&s.tPlace&&String(s.tPlace).trim()!=="1"&&!s.bustHand}
+function goBust(){Q.bust="1";showTab("quick");renderQuick();saveDraft()}
+$("#delSess").addEventListener("click",e=>arm(e.currentTarget,"Xóa phiên + mọi hand?",async()=>{if(!curSess)return;for(const h of handsOf(curSess))await del("hands",h.id);await del("sessions",curSess);curSess=sessions()[0]?.id||null;LS.set("sth_cur",curSess);render(true);toast("Đã xóa phiên")}));
+function moneyLine(){const d=readForm(sf);const bi=parseAmt(d.buyin),co=parseAmt(d.cashout),bb=parseAmt(d.bb),stop=parseAmt(d.stop);let t="";
+  if(bi!=null&&co!=null){const r=co-bi;t=`Kết quả: <b class="${r>=0?"pos":"neg"}">${r>=0?"+":""}${fmtMoney(r)}</b>`;if(bb)t+=` · <span class="mono">${(r/bb>=0?"+":"")+(r/bb).toFixed(1)} bb</span>`}
+  let warn="";if(stop&&bi!=null&&co!=null&&bi-co>=stop)warn=`<div class="warnbox" style="margin-top:8px"><b>Đã chạm stop-loss.</b> Lỗ ${fmtMoney(bi-co)} ≥ mức ${fmtMoney(stop)} đã đặt. Đứng dậy.</div>`;
+  $("#sessMoney").innerHTML=t+warn;
+  const f2=n=>String(Math.round(n*100)/100);
+  const tb=num(d.tBuyin);let tm="";
+  if(tb!=null){const cost=tb*(num(d.tEntries)||1),ret=(num(d.tPrize)||0)+(num(d.tBounty)||0),pl=ret-cost;
+    tm=`Chi <b class="mono">$${f2(cost)}</b> · Thu <b class="mono">$${f2(ret)}</b> · <b class="mono ${pl>0?"pos":pl<0?"neg":""}">${pl>=0?"+":"−"}$${f2(Math.abs(pl))}</b>${d.tPlace?` · hạng ${esc(d.tPlace)}${d.tField?"/"+esc(d.tField):""}`:""}`}
+  $("#tMoney").innerHTML=tm;
+  $("#bustWarn").innerHTML=needBust(d)?`<div class="warnbox"><b>Chưa ghi hand bị loại.</b> Đây là hand quan trọng nhất để review. <button type="button" class="btn sm" id="goBust" style="margin-left:6px">Ghi ngay</button></div>`:""}
+
+/* ================= NOTES ================= */
+const nf=$("#noteForm");let editingNote=null;
+nf.addEventListener("submit",async e=>{e.preventDefault();const d=readForm(nf);if(!d.who&&!d.text){toast("Ghi ít nhất tên hoặc nội dung.");return}
+  const old=editingNote?view("notes").find(n=>n.id===editingNote):null;const n=Object.assign({},old||{createdAt:Date.now()},{who:d.who,type:d.ntype||"",text:d.text,updatedAt:Date.now()});
+  await put("notes",old?old.id:uid(),n);editingNote=null;fillForm(nf,{});$("#noteCancel").hidden=true;$("#noteFormTitle").textContent="Ghi chú đối thủ";toast("Đã lưu ghi chú")});
+$("#noteCancel").addEventListener("click",()=>{editingNote=null;fillForm(nf,{});$("#noteCancel").hidden=true;$("#noteFormTitle").textContent="Ghi chú đối thủ"});
+$("#nlist").addEventListener("click",e=>{const b=e.target.closest("button[data-act]");if(!b)return;const id=b.dataset.id;
+  if(b.dataset.act==="edit"){const n=view("notes").find(x=>x.id===id);editingNote=id;fillForm(nf,{who:n.who,ntype:n.type,text:n.text});$("#noteCancel").hidden=false;$("#noteFormTitle").textContent="Sửa ghi chú";window.scrollTo(0,0)}
+  if(b.dataset.act==="del")arm(b,"Chạm lần nữa",()=>{del("notes",id);toast("Đã xóa ghi chú")})});
+
+/* ================= LIST ================= */
+const FILTERS=["Tất cả","⚑ Đánh dấu","Thiếu dữ liệu","Chưa review","Đã review"];
+$("#listFilter").innerHTML=FILTERS.map((f,i)=>`<label class="chip"><input type="radio" name="lf" value="${f}" id="lf_${i}" ${i===0?"checked":""}><span>${f}</span></label>`).join("");
+$("#listFilter").addEventListener("change",e=>{listFilter=e.target.value;renderList()});
+$("#hlist").addEventListener("click",e=>{const r=e.target.closest(".hrow");if(!r)return;const h=view("hands").find(x=>x.id===r.dataset.id);if(h)openDetail(h)});
+const isMissing=h=>String(h.result??"")===""||String(h.eff??"")==="";
+function handLine(h){if(h.line)return h.line;const p=[];if(h.pf)p.push("PF: "+h.pf);if(h.flopA)p.push("F: "+h.flopA);if(h.turnA)p.push("T: "+h.turnA);if(h.riverA)p.push("R: "+h.riverA);return p.join(" · ")}
+function renderList(){
+  const all=handsOf(curSess);
+  const tot=all.reduce((a,h)=>a+(num(h.result)||0),0);const rev=all.filter(h=>h.rDone).length;const miss=all.filter(isMissing).length;
+  $("#strip").innerHTML=`<div><b>${all.length}</b><span>Hand đã ghi</span></div><div><b class="${tot>0?"pos":tot<0?"neg":""}">${tot>0?"+":""}${fmtN(tot)}</b><span>Tổng bb</span></div><div><b>${miss}</b><span>Thiếu dữ liệu</span></div><div><b>${rev}/${all.length}</b><span>Đã review</span></div>`;
+  let hs=all;if(listFilter==="⚑ Đánh dấu")hs=all.filter(h=>h.flag);if(listFilter==="Thiếu dữ liệu")hs=all.filter(isMissing);if(listFilter==="Chưa review")hs=all.filter(h=>!h.rDone);if(listFilter==="Đã review")hs=all.filter(h=>h.rDone);
+  if(!curSess){$("#hlist").innerHTML=`<div class="empty">Chưa có phiên nào. Bấm “+ Phiên” ở trên.</div>`;return}
+  if(!hs.length){$("#hlist").innerHTML=`<div class="empty">${all.length?"Không có hand nào khớp bộ lọc.":"Chưa ghi hand nào trong phiên này."}</div>`;return}
+  $("#hlist").innerHTML=hs.map(h=>{const r=num(h.result);const t=[];const board=[h.flop,h.turn,h.river].filter(Boolean).join("");
+    if(h.example)t.push(`<span class="tagp ex">Ví dụ</span>`);if(h.flag)t.push(`<span class="tagp q">⚑</span>`);if(h.villName)t.push(`<span class="tagp">${esc(h.villName)}</span>`);else if(h.villType)t.push(`<span class="tagp">${esc(h.villType)}</span>`);
+    if(h.tags&&h.tags.includes("Hand bị loại"))t.push(`<span class="tagp bust">Bị loại</span>`);
+    if(h.fromImage)t.push(h.checked?`<span class="tagp img">Từ ảnh</span>`:`<span class="tagp q">Từ ảnh · chưa kiểm tra</span>`);
+    if(h.rDone)t.push(`<span class="tagp ok">Đã review</span>`);else if(isMissing(h))t.push(`<span class="tagp q">Thiếu dữ liệu</span>`);
+    const mt=h.mtt?` · Lv${esc(h.level||"?")}${h.stage?" · "+esc(STAGE_SHORT[h.stage]||h.stage):""}`:"";
+    return `<button type="button" class="hrow" data-id="${h.id}"><span class="hn">#${h.num||"?"}</span>
+      <span class="line1">${cardsHTML(h.hero)||'<span class="hint">?</span>'}${board?`<span class="hint">·</span>${cardsHTML(board)}`:""}<span class="hint">${esc(h.heroPos||"")}${h.villPos?" vs "+esc(h.villPos):""}${h.eff?" · "+esc(h.eff)+"bb":""}${mt}</span>${t.join("")}</span>
+      <span class="res ${r>0?"pos":r<0?"neg":""}">${r==null?"":(r>0?"+":"")+fmtN(r)+"bb"}</span>
+      <span class="line2"><span class="mono">${esc(handLine(h))||"—"}</span>${h.thought?`<br>${esc(h.thought)}`:""}${h.question?`<br><b>?</b> ${esc(h.question)}`:""}</span></button>`}).join("")}
+
+function sessHeader(s){const L=[];
+  if(isMtt(s)){L.push(`MTT ${isOnline(s)?"online":"live"} ${s.tName||""} | ${s.date||""} | ${s.venue||""} | buy-in $${s.tBuyin||"?"}${num(s.tEntries)>1?" x"+s.tEntries:""}${s.tType?" | "+s.tType:""}`);
+    if(s.tLateLv)L.push(`Late reg Lv${s.tLateLv}, ${s.tLateStack||"?"}bb`);
+    if(s.tPlace||s.tPrize||s.bustStage)L.push(`Kết quả: hạng ${s.tPlace||"?"}/${s.tField||"?"} | thưởng $${s.tPrize||0}${s.tBounty?" + bounty $"+s.tBounty:""} | bị loại Lv${s.bustLevel||"?"} ${s.bustStage||""}`)}
+  else{L.push(`CASH ${isOnline(s)?"online":"live"} ${s.date||""} | ${s.venue||""} | ${s.stake||""} | ${s.seats||"?"} người | BB ${s.bb||"?"}`);
+  const bi=parseAmt(s.buyin),co=parseAmt(s.cashout);if(bi!=null)L.push(`Buy-in ${fmtMoney(bi)} → Cash-out ${co==null?"?":fmtMoney(co)}`)}
+  if(s.table||s.tableNote)L.push(`Bàn: ${[s.table,s.recs?s.recs+" giải trí":"",s.regs?s.regs+" reg":"",s.tableNote].filter(Boolean).join(", ")}`);
+  if(s.self||s.selfNote)L.push(`Trạng thái: ${[s.self,s.selfNote].filter(Boolean).join(", ")}`);
+  return L}
+function handLines(h){const L=[];
+  L.push(`#${h.num}${h.flag?" ⚑":""} | eff ${h.eff||"?"}bb${h.heroStack?` (mình ${h.heroStack}, đối thủ ${h.villStack||"?"})`:""}${h.tags&&h.tags.length?" | "+h.tags.join(", "):""}`);
+  if(h.mtt)L.push(`Lv${h.level||"?"} ${h.sb||"?"}/${h.bb||"?"}${h.ante?" ante "+h.ante:""} | ${h.stage||"giai đoạn ?"}${h.left?` | còn ${h.left}${h.paid?", trả "+h.paid:""}`:""} | bàn ${h.tableSize||"?"} người`);
+  L.push(`Hero ${h.heroPos||"?"} ${h.hero||"?"}, V ${h.villPos||"?"} (${[h.villName,h.villType,h.villSeatNo?"ghế "+h.villSeatNo:""].filter(Boolean).join(", ")||"?"})`);
+  const board=[h.flop,h.turn,h.river].filter(Boolean).join(" ");if(board)L.push(`Board: ${board}`);
+  if(h.line)L.push(`Tắt${h.unit==="chip"?" (chip)":""}: ${h.line}`);
+  if(h.villRead)L.push(`V read: ${h.villRead}`);if(h.image)L.push(`Hình ảnh mình: ${h.image}`);
+  L.push(`PF: ${h.pf||"-"}${h.potPF?" (pot "+h.potPF+")":""}`);
+  if(h.flopA)L.push(`F ${h.flop||""}${h.flopPot?" (pot "+h.flopPot+")":""}: ${h.flopA}`);
+  if(h.turnA)L.push(`T ${h.turn||""}${h.turnPot?" (pot "+h.turnPot+")":""}: ${h.turnA}`);
+  if(h.riverA)L.push(`R ${h.river||""}${h.riverPot?" (pot "+h.riverPot+")":""}: ${h.riverA}`);
+  L.push(`KQ: ${h.result||"?"}bb${h.outcome?" ("+({win:"thắng",lose:"thua",fold:"fold",split:"chia"}[h.outcome])+")":""} | ${h.villCards?"V show "+h.villCards:"không showdown"}`);
+  if(h.thought)L.push(`Nghĩ: ${h.thought}`);if(h.question)L.push(`?: ${h.question}`);
+  return L}
+function exportText(){const s=curSession()||{};const hs=handsOf(curSess);const L=sessHeader(s);
+  if(s.sumOverall||s.sumLeaks){L.push(`Tổng kết${s.sumGrade?" ("+s.sumGrade+" game)":""}: ${s.sumOverall||""}`);if(s.sumLeaks)L.push(`Leak: ${s.sumLeaks}`);if(s.leakTags&&s.leakTags.length)L.push(`Nhãn leak: ${s.leakTags.join(", ")}`)}
+  L.push("");
+  hs.forEach(h=>{L.push(...handLines(h));
+    if(h.rDone||h.rLesson)L.push(`Review: ${[h.rErr&&h.rErr.length?"lỗi "+h.rErr.join("/"):"",h.rEv?"EV "+h.rEv:"",h.rIcm?"ICM: "+h.rIcm:"",h.rLesson].filter(Boolean).join(" | ")}`);
+    L.push("")});
+  return L.join("\n")}
+$("#copyBtn").addEventListener("click",async()=>{const t=exportText();try{await navigator.clipboard.writeText(t);toast("Đã sao chép. Dán vào chat để review.");$("#copyWrap").hidden=true}catch(e){$("#copyBox").value=t;$("#copyWrap").hidden=false;$("#copyBox").select()}});
+
+/* ================= LEAK TAGS ================= */
+let extraLeaks=[],leakKey="";
+function allLeaks(){const set=new Set(LEAKS);view("sessions").forEach(x=>(x.leakTags||[]).forEach(t=>set.add(t)));extraLeaks.forEach(t=>set.add(t));return[...set]}
+function renderLeakChips(force){const list=allLeaks();const key=list.join("|");if(!force&&key===leakKey)return;
+  const prev=[...document.querySelectorAll("#s_leak input:checked")].map(i=>i.value);leakKey=key;chips($("#s_leak"),"leakTags",list,true,"leak");
+  if(!force)document.querySelectorAll("#s_leak input").forEach(i=>{if(prev.includes(i.value))i.checked=true})}
+$("#leakAdd").addEventListener("click",()=>{const inp=$("#leakNew");const v=inp.value.trim();if(!v)return;if(!extraLeaks.includes(v))extraLeaks.push(v);renderLeakChips(false);
+  document.querySelectorAll("#s_leak input").forEach(i=>{if(i.value===v)i.checked=true});inp.value="";toast("Đã thêm nhãn. Bấm Lưu phiên để giữ lại.")});
+$("#leakNew").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();$("#leakAdd").click()}});
+function renderLeakOv(){const ss=sessions().filter(x=>x.leakTags&&x.leakTags.length);$("#leakBox").hidden=!ss.length;if(!ss.length)return;
+  const cnt={};ss.forEach(x=>x.leakTags.forEach(t=>{cnt[t]=(cnt[t]||0)+1}));
+  const rows=Object.entries(cnt).sort((a,b)=>b[1]-a[1]);const max=rows[0][1];
+  const streak=t=>{let k=0;for(const x of ss){if(x.leakTags.includes(t))k++;else break}return k};
+  const hot=rows.map(([t])=>[t,streak(t)]).filter(([,k])=>k>=2).sort((a,b)=>b[1]-a[1]);
+  $("#leakOv").innerHTML=`<p class="hint">${ss.length} phiên đã gắn nhãn leak.</p><div class="bars wide">${rows.map(([t,c])=>`<div class="bar"><span>${esc(t)}</span><span class="tr"><i class="${c===max&&c>1?"hot":""}" style="width:${c/max*100}%"></i></span><b>${c}</b></div>`).join("")}</div>`+
+    (hot.length?`<div class="warnbox">${hot.map(([t,k])=>`<b>${esc(t)}</b> lặp lại ${k} phiên gần nhất liên tiếp.`).join("<br>")}</div>`:"")}
+
+/* ================= CLAUDE: đọc ảnh + review ================= */
+let sampleFn=null,imgLimits=null;
+function parseLoose(t){t=String(t||"");const f=t.match(/```(?:json)?\s*([\s\S]*?)```/);if(f)t=f[1];const a=t.indexOf("{"),b=t.lastIndexOf("}");if(a<0||b<a)throw{code:"invalid_json"};try{return JSON.parse(t.slice(a,b+1))}catch(e){throw{code:"invalid_json"}}}
+async function askJson(prompt,opts){if(typeof sampleFn.json==="function"){try{return await sampleFn.json(prompt,opts)}catch(e){if(!(e&&e.code==="capability_removed"))throw e}}
+  const r=await sampleFn(prompt,opts);return parseLoose(r&&r.text)}
+const IMP={queue:[],idx:-1,cur:null,ctl:null,fails:0};
+const FATAL=["not_granted","sampling_disabled","not_declared","capability_disabled","capability_removed","images_unavailable"];
+function errText(c){return({image_rejected:"Ảnh không đọc được (sai định dạng hoặc quá lớn).",invalid_json:"Claude không trả về dữ liệu đúng dạng.",refused:"Claude không đọc được ảnh này.",empty_completion:"Claude không đọc được ảnh này.",rate_limited:"Đã chạm giới hạn sử dụng Claude. Thử lại sau.",session_expired:"Cần đăng nhập lại claude.ai.",not_granted:"Chưa cho phép trang dùng Claude.",images_unavailable:"Ở đây không gửi được ảnh cho Claude."})[c]||"Lỗi kết nối, thử lại sau."}
+function impPrompt(hero){return `You are reading ONE screenshot of a Natural8 / GGPoker hand-history replay. The hero's account name is "${hero}". Extract the hand and reply with ONLY one JSON object:
+{"handId": string (e.g. "TM6470550627"; "" if not visible),
+ "tournament": string (title without the hand id; "" if none),
+ "buyin": string (e.g. "1.08" from "$1.08" in the title; "" if none),
+ "players": integer (players dealt in),
+ "sb": number, "bb": number, "ante": number (TOTAL ante collected, the "All Ante" figure; 0 if none),
+ "heroCards": string like "AdQd" (rank AKQJT98765432 + suit s/h/d/c),
+ "board": string, up to 5 cards in deal order ("" if none),
+ "heroPos": string, "villPos": string, "villName": string, "villCards": string ("" if not shown),
+ "heroStack": number (hero chips at the START of the hand = hero stack shown after the hand minus hero's net result),
+ "villStack": number or null (same for the villain if you can compute it),
+ "line": string (the action, in the shorthand below),
+ "outcome": "win" | "lose" | "fold" | "split",
+ "result": number (hero's net chips this hand, the "Profit" figure; negative if lost),
+ "equity": string (all-in equities shown, e.g. "AQs 45.7% vs JJ 54.3%"; "" if none),
+ "notes": string (one short Vietnamese sentence: other showdowns, who won, anything unusual; "" if nothing)}
+Villain = the main opponent: the player hero put the most chips in against; if hero folded preflop, the last aggressor.
+Positions: use exactly these names by number of players dealt in (count back from the button; the first to act preflop is always UTG). Convert the screenshot's labels (UTG1, MP, MP1...) with this rule:
+9: UTG, UTG+1, MP, LJ, HJ, CO, BTN, SB, BB
+8: UTG, UTG+1, LJ, HJ, CO, BTN, SB, BB
+7: UTG, LJ, HJ, CO, BTN, SB, BB
+6: UTG, HJ, CO, BTN, SB, BB
+5 or fewer: HJ, CO, BTN, SB, BB (drop from the left)
+Shorthand for "line": streets separated by " / ". Each action = actor then token. Actors: H = hero, V = villain, anyone else by position name. Tokens: f fold, x check, c call, lp limp, o open-raise, r raise, 3b 3-bet, 4b 4-bet, b bet, l lead, cr check-raise, ai all-in. Amounts in chips, as the TOTAL that player has put in on that street (o800, r16475, ai9180, b1576, c800). Write every preflop action in order, folds included. Each postflop segment starts with the new board card(s). Do not write blinds or antes.
+Example: "UTG f V o800 MP c H ai9180 V ai16475 MP f / Qs4h3h / Th / As"
+If a value cannot be read use "" or null. Never guess cards.`}
+function normImp(r){r=r&&typeof r==="object"?r:{};const n=v=>{const x=Number(v);return v===null||v===""||v==null||isNaN(x)?null:x};
+  const posOk=v=>POS.includes(String(v||""))?String(v):"";
+  const oc=["win","lose","fold","split"].includes(r.outcome)?r.outcome:"";
+  return{handId:String(r.handId||"").trim(),tournament:String(r.tournament||"").trim(),buyin:String(r.buyin||"").replace(/[^\d.]/g,""),players:n(r.players),sb:n(r.sb),bb:n(r.bb),ante:n(r.ante)||0,
+    heroCards:cardList(r.heroCards).slice(0,2).join(""),board:cardList(r.board).slice(0,5).join(""),villCards:cardList(r.villCards).slice(0,2).join(""),
+    heroPos:posOk(r.heroPos),villPos:posOk(r.villPos),villName:String(r.villName||"").trim(),heroStack:n(r.heroStack),villStack:n(r.villStack),
+    line:String(r.line||"").trim(),outcome:oc,result:n(r.result),equity:String(r.equity||"").trim(),notes:String(r.notes||"").trim()}}
+function applyBlinds(d){const S=curSession();let lvUnknown=false;
+  if(isMtt(S)&&d.bb){let lv="";for(const[k,v]of Object.entries(LV.map||{}))if(num(v.bb)===d.bb)lv=k;if(!lv&&num(LV.bb)===d.bb)lv=LV.lv;
+    lvUnknown=!lv;LV.lv=lv;LV.sb=String(d.sb||d.bb/2);LV.bb=String(d.bb);LV.ante=String(d.ante||0);LV.anteAuto=false;
+    if(lv)LV.map[lv]={sb:LV.sb,bb:LV.bb,ante:LV.ante,anteAuto:false};
+    if(d.players)LV.seats=d.players>=9?"9":d.players>=7?"8":"6";saveLV();fillLV()}
+  else if(S&&!isMtt(S)&&d.bb&&!num(S.bb)&&!S.stake){put("sessions",curSess,Object.assign({},S,{stake:`${d.sb||d.bb/2}/${d.bb}`,bb:String(d.bb),updatedAt:Date.now()}))}
+  if(S&&isMtt(S)&&(!S.tName||!S.tBuyin)&&(d.tournament||d.buyin)){const ns=Object.assign({},curSession());if(!ns.tName&&d.tournament)ns.tName=d.tournament;if(!ns.tBuyin&&d.buyin)ns.tBuyin=d.buyin;ns.updatedAt=Date.now();put("sessions",curSess,ns)}
+  return{lvUnknown}}
+function impExtra(d,checked){const o={handId:d.handId,fromImage:true,checked};const m=[d.equity?"Equity all-in: "+d.equity:"",d.notes?"Từ ảnh: "+d.notes:""].filter(Boolean).join("\n");if(m)o.rMath=m;return o}
+function loadIntoQuick(item){const d=item.data;const info=applyBlinds(d);renderPos();const bl=blinds();
+  const hc=cardList(d.heroCards),bc=cardList(d.board),vc=cardList(d.villCards);const note=d.villName?noteByName(d.villName):null;
+  restoreQ({hero:[hc[0]||"",hc[1]||""],board:[0,1,2,3,4].map(i=>bc[i]||""),vill:[vc[0]||"",vc[1]||""],heroPos:d.heroPos,villPos:d.villPos,seat:"",name:d.villName,type:note&&note.type||"",
+    outcome:d.outcome,flag:false,manual:d.result!=null,line:d.line,result:d.result==null?"":(d.result>0?"+":"")+fmtN(d.result/bl.bb),thought:"",villStack:d.villStack==null?"":String(d.villStack)});
+  Q.bust="";$("#q_heroStack").value=d.heroStack==null?"":String(d.heroStack);$("#seatHint").textContent=note?(note.text||"").split("\n")[0].slice(0,70):"";
+  IMP.cur=item;item.lvUnknown=info.lvUnknown;showTab("quick");renderQuick();renderImpBanner()}
+function okItems(){return IMP.queue.filter(x=>x.ok)}
+function renderImpBanner(){const b=$("#impBanner");if(!IMP.cur){b.hidden=true;b.innerHTML="";return}
+  const ok=okItems();const pos=ok.indexOf(IMP.cur)+1;const rest=ok.length-pos+1;const d=IMP.cur.data;
+  const dup=d.handId?handsOf(curSess).find(h=>h.handId===d.handId):null;
+  b.hidden=false;b.innerHTML=`<b>Ảnh ${pos}/${ok.length}</b>${d.handId?" · "+esc(d.handId):""}. ${dup?`<b>Hand này đã có (#${dup.num}).</b> `:""}${IMP.cur.lvUnknown?"Chưa biết level: điền ở ô Level. ":""}Kiểm tra bài, vị trí, diễn biến rồi bấm <b>Lưu hand</b>.
+    <div class="actions" style="margin-top:8px"><button type="button" class="btn sm" data-imp="skip">Bỏ qua ảnh này</button>${rest>1?`<button type="button" class="btn sm" data-imp="all">Lưu hết ${rest} hand, kiểm tra sau</button>`:""}<button type="button" class="btn sm danger" data-imp="cancel">Hủy nhập</button></div>`}
+function nextImport(){const ok=okItems();let i=IMP.cur?ok.indexOf(IMP.cur)+1:(IMP.idx<0?0:ok.length);
+  if(IMP.idx<0){IMP.idx=0;i=0}
+  if(i>=ok.length||!ok.length){const n=ok.length,f=IMP.fails;IMP.queue=[];IMP.idx=-1;IMP.cur=null;renderImpBanner();
+    if(f)$("#impStatus").textContent=`Xong. ${f} ảnh không đọc được.`;else if(n)$("#impStatus").textContent="Xong nhập từ ảnh.";return}
+  loadIntoQuick(ok[i])}
+async function buildImported(item){const d=item.data;applyBlinds(d);const bl=blinds();const S=curSession();const note=d.villName?noteByName(d.villName):null;
+  const ctx={heroPos:d.heroPos,villPos:d.villPos,heroStack:d.heroStack,villStack:d.villStack,bl};
+  const r=d.result==null?null:d.result/bl.bb;const eff=d.heroStack!=null&&d.villStack!=null?fmtN(Math.min(d.heroStack,d.villStack)/bl.bb):"";
+  const hc=cardList(d.heroCards).join(""),bc=cardList(d.board);
+  const h={sessionId:curSess,num:nextNum(),createdAt:Date.now(),updatedAt:Date.now(),quick:true,unit:"chip",hero:hc,flop:bc.slice(0,3).join(""),turn:bc[3]||"",river:bc[4]||"",villCards:d.villCards,
+    heroPos:d.heroPos,villPos:d.villPos,villSeatNo:"",villName:d.villName,villSeat:d.villName,villType:note&&note.type||"",line:d.line,outcome:d.outcome,
+    result:r==null?"":fmtN(r),resultChips:d.result==null?"":String(r2(d.result)),heroStack:d.heroStack==null?"":String(d.heroStack),villStack:d.villStack==null?"":String(d.villStack),eff,
+    thought:"",flag:false,tags:[],rErr:[]};
+  if(isMtt(S))Object.assign(h,{mtt:true,level:LV.lv,sb:LV.sb,bb:LV.bb,ante:LV.ante,stage:LV.stage,left:LV.left,paid:LV.paid,tableSize:LV.seats});
+  if(d.line)applyParsed(h,d.line,ctx);Object.assign(h,impExtra(d,false));h.missing=(h.result===""||h.eff==="");
+  await put("hands",uid(),h);
+  if(d.heroStack!=null&&d.result!=null){$("#q_heroStack").value=String(r2(d.heroStack+d.result));LS.set("sth_stack_"+curSess,$("#q_heroStack").value)}}
+$("#impBanner").addEventListener("click",async e=>{const b=e.target.closest("button[data-imp]");if(!b)return;const a=b.dataset.imp;
+  if(a==="skip"){const cur=IMP.cur;clearQuick();nextImportAfter(cur);return}
+  if(a==="cancel"){IMP.queue=[];IMP.idx=-1;IMP.cur=null;clearQuick();renderImpBanner();toast("Đã hủy nhập từ ảnh");return}
+  if(a==="all"){const ok=okItems();const from=ok.indexOf(IMP.cur);b.disabled=true;let n=0;for(const it of ok.slice(from)){await buildImported(it);n++}
+    IMP.queue=[];IMP.idx=-1;IMP.cur=null;clearQuick();renderImpBanner();render();toast(`Đã lưu ${n} hand. Vào Danh sách để kiểm tra các hand gắn nhãn “chưa kiểm tra”.`)}});
+function nextImportAfter(cur){const ok=okItems();const i=ok.indexOf(cur)+1;if(i>=ok.length){IMP.cur=null;nextImport();return}loadIntoQuick(ok[i])}
+$("#impFile").addEventListener("change",async e=>{const files=[...e.target.files].slice(0,20);e.target.value="";if(!files.length||!sampleFn)return;
+  const S=curSession();if(!S||!isOnline(S)){toast("Chỉ dùng được với phiên Online.");return}
+  const hero=(S.heroName||"").trim();if(!hero){toast("Điền tên tài khoản của bạn ở tab Phiên trước.");showTab("sess");return}
+  if(IMP.cur){toast("Đang có ảnh chờ kiểm tra. Lưu, bỏ qua hoặc hủy trước.");return}
+  IMP.queue=[];IMP.idx=-1;IMP.cur=null;IMP.fails=0;const ctl=new AbortController();IMP.ctl=ctl;
+  $("#impStop").hidden=false;$("#impPick").disabled=true;const st=$("#impStatus");let stop=false;
+  for(let i=0;i<files.length;i++){st.textContent=`Đang đọc ảnh ${i+1}/${files.length}… (mỗi ảnh ~10–60 giây)`;
+    try{const r=await askJson(impPrompt(hero),{images:[files[i]],signal:ctl.signal});IMP.queue.push({ok:true,data:normImp(r),name:files[i].name})}
+    catch(err){const c=err&&err.code;if(c==="cancelled"){stop=true;break}
+      IMP.queue.push({ok:false,name:files[i].name});IMP.fails++;
+      if(FATAL.includes(c)){impState(c==="images_unavailable"?"noimg":"off",errText(c));stop=true;break}
+      if(c==="rate_limited"||c==="session_expired"){toast(errText(c));stop=true;break}}}
+  $("#impStop").hidden=true;$("#impPick").classList.remove("arm");if(sampleFn&&!$("#impPick").dataset.off)$("#impPick").disabled=false;IMP.ctl=null;
+  const n=okItems().length;st.textContent=n?`Đọc được ${n}/${files.length} ảnh${IMP.fails?` · ${IMP.fails} ảnh lỗi`:""}.`:(stop?"Đã dừng.":"Không đọc được ảnh nào.");
+  if(n)nextImport()});
+$("#impStop").addEventListener("click",()=>{if(IMP.ctl)IMP.ctl.abort()});
+$("#impPick").addEventListener("click",()=>{if(!sampleFn){impState("off");return}$("#impFile").click()});
+function impState(kind,msg){const b=$("#impPick"),st=$("#impStatus");
+  if(kind==="ready"){b.disabled=false;delete b.dataset.off;st.textContent="Mỗi ảnh là 1 hand. Chọn được nhiều ảnh (tối đa 20).";return}
+  b.disabled=true;b.dataset.off="1";
+  st.textContent=msg||(kind==="noimg"?"Ứng dụng hoặc thiết bị này chưa gửi được ảnh cho Claude. Mở sổ tay trên claude.ai bằng trình duyệt để dùng tính năng này.":"Không kết nối được Claude ở đây. Mở sổ tay trong claude.ai (web hoặc app) và cho phép trang dùng Claude.")}
+
+/* ----- review hand bằng Claude ----- */
+let aiCtl=null;
+function aiPrompt(h,S){const mtt=isMtt(S);const note=h.villName?noteByName(h.villName):null;
+  const extra=h.fromImage&&!h.rDone&&h.rMath?"Dữ liệu thêm từ ảnh: "+h.rMath:"";
+  return `Bạn là coach poker. Review hand dưới đây cho người chơi (hero). Viết tiếng Việt, thẳng thắn, ngắn gọn, không rào đón, không khen chung chung.
+Dùng số cụ thể: pot odds, equity ước tính theo range, EV ước tính bằng chip hoặc bb. Đánh giá theo EV, không theo kết quả.
+Không bịa kết quả solver. Nếu dựa vào chart hoặc kinh nghiệm thì ghi rõ là ước tính.
+Nếu hero có ghi suy nghĩ, chỉ ra chỗ suy nghĩ đúng và chỗ lập luận sai.
+
+BỐI CẢNH PHIÊN
+${sessHeader(S).join("\n")}
+
+HAND
+${handLines(h).join("\n")}
+${extra}
+${note&&note.text?"GHI CHÚ VỀ ĐỐI THỦ "+note.who+": "+note.text:""}
+
+Trả về DUY NHẤT một object JSON, dùng \\n để xuống dòng trong chuỗi:
+{"rRange": "range đối thủ qua từng street, 2-5 dòng",
+ "rMath": "toán: pot odds, equity, EV, 2-5 dòng",
+ "rSolver": "line đề xuất từng street và các lựa chọn khác, 2-5 dòng",
+ ${mtt?'"rIcm": "ICM, bounty, độ sâu stack, 1-3 dòng",':""}
+ "rErr": mảng con của ${JSON.stringify(ERR)},
+ "rEv": một trong ${JSON.stringify(EV)},
+ "rLesson": "1-3 bài học ngắn, đánh số"}`}
+$("#aiReview").addEventListener("click",e=>{if(!sampleFn||!editing)return;const d=readForm(hf);
+  if(d.rRange||d.rMath&&!(view("hands").find(x=>x.id===editing)||{}).fromImage||d.rSolver||d.rLesson){arm(e.currentTarget,"Chạm lần nữa để ghi đè review hiện có",runAiReview);return}
+  runAiReview()});
+async function runAiReview(){const old=view("hands").find(x=>x.id===editing);if(!old)return;const h=Object.assign({},old,readForm(hf));const S=view("sessions").find(x=>x.id===h.sessionId)||curSession()||{};
+  const btn=$("#aiReview"),st=$("#aiStatus");aiCtl=new AbortController();btn.disabled=true;$("#aiStop").hidden=false;st.textContent="Claude đang suy nghĩ… (có thể mất 1–2 phút)";
+  try{const r=await askJson(aiPrompt(h,S),{modelTier:"complex",cache:false,signal:aiCtl.signal,onText:({text})=>{st.textContent=`Claude đang viết… ${text.length} ký tự`}});
+    if(editing!==old.id)return;
+    const set=(id,v)=>{if(typeof v==="string"&&v.trim())$(id).value=v.trim()};
+    set("#r_range",r.rRange);set("#r_math",r.rMath);set("#r_solver",r.rSolver);set("#r_icm",r.rIcm);set("#r_lesson",r.rLesson);
+    const errs=Array.isArray(r.rErr)?r.rErr.filter(x=>ERR.includes(x)):[];if(errs.length)document.querySelectorAll('#r_err input').forEach(i=>i.checked=errs.includes(i.value));
+    if(EV.includes(r.rEv))document.querySelectorAll('#r_ev input').forEach(i=>{i.checked=i.value===r.rEv;i.dataset.was=i.checked?"1":"0"});
+    $("#reviewBox").open=true;st.textContent="Đã điền review. Đọc lại, sửa nếu cần, rồi bấm Lưu thay đổi."}
+  catch(err){const c=err&&err.code;if(c==="cancelled")st.textContent="Đã dừng.";else{st.textContent=errText(c);if(FATAL.includes(c)&&c!=="images_unavailable")$("#aiRow").hidden=true}}
+  finally{btn.disabled=false;$("#aiStop").hidden=true;aiCtl=null}}
+$("#aiStop").addEventListener("click",()=>{if(aiCtl)aiCtl.abort()});
+
+/* ================= RENDER ================= */
+function sLabel(s){return isMtt(s)?`${s.date||""} · ${s.tName||"MTT"}${s.tBuyin?" · $"+s.tBuyin:""}`:`${s.date||""} · ${s.stake||"stake?"}${s.venue?" · "+s.venue:""}`}
+function renderOverview(){
+  const ts=view("sessions").filter(isMtt);$("#ovBox").hidden=!ts.length;if(!ts.length)return;
+  const rows=ts.filter(s=>num(s.tBuyin)!=null);const n=rows.length;
+  if(!n){$("#ov").innerHTML=`<p class="hint">Điền buy-in ở phần Thông tin MTT để bắt đầu tính ROI và ITM.</p>`;return}
+  let cost=0,ret=0,itm=0,ft=0;const bs={};
+  rows.forEach(s=>{cost+=num(s.tBuyin)*(num(s.tEntries)||1);const pr=num(s.tPrize)||0;ret+=pr+(num(s.tBounty)||0);if(pr>0)itm++;
+    const p=num(s.tPlace);if(s.bustStage==="Bàn cuối"||(p!=null&&p>0&&p<=9))ft++;if(s.bustStage)bs[s.bustStage]=(bs[s.bustStage]||0)+1});
+  const pl=ret-cost,roi=cost?pl/cost*100:0;const f2=x=>String(Math.round(x*100)/100);
+  const max=Math.max(1,...Object.values(bs));const top=Object.entries(bs).sort((a,b)=>b[1]-a[1])[0];
+  $("#ov").innerHTML=`<div class="strip"><div><b>${n}</b><span>MTT</span></div><div><b class="${roi>0?"pos":roi<0?"neg":""}">${roi>0?"+":""}${Math.round(roi)}%</b><span>ROI</span></div><div><b>${Math.round(itm/n*100)}%</b><span>ITM</span></div><div><b>${ft}</b><span>Bàn cuối</span></div></div>
+  <p class="calc">Chi <b>$${f2(cost)}</b> · Thu <b>$${f2(ret)}</b> · Lời/lỗ <b class="${pl>0?"pos":pl<0?"neg":""}">${pl>=0?"+":"−"}$${f2(Math.abs(pl))}</b> · Buy-in TB <b>$${f2(cost/n)}</b></p>
+  <div class="field"><span class="lbl">Bị loại ở giai đoạn</span><div class="bars">${STAGES.map(st=>{const c=bs[st]||0;return`<div class="bar"><span>${esc(st)}</span><span class="tr"><i class="${top&&top[0]===st?"hot":""}" style="width:${c/max*100}%"></i></span><b>${c}</b></div>`}).join("")}</div></div>
+  ${top?`<p class="hint">Bị loại nhiều nhất ở <b>${esc(top[0])}</b> (${top[1]}/${n} MTT).</p>`:""}
+  ${n<30?`<p class="hint">Mẫu: ${n}/30 MTT. Chưa đủ để kết luận về ROI, chỉ xem như xu hướng.</p>`:""}`}
+function render(sessChanged){
+  const ss=sessions();
+  if(curSess&&!ss.find(s=>s.id===curSess)&&ss.length&&!pending.sessions[curSess])curSess=ss[0].id;
+  if(!curSess&&ss.length){curSess=ss[0].id;LS.set("sth_cur",curSess);sessChanged=true}
+  $("#sessSel").innerHTML=ss.length?ss.map(s=>`<option value="${s.id}" ${s.id===curSess?"selected":""}>${esc(sLabel(s))}</option>`).join(""):`<option>Chưa có phiên</option>`;
+  const cs=curSession();document.body.classList.toggle("mtt",isMtt(cs));document.body.classList.toggle("online",isOnline(cs));
+  renderLeakChips(sessChanged||render._last!==curSess);
+  if(isMtt(cs)&&!LV.bb&&LS.get("sth_lv_"+curSess,null)==null&&handsOf(curSess).some(h=>h.mtt)){loadLV();renderPos()}
+  const bh=$("#s_bustHand");const keep=bh.value;
+  bh.innerHTML=`<option value="">—</option>`+handsOf(curSess).map(h=>`<option value="${esc(h.id)}">#${h.num||"?"} ${esc(h.hero||"?")}${h.level?" · Lv"+esc(h.level):""}${h.tags&&h.tags.includes("Hand bị loại")?" · bị loại":""}</option>`).join("");bh.value=keep;
+  $("#nHands").textContent=handsOf(curSess).length;$("#nNotes").textContent=view("notes").length;
+  if(sessChanged||render._last!==curSess){fillForm(sf,cs||{});moneyLine();if(render._last!==curSess&&render._last!==undefined)loadLV();renderPos();render._last=curSess}
+  renderList();renderOverview();renderLeakOv();
+  const ns=view("notes").sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
+  $("#nlist").innerHTML=ns.length?ns.map(n=>`<div class="note"><div class="note-h"><span style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b>${esc(n.who||"Không tên")}</b>${n.type?`<span class="tagp">${esc(n.type)}</span>`:""}</span><span class="actions"><button type="button" class="btn sm" data-act="edit" data-id="${n.id}">Sửa</button><button type="button" class="btn sm danger" data-act="del" data-id="${n.id}">Xóa</button></span></div>${n.text?`<p>${esc(n.text)}</p>`:""}</div>`).join(""):`<div class="empty">Chưa có ghi chú đối thủ.</div>`;
+  $("#quickLabel").textContent="#"+nextNum();
+  statusRefresh()}
+
+/* ================= BOOT ================= */
+loadLV();loadDraft();renderPos();renderQuick();
+{const t=LS.get("sth_tab","quick");showTab(["quick","list","sess","opp"].includes(t)?t:"quick")}
+render(true);
+let booted=false;
+function bootLocal(){if(booted)return;booted=true;db=null;for(const c of["sessions","hands","notes"])remote[c]=LS.get("sth_local_"+c,{});
+  for(const c of Object.keys(pending))for(const[id,v]of Object.entries(pending[c])){if(v===null)delete remote[c][id];else remote[c][id]=v}
+  pending={sessions:{},hands:{},notes:{}};savePending();for(const c of["sessions","hands","notes"])LS.set("sth_local_"+c,remote[c]);
+  render(true);renderQuick()}
+const cl=window.claude;
+if(cl&&cl.use){cl.use("db").then(d=>{
+  if(!d){bootLocal();return}
+  booted=true;db=d;const first={};
+  for(const c of["sessions","hands","notes"]){
+    db.collection(c).onSnapshot(snap=>{const m={};snap.docs.forEach(x=>{m[x.id]=Object.assign({id:x.id},x.data())});remote[c]=m;
+      const f=!first[c];first[c]=1;render(f&&c==="sessions");renderQuick()},
+      ()=>setStatus("warn","Mất kết nối dữ liệu. Tải lại trang để kết nối lại."))}
+  flush();
+}).catch(bootLocal)}else bootLocal();
+if(cl&&cl.use){cl.use("sample").then(async sf=>{if(!sf){impState("off");return}sampleFn=sf;if(editing)$("#aiRow").hidden=false;
+  let lim=null;try{lim=typeof sf.limits==="function"?await sf.limits():null}catch(e){lim=null}
+  if(lim&&lim.images){imgLimits=lim.images;if(lim.images.mediaTypes&&lim.images.mediaTypes.length)$("#impFile").accept=lim.images.mediaTypes.join(",")}
+  if(lim&&!lim.images)impState("noimg");else impState("ready")}).catch(()=>impState("off"))}else impState("off");
+})();
+</script>
+
+</body></html>
