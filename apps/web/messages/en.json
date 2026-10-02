@@ -3,7 +3,9 @@
     "appName": "HoldNote",
     "tagline": "Your poker hand journal",
     "language": "Language",
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "back": "Back",
+    "save": "Save"
   },
   "login": {
     "google": "Continue with Google",
@@ -16,6 +18,64 @@
     "authFailed": "Sign-in failed or the link has expired. Please try again."
   },
   "home": {
-    "greeting": "Hi {name}"
+    "greeting": "Hi {name}",
+    "startSession": "Start a session"
+  },
+  "sessions": {
+    "newTitle": "New session",
+    "kind": "Type",
+    "cash": "Cash",
+    "mtt": "MTT",
+    "mode": "Mode",
+    "live": "Live",
+    "online": "Online",
+    "currency": "Currency",
+    "venue": "Venue / site",
+    "sb": "SB",
+    "bb": "BB",
+    "straddle": "Straddle",
+    "ante": "Ante",
+    "anteNone": "None",
+    "anteEach": "Per player",
+    "anteBb": "In BB",
+    "anteAmount": "Ante amount",
+    "seats": "Seats",
+    "buyin": "Buy-in",
+    "stopLoss": "Stop-loss",
+    "mttName": "Tournament name",
+    "mttType": "Tournament type",
+    "mttReentry": "Re-entry",
+    "mttStartLevel": "Starting level",
+    "mttStartStack": "Starting stack (chips)",
+    "mttBlinds": "Blinds at starting level",
+    "type_regular": "Regular",
+    "type_bounty": "Bounty",
+    "type_turbo": "Turbo",
+    "type_satellite": "Satellite",
+    "create": "Create session",
+    "creating": "Creating…",
+    "prefilled": "Pre-filled from your last session.",
+    "saveFailed": "Could not save. Try again.",
+    "errors": {
+      "required": "Required",
+      "invalid": "Invalid value",
+      "positive": "Must be greater than 0",
+      "sbAboveBb": "SB cannot exceed BB",
+      "seatsRange": "2 to 10 seats"
+    },
+    "beforeTitle": "Pre-session",
+    "rules": "Your rules",
+    "noRules": "No rules yet. Add them after each session.",
+    "stopLossLine": "Stop when down {amount} ({bb} bb)",
+    "stopLossNone": "No stop-loss set.",
+    "knownOpponents": "Opponents you know at {venue}",
+    "noOpponents": "No opponent notes for this venue yet.",
+    "enterTable": "Sit down",
+    "activeTitle": "Current session",
+    "startedAt": "Seated at {time}",
+    "notStarted": "Not seated yet",
+    "goBefore": "Open pre-session",
+    "recordSoon": "Hand entry comes in the next step.",
+    "title": "{kind} session"
   }
 }

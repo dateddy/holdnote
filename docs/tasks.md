@@ -12,7 +12,7 @@ Mỗi task cỡ một phiên làm việc. Làm theo thứ tự trừ khi chủ d
 - [x] **1.7 i18n:** next-intl, `vi` + `en`, chọn ngôn ngữ theo profile.
 
 ## Giai đoạn 2 — Ghi hand
-- [ ] 2.1 Tạo phiên cash + MTT, màn Trước phiên.
+- [x] 2.1 Tạo phiên cash + MTT, màn Trước phiên.
 - [ ] 2.2 Ghi nhanh: lưới bài + board, vị trí, kết quả, stack, lưu.
 - [ ] 2.3 Ghi nhanh: chế độ nút từng street.
 - [ ] 2.4 Ghi nhanh: chế độ ghi tắt + hàng phím, chuyển qua lại với chế độ nút.

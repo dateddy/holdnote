@@ -1,4 +1,5 @@
 import { getTranslations } from 'next-intl/server';
+import Link from 'next/link';
 import { LocaleSwitcher } from '@/i18n/locale-switcher';
 import { createClient } from '@/lib/supabase/server';
 
@@ -19,6 +20,12 @@ export default async function Home() {
         </form>
       </header>
       <p>{t('home.greeting', { name: profile?.display_name ?? '' })}</p>
+      <Link
+        href="/sessions/new"
+        className="flex h-14 items-center justify-center rounded-md bg-foreground text-lg font-medium text-background"
+      >
+        {t('home.startSession')}
+      </Link>
       <LocaleSwitcher />
     </main>
   );

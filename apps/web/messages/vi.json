@@ -3,7 +3,9 @@
     "appName": "HoldNote",
     "tagline": "Sổ Tay Hand — nhật ký học poker",
     "language": "Ngôn ngữ",
-    "signOut": "Đăng xuất"
+    "signOut": "Đăng xuất",
+    "back": "Quay lại",
+    "save": "Lưu"
   },
   "login": {
     "google": "Đăng nhập bằng Google",
@@ -16,6 +18,64 @@
     "authFailed": "Đăng nhập không thành công hoặc link đã hết hạn. Thử lại."
   },
   "home": {
-    "greeting": "Xin chào {name}"
+    "greeting": "Xin chào {name}",
+    "startSession": "Bắt đầu phiên"
+  },
+  "sessions": {
+    "newTitle": "Phiên mới",
+    "kind": "Loại",
+    "cash": "Cash",
+    "mtt": "MTT",
+    "mode": "Hình thức",
+    "live": "Live",
+    "online": "Online",
+    "currency": "Đơn vị tiền",
+    "venue": "Địa điểm / site",
+    "sb": "SB",
+    "bb": "BB",
+    "straddle": "Straddle",
+    "ante": "Ante",
+    "anteNone": "Không",
+    "anteEach": "Từng người",
+    "anteBb": "Theo BB",
+    "anteAmount": "Số ante",
+    "seats": "Số ghế",
+    "buyin": "Buy-in",
+    "stopLoss": "Stop-loss",
+    "mttName": "Tên giải",
+    "mttType": "Loại giải",
+    "mttReentry": "Re-entry",
+    "mttStartLevel": "Level vào",
+    "mttStartStack": "Stack vào (chip)",
+    "mttBlinds": "Blind ở level vào",
+    "type_regular": "Thường",
+    "type_bounty": "Bounty",
+    "type_turbo": "Turbo",
+    "type_satellite": "Vệ tinh",
+    "create": "Tạo phiên",
+    "creating": "Đang tạo…",
+    "prefilled": "Đã điền sẵn từ phiên trước.",
+    "saveFailed": "Không lưu được. Thử lại.",
+    "errors": {
+      "required": "Bắt buộc",
+      "invalid": "Giá trị không hợp lệ",
+      "positive": "Phải lớn hơn 0",
+      "sbAboveBb": "SB không được lớn hơn BB",
+      "seatsRange": "Từ 2 đến 10 ghế"
+    },
+    "beforeTitle": "Trước phiên",
+    "rules": "Luật của bạn",
+    "noRules": "Chưa có luật nào. Luật được thêm sau mỗi phiên.",
+    "stopLossLine": "Dừng khi thua {amount} ({bb} bb)",
+    "stopLossNone": "Chưa đặt stop-loss.",
+    "knownOpponents": "Đối thủ quen ở {venue}",
+    "noOpponents": "Chưa có ghi chú đối thủ ở địa điểm này.",
+    "enterTable": "Vào bàn",
+    "activeTitle": "Phiên đang chơi",
+    "startedAt": "Vào bàn lúc {time}",
+    "notStarted": "Chưa vào bàn",
+    "goBefore": "Mở Trước phiên",
+    "recordSoon": "Ghi hand sẽ có ở bước tiếp theo.",
+    "title": "Phiên {kind}"
   }
 }
