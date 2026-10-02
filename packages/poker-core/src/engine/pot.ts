@@ -14,6 +14,8 @@ export interface ActionStep {
   potAfter: number;
   /** What the actor had to put in to call before acting, capped by their stack. */
   toCall: number;
+  /** Largest bet on the table this street just before this action (preflop: blinds included). */
+  level: number;
   /** Index of the last bet/raise on this street before this action, if any. */
   facingIndex: number | null;
 }
@@ -177,6 +179,7 @@ export function computePot(input: HandInput): PotResult {
         potBefore,
         potAfter: roundMoney(pot + streetSum()),
         toCall,
+        level,
         facingIndex: facing,
       });
     }

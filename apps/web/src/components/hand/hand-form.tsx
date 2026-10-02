@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import { useMemo, useRef, useState } from 'react';
 import { parseAmount, POSITIONS } from 'poker-core';
 import {
+  boardCards,
   canSave,
   deriveHand,
   emptyDraft,
@@ -15,6 +16,7 @@ import {
 } from '@/lib/hands/build';
 import { formatMoney } from '@/lib/sessions/format';
 import { createClient } from '@/lib/supabase/client';
+import { ActionRows } from './action-rows';
 import { CardGrid } from './card-grid';
 
 export type OpponentOption = { id: string; name: string };
@@ -155,7 +157,15 @@ export function HandForm({ sessionId, session, locale, lastNum, previous, oppone
 
       <section className="space-y-2">
         <h3 className="font-medium">{t('actions')}</h3>
-        <p className="text-sm opacity-70">{t('actionsSoon')}</p>
+        <ActionRows
+          actions={draft.actions}
+          onChange={(actions) => setDraft((d) => ({ ...d, actions }))}
+          input={derived.input}
+          heroPos={draft.heroPos}
+          villPos={draft.villPos}
+          boardCount={boardCards(draft).length}
+          money={money}
+        />
       </section>
 
       <section className="space-y-2">

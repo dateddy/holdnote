@@ -94,7 +94,6 @@
     "heroPos": "Your position",
     "villPos": "Main opponent",
     "actions": "Action",
-    "actionsSoon": "Street-by-street actions come in the next step.",
     "outcome": "Result",
     "outcome_win": "Win",
     "outcome_lose": "Lose",
@@ -121,6 +120,23 @@
     "saveFailed": "Could not save. Try again.",
     "needCards": "Pick your 2 cards or flag ⚑ to save.",
     "willBeMissing": "Result or effective stack missing: the hand will be marked Missing data.",
-    "handsList": "Hand list"
+    "handsList": "Hand list",
+    "hero": "Hero",
+    "villain": "Villain",
+    "other": "Other",
+    "potNow": "Pot {pot}",
+    "act_check": "Check",
+    "act_bet": "Bet",
+    "act_call": "Call",
+    "act_raise": "Raise",
+    "act_fold": "Fold",
+    "act_all-in": "All-in",
+    "who": "Who acts",
+    "undoAction": "Remove last action",
+    "potSize": "Pot",
+    "amountTo": "Amount (total)",
+    "confirm": "OK",
+    "street_preflop": "preflop",
+    "actionsHint": "Tap who acts, then tap the action."
   }
 }

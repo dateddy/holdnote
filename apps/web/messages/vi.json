@@ -94,7 +94,6 @@
     "heroPos": "Vị trí của mình",
     "villPos": "Đối thủ chính",
     "actions": "Hành động",
-    "actionsSoon": "Chọn hành động từng street ở bước tiếp theo.",
     "outcome": "Kết quả",
     "outcome_win": "Thắng",
     "outcome_lose": "Thua",
@@ -121,6 +120,23 @@
     "saveFailed": "Không lưu được. Thử lại.",
     "needCards": "Chọn 2 lá của mình hoặc đánh dấu ⚑ để lưu.",
     "willBeMissing": "Thiếu kết quả hoặc eff stack: hand sẽ có nhãn Thiếu dữ liệu.",
-    "handsList": "Danh sách hand"
+    "handsList": "Danh sách hand",
+    "hero": "Mình",
+    "villain": "Đối thủ",
+    "other": "Khác",
+    "potNow": "Pot {pot}",
+    "act_check": "Check",
+    "act_bet": "Bet",
+    "act_call": "Call",
+    "act_raise": "Raise",
+    "act_fold": "Fold",
+    "act_all-in": "All-in",
+    "who": "Ai hành động",
+    "undoAction": "Xóa hành động cuối",
+    "potSize": "Pot",
+    "amountTo": "Số tiền (tổng)",
+    "confirm": "OK",
+    "street_preflop": "preflop",
+    "actionsHint": "Chạm người hành động, rồi chạm hành động."
   }
 }
