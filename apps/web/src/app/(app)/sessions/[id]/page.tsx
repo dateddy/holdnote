@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 
-// Temporary session screen until hand entry (task 2.2) and the real home (task 4.4).
+// Temporary session screen until the real home (task 4.4).
 export default async function SessionPage({ params }: PageProps<'/sessions/[id]'>) {
   const { id } = await params;
   const supabase = await createClient();
@@ -34,7 +34,12 @@ export default async function SessionPage({ params }: PageProps<'/sessions/[id]'
         </p>
       </section>
       {startedAt ? (
-        <p className="text-sm opacity-70">{t('recordSoon')}</p>
+        <Link
+          href={`/sessions/${id}/record`}
+          className="flex h-14 items-center justify-center rounded-md bg-foreground text-lg font-medium text-background"
+        >
+          {t('recordHand')}
+        </Link>
       ) : (
         <Link
           href={`/sessions/${id}/before`}
