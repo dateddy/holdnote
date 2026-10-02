@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import { useRouter } from 'next/navigation';
 import { useMemo, useRef, useState } from 'react';
 import { formatShorthand, parseAmount, parseShorthand, POSITIONS, type Card } from 'poker-core';
 import {
@@ -38,6 +39,8 @@ type Props = {
   previous: PreviousHand | null;
   opponents: OpponentOption[];
   entryMode: 'buttons' | 'shorthand';
+  /** Set on the hand detail screen: update this hand instead of adding one. */
+  edit?: { handId: string; num: number; initial: HandDraft };
 };
 
 export function HandForm({
@@ -48,12 +51,16 @@ export function HandForm({
   previous,
   opponents,
   entryMode,
+  edit,
 }: Props) {
   const t = useTranslations('hand');
-  const [raw, setDraft] = useState<HandDraft>(() => emptyDraft(session, previous));
-  const [mode, setMode] = useState(entryMode);
+  const router = useRouter();
+  const [raw, setDraft] = useState<HandDraft>(() => edit?.initial ?? emptyDraft(session, previous));
+  const [mode, setMode] = useState<'buttons' | 'shorthand'>(
+    edit ? (edit.initial.rawLine ? 'shorthand' : 'buttons') : entryMode,
+  );
   const [switchBlocked, setSwitchBlocked] = useState(false);
-  const [num, setNum] = useState(lastNum + 1);
+  const [num, setNum] = useState(edit?.num ?? lastNum + 1);
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'failed'>('idle');
   const [savedNum, setSavedNum] = useState<number | null>(null);
   const locked = useRef(false);
@@ -102,6 +109,17 @@ export function HandForm({
     locked.current = true;
     setStatus('saving');
     const supabase = createClient();
+
+    if (edit) {
+      const row: Partial<ReturnType<typeof toHandRow>> = toHandRow(session, draft, edit.num);
+      delete row.num;
+      const { error } = await supabase.from('hands').update(row).eq('id', edit.handId);
+      locked.current = false;
+      setStatus(error ? 'failed' : 'saved');
+      if (!error) router.refresh();
+      return;
+    }
+
     let target = num;
     let error = null;
     for (let attempt = 0; attempt < 2; attempt++) {
@@ -161,7 +179,12 @@ export function HandForm({
 
   return (
     <div className="flex flex-col gap-6">
-      {status === 'saved' && savedNum !== null && (
+      {status === 'saved' && edit && (
+        <p role="status" className="rounded-md bg-foreground/10 p-3 text-sm">
+          {t('savedChanges')}
+        </p>
+      )}
+      {status === 'saved' && !edit && savedNum !== null && (
         <p role="status" className="rounded-md bg-foreground/10 p-3 text-sm">
           {t('saved', { num: savedNum })}
         </p>
@@ -375,7 +398,7 @@ export function HandForm({
         disabled={!canSave(draft) || lineErrors.length > 0 || status === 'saving'}
         className="h-14 rounded-md bg-foreground text-lg font-medium text-background disabled:opacity-40"
       >
-        {status === 'saving' ? t('saving') : t('save')}
+        {status === 'saving' ? t('saving') : edit ? t('saveChanges') : t('save')}
       </button>
       {lineErrors.length > 0 && <p className="text-sm opacity-70">{t('fixLineToSave')}</p>}
       {!canSave(draft) && <p className="text-sm opacity-70">{t('needCards')}</p>}

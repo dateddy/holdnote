@@ -4,6 +4,7 @@ import {
   canSave,
   deriveHand,
   emptyDraft,
+  fromHandRow,
   nextHandDefaults,
   startingStack,
   toHandRow,
@@ -140,5 +141,30 @@ describe('toHandRow', () => {
     const draft = golden();
     draft.slots = ['Ah', 'Kd', '8s', 'Qh', 'Jh', '2c', ''];
     expect(toHandRow(cash, draft, 1).board).toEqual(['8s', 'Qh', 'Jh', '2c']);
+  });
+});
+
+describe('fromHandRow', () => {
+  it('round trips the golden hand through a saved row', () => {
+    const draft = golden();
+    const row = toHandRow(cash, draft, 1);
+    const back = fromHandRow(cash, row as never);
+    expect(back.slots.slice(0, 2)).toEqual(['Ah', 'Kd']);
+    expect(back.heroPos).toBe('MP');
+    expect(back.outcome).toBe('lose');
+    expect(back.heroStack).toBe('18000');
+    expect(back.resultText).toBe('');
+    expect(deriveHand(cash, back).result).toBe(-18000);
+    expect(back.actions.length).toBe(draft.actions.length);
+  });
+
+  it('keeps a manual result as an override', () => {
+    const row = { ...toHandRow(cash, golden(), 1), result: -17500 };
+    expect(fromHandRow(cash, row as never).resultText).toBe('-17500');
+  });
+
+  it('drops malformed actions', () => {
+    const row = { ...toHandRow(cash, golden(), 1), actions: [{ foo: 1 }, null] };
+    expect(fromHandRow(cash, row as never).actions).toEqual([]);
   });
 });

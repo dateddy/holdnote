@@ -1,0 +1,101 @@
+import { getLocale, getTranslations } from 'next-intl/server';
+import Link from 'next/link';
+import { notFound } from 'next/navigation';
+import { potOddsAtDecisions } from 'poker-core';
+import { HandForm } from '@/components/hand/hand-form';
+import { ReviewForm, type MathHint } from '@/components/hand/review-form';
+import {
+  deriveHand,
+  fromHandRow,
+  HAND_EDIT_COLUMNS,
+  HAND_SESSION_COLUMNS,
+} from '@/lib/hands/build';
+import { fromReviewRow, REVIEW_COLUMNS } from '@/lib/review/review';
+import { formatMoney } from '@/lib/sessions/format';
+import { createClient } from '@/lib/supabase/server';
+
+export default async function HandDetailPage({ params }: PageProps<'/hands/[id]'>) {
+  const { id } = await params;
+  const supabase = await createClient();
+
+  const { data: hand } = await supabase
+    .from('hands')
+    .select(HAND_EDIT_COLUMNS)
+    .eq('id', id)
+    .maybeSingle();
+  if (!hand) notFound();
+
+  const { data: session } = await supabase
+    .from('sessions')
+    .select(`${HAND_SESSION_COLUMNS}, currency, venue`)
+    .eq('id', hand.session_id)
+    .maybeSingle();
+  if (!session) notFound();
+
+  const venue = session.venue?.trim() ?? '';
+  const [{ data: review }, { data: opponents }, { data: profile }, t, locale] = await Promise.all([
+    supabase
+      .from('reviews')
+      .select(REVIEW_COLUMNS)
+      .eq('hand_id', id)
+      .eq('is_current', true)
+      .maybeSingle(),
+    venue
+      ? supabase
+          .from('opponents')
+          .select('id, name')
+          .ilike('venue', venue.replace(/[\\%_]/g, '\\$&'))
+          .order('name')
+      : Promise.resolve({ data: [] }),
+    supabase.from('profiles').select('entry_mode').single(),
+    getTranslations('hand'),
+    getLocale(),
+  ]);
+
+  // Pot odds come from poker-core, never from the reviewer's head (CLAUDE.md rule 5).
+  const draft = fromHandRow(session, hand);
+  const derived = deriveHand(session, draft);
+  const money = (n: number) => formatMoney(n, session.currency, locale);
+  const mathHints: MathHint[] = derived.input
+    ? potOddsAtDecisions(derived.input).map((d) => ({
+        street: t(`street_${d.street}`),
+        act: t(`act_${d.act}`),
+        toCall: money(d.toCall),
+        odds: `${Math.round(d.potOdds * 100)}%`,
+        mdf: d.mdf == null ? null : `${Math.round(d.mdf * 100)}%`,
+      }))
+    : [];
+
+  return (
+    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-8 p-6">
+      <header className="flex items-center justify-between gap-4">
+        <h1 className="text-2xl font-semibold">{t('detailTitle', { num: hand.num })}</h1>
+        <Link
+          href={`/sessions/${hand.session_id}/hands`}
+          className="text-sm underline underline-offset-4"
+        >
+          {t('handsList')}
+        </Link>
+      </header>
+
+      <HandForm
+        sessionId={hand.session_id}
+        session={session}
+        locale={locale}
+        lastNum={hand.num - 1}
+        previous={null}
+        opponents={opponents ?? []}
+        entryMode={profile?.entry_mode === 'shorthand' ? 'shorthand' : 'buttons'}
+        edit={{ handId: hand.id, num: hand.num, initial: draft }}
+      />
+
+      <ReviewForm
+        handId={hand.id}
+        reviewId={review?.id ?? null}
+        initial={fromReviewRow(review)}
+        isMtt={session.kind === 'mtt'}
+        mathHints={mathHints}
+      />
+    </main>
+  );
+}

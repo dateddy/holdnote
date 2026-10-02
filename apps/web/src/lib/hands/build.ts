@@ -10,6 +10,7 @@ import {
   roundMoney,
   toBb,
   POSITIONS,
+  STREETS,
   type Action,
   type Blinds,
   type EffStack,
@@ -249,4 +250,67 @@ export function toHandRow(session: HandSession, draft: HandDraft, num_: number) 
 function integerOrNull(raw: string): number | null {
   const n = Number(raw.trim());
   return raw.trim() && Number.isInteger(n) && n >= 2 && n <= 10 ? n : null;
+}
+
+/** Columns of a saved hand that {@link fromHandRow} reads. */
+export const HAND_EDIT_COLUMNS =
+  'id, num, session_id, hero_cards, board, villain_cards, hero_pos, villain_pos, opponent_id, actions, raw_line, outcome, result, hero_stack, villain_stack, level_bb, players_dealt, thought, flagged';
+
+export type HandRowIn = {
+  hero_cards: string[] | null;
+  board: string[] | null;
+  villain_cards: string[] | null;
+  hero_pos: string | null;
+  villain_pos: string | null;
+  opponent_id: string | null;
+  actions: unknown;
+  raw_line: string | null;
+  outcome: string | null;
+  result: number | null;
+  hero_stack: number | null;
+  villain_stack: number | null;
+  level_bb: number | null;
+  players_dealt: number | null;
+  thought: string | null;
+  flagged: boolean;
+};
+
+const isAction = (x: unknown): x is Action => {
+  if (!x || typeof x !== 'object') return false;
+  const a = x as Record<string, unknown>;
+  return (
+    isOneOf(STREETS, a.street) &&
+    isOneOf(['hero', 'villain', 'other'] as const, a.actor) &&
+    isOneOf(['check', 'bet', 'call', 'raise', 'fold', 'all-in'] as const, a.act)
+  );
+};
+
+/** Back from a saved row to the editable draft. A manual result is kept as an override. */
+export function fromHandRow(session: HandSession, row: HandRowIn): HandDraft {
+  const slots = Array<string>(SLOT_COUNT).fill('');
+  (row.hero_cards ?? []).slice(0, 2).forEach((c, i) => (slots[i] = c));
+  (row.board ?? []).slice(0, 5).forEach((c, i) => (slots[2 + i] = c));
+  const str = (n: number | null) => (n == null ? '' : String(n));
+  const draft: HandDraft = {
+    slots,
+    villCards: [row.villain_cards?.[0] ?? '', row.villain_cards?.[1] ?? ''],
+    heroPos: row.hero_pos ?? '',
+    villPos: row.villain_pos ?? '',
+    opponentId: row.opponent_id ?? '',
+    actions: Array.isArray(row.actions) ? row.actions.filter(isAction) : [],
+    rawLine: row.raw_line ?? '',
+    outcome: row.outcome ?? '',
+    resultText: '',
+    heroStack: str(row.hero_stack),
+    villStack: str(row.villain_stack),
+    levelBb: str(row.level_bb),
+    playersDealt: str(row.players_dealt),
+    thought: row.thought ?? '',
+    flagged: row.flagged,
+  };
+  // Keep the stored result only when the numbers do not already give it.
+  if (row.result != null && deriveHand(session, draft).result !== row.result) {
+    draft.resultText = String(row.result);
+  }
+  return draft;
 }
