@@ -24,6 +24,7 @@ describe.skipIf(!configured)('RLS', () => {
   let a: Client;
   let b: Client;
   let aId: string;
+  let bId: string;
   const ids = {} as Record<(typeof OWNED_TABLES)[number], string>;
 
   async function makeUser(tag: string, locale: string) {
@@ -49,6 +50,7 @@ describe.skipIf(!configured)('RLS', () => {
     a = ua.client;
     b = ub.client;
     aId = ua.id;
+    bId = ub.id;
 
     const opp = await a.from('opponents').insert({ name: 'Seat 3' }).select('id').single();
     const sess = await a
@@ -247,6 +249,77 @@ describe.skipIf(!configured)('RLS', () => {
       expect(hand.error).not.toBeNull();
       const review = await b.from('reviews').insert({ hand_id: ids.hands, source: 'manual' });
       expect(review.error).not.toBeNull();
+    });
+  });
+
+  describe('AI review helpers', () => {
+    it('users and signed-out callers cannot call the Vault functions', async () => {
+      for (const client of [a, b, anon]) {
+        const calls = [
+          client.rpc('set_user_api_key', { p_user: aId, p_key: 'sk-x', p_model: null } as never),
+          client.rpc('get_user_api_key', { p_user: aId } as never),
+          client.rpc('delete_user_api_key', { p_user: aId } as never),
+        ];
+        for (const { error } of await Promise.all(calls)) expect(error).not.toBeNull();
+      }
+    });
+
+    it('server stores, reads and deletes a key in Vault; client never sees it', async () => {
+      const set = await admin.rpc('set_user_api_key', {
+        p_user: bId,
+        p_key: 'sk-test-secret',
+        p_model: 'some/model',
+      });
+      expect(set.error).toBeNull();
+      const got = await admin.rpc('get_user_api_key', { p_user: bId });
+      expect(got.data?.[0]).toMatchObject({ api_key: 'sk-test-secret', model: 'some/model' });
+      const own = await b.from('user_api_keys').select('*');
+      expect(!!own.error || (own.data ?? []).length === 0).toBe(true);
+      const del = await admin.rpc('delete_user_api_key', { p_user: bId });
+      expect(del.error).toBeNull();
+      const after = await admin.rpc('get_user_api_key', { p_user: bId });
+      expect(after.data ?? []).toHaveLength(0);
+    });
+
+    it('replace_current_review keeps one current review and keeps history', async () => {
+      const id = await a.rpc('replace_current_review', {
+        p_hand_id: ids.hands,
+        p_review: { source: 'ai', model: 'm', error_tags: ['bad_bluff'], lesson: 'l' },
+      });
+      expect(id.error).toBeNull();
+      const { data } = await a
+        .from('reviews')
+        .select('id, source, is_current, error_tags')
+        .eq('hand_id', ids.hands);
+      expect(data?.filter((r) => r.is_current)).toHaveLength(1);
+      expect(data?.find((r) => r.is_current)).toMatchObject({
+        id: id.data,
+        source: 'ai',
+        error_tags: ['bad_bluff'],
+      });
+      expect(data?.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it('B cannot replace the review of A hand', async () => {
+      const { error } = await b.rpc('replace_current_review', {
+        p_hand_id: ids.hands,
+        p_review: { source: 'manual' },
+      });
+      expect(error).not.toBeNull();
+      const { data } = await a
+        .from('reviews')
+        .select('id')
+        .eq('hand_id', ids.hands)
+        .eq('is_current', true);
+      expect(data).toHaveLength(1);
+    });
+
+    it('signed-out callers cannot call replace_current_review', async () => {
+      const { error } = await anon.rpc('replace_current_review', {
+        p_hand_id: ids.hands,
+        p_review: { source: 'manual' },
+      });
+      expect(error).not.toBeNull();
     });
   });
 

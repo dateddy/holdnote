@@ -10,6 +10,7 @@ export type Database = {
     Tables: {
       ai_usage: {
         Row: {
+          billed_to: string;
           cost_usd: number;
           created_at: string;
           id: string;
@@ -20,6 +21,7 @@ export type Database = {
           user_id: string;
         };
         Insert: {
+          billed_to?: string;
           cost_usd?: number;
           created_at?: string;
           id?: string;
@@ -30,6 +32,7 @@ export type Database = {
           user_id: string;
         };
         Update: {
+          billed_to?: string;
           cost_usd?: number;
           created_at?: string;
           id?: string;
@@ -370,18 +373,21 @@ export type Database = {
       user_api_keys: {
         Row: {
           created_at: string;
+          model: string | null;
           provider: string;
           user_id: string;
           vault_secret_id: string;
         };
         Insert: {
           created_at?: string;
+          model?: string | null;
           provider: string;
           user_id: string;
           vault_secret_id: string;
         };
         Update: {
           created_at?: string;
+          model?: string | null;
           provider?: string;
           user_id?: string;
           vault_secret_id?: string;
@@ -438,6 +444,23 @@ export type Database = {
       };
     };
     Functions: {
+      ai_app_spend_since: { Args: { p_since: string }; Returns: number };
+      delete_user_api_key: { Args: { p_user: string }; Returns: undefined };
+      get_user_api_key: {
+        Args: { p_user: string };
+        Returns: {
+          api_key: string;
+          model: string;
+        }[];
+      };
+      replace_current_review: {
+        Args: { p_hand_id: string; p_review: Json };
+        Returns: string;
+      };
+      set_user_api_key: {
+        Args: { p_key: string; p_model: string; p_user: string };
+        Returns: undefined;
+      };
       valid_cards: {
         Args: { cards: string[]; max_len: number };
         Returns: boolean;

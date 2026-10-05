@@ -11,6 +11,10 @@ export async function proxy(request: NextRequest) {
   const { response, userId } = await updateSession(request);
   const { pathname, search } = request.nextUrl;
 
+  // API calls get a 401 they can read, not a redirect to an HTML page.
+  if (!userId && pathname.startsWith('/api/')) {
+    return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  }
   if (!userId && !isPublic(pathname)) {
     const url = new URL('/login', request.url);
     if (pathname !== '/') url.searchParams.set('next', pathname + search);
