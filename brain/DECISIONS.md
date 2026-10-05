@@ -204,3 +204,31 @@ Append-only. Không sửa, không xóa mục cũ. Muốn đảo một quyết đ
 - Quyết định: Migration `20261003120000` thu mặc định quyền `anon` trên bảng, sequence, function mới trong `public` (không đổi bảng nào). Thêm `__pycache__/` vào `.gitignore`; thêm `pnpm test:rls` vào README.
 - Lý do: Bắt buộc đăng nhập (DEC-004): bảng tạo sau này không được vô tình mở cho `anon`. Ba mục PROPOSED trong STATUS ngày 02/10.
 - Ai quyết: Đạt
+
+## DEC-030 — Bộ mã loại lỗi cố định
+
+- Ngày: 2026-10-03
+- Quyết định: 14 mã + `none`: `preflop_too_loose`, `preflop_too_tight`, `sizing_too_small`, `sizing_too_large`, `missed_value`, `bad_bluff`, `bluff_multiway`, `call_too_loose`, `fold_too_much`, `passive_short`, `misread_range`, `read_right_act_wrong`, `math_error`, `tilt`, `none`. Nằm ở `apps/web/src/lib/review/review.ts`; AI review (3.1) dùng chung danh sách này. `none` đứng một mình.
+- Lý do: Spec 4.3 chỉ có ví dụ. Gộp từ ví dụ spec và nhóm lỗi trong app cũ (Preflop, Sizing, Đọc sai range, Cảm xúc, Toán, Không lỗi).
+- Ai quyết: Đạt
+
+## DEC-031 — Danh sách hand theo phiên
+
+- Ngày: 2026-10-03
+- Quyết định: Danh sách hand ở `/sessions/[id]/hands`; thanh trên tính trong phạm vi một phiên. Danh sách toàn bộ để task thống kê.
+- Lý do: Tổng bb cộng nhiều phiên khác BB/tiền tệ dễ sai.
+- Ai quyết: Đạt
+
+## DEC-032 — Quy ước màn Ghi nhanh và review tay
+
+- Ngày: 2026-10-03
+- Quyết định: (1) "Đã review" = review hiện tại có `accepted = true`. (2) Phiên MTT: BB của hand là ô "BB của level" (mặc định hand trước), SB = BB/2 trừ khi BB bằng BB phiên (dùng SB phiên); ante giữ theo phiên; `level_bb` chỉ lưu cho MTT. (3) Ghi/sửa hand và review bằng browser client (client ghi thẳng, RLS chặn) để task 2.7 bọc hàng đợi offline. (4) Kết quả gõ tay giữ làm ghi đè; khi mở lại hand chỉ giữ ghi đè nếu khác số tính được. (5) Tối thiểu để lưu: đủ 2 lá mình hoặc cờ ⚑; thiếu kết quả hoặc eff stack thì `missing_data = true`. (6) Lưu `raw_line` chỉ khi đang ở chế độ ghi tắt; `actions` luôn là bản đã điền số tiền của call/all-in.
+- Lý do: Spec 3.5–3.7 chưa nói rõ các điểm này.
+- Ai quyết: Claude Code (chờ Đạt xác nhận)
+
+## DEC-033 — Offline và PWA
+
+- Ngày: 2026-10-05
+- Quyết định: (1) Offline chỉ cho hand mới ở màn Ghi nhanh; sửa hand và lưu review cần mạng. (2) Mọi lần Lưu ghi vào hàng đợi IndexedDB trước rồi mới đồng bộ; `hands.id` do client sinh (`crypto.randomUUID()`) nên chèn lặp không tạo trùng và Hoàn tác biết xóa gì. (3) Xung đột `unique(session_id, num)` thì đọc max + 1 rồi chèn lại; trùng khóa chính coi như đã đồng bộ; lỗi 4xx khác thì đánh dấu `failed` và báo, không thử vô hạn. (4) Mỗi mục ghi `user_id`, chỉ đồng bộ mục của tài khoản đang đăng nhập. (5) Không thêm dependency: IndexedDB thô, service worker viết tay `public/sw.js` (cache-first cho `/_next/static` và `/icons`, điều hướng network-first có cache dự phòng; không đụng `/api`, `/auth`, Supabase; cache trang bị xóa khi tới `/login`), chỉ đăng ký ở production. (6) Icon là chữ "H" trên nền xanh, sinh bằng `ImageResponse`, là bản tạm.
+- Lý do: Spec 3.5 "mất mạng vẫn lưu, có mạng tự đồng bộ", Hoàn tác trong toast; CLAUDE.md quy tắc 7 hạn chế thêm dependency; iOS không có Background Sync nên đồng bộ chạy khi app mở (mở trang, sự kiện `online`, 30 giây một lần).
+- Ai quyết: Claude Code (chờ Đạt xác nhận)
