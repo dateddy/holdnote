@@ -2,6 +2,7 @@ import { getLocale, getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { HandForm } from '@/components/hand/hand-form';
+import { SyncStatus } from '@/components/hand/sync-status';
 import { HAND_SESSION_COLUMNS } from '@/lib/hands/build';
 import { createClient } from '@/lib/supabase/server';
 
@@ -46,6 +47,7 @@ export default async function RecordPage({ params }: PageProps<'/sessions/[id]/r
           {t('backToSession')}
         </Link>
       </header>
+      <SyncStatus />
       <HandForm
         sessionId={id}
         session={session}

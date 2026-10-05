@@ -163,7 +163,10 @@
     "reviewedLabel": "Đã review",
     "saveChanges": "Lưu thay đổi",
     "savedChanges": "Đã lưu thay đổi.",
-    "detailTitle": "Hand #{num}"
+    "detailTitle": "Hand #{num}",
+    "undo": "Hoàn tác",
+    "undoFailed": "Không hoàn tác được. Thử lại.",
+    "needNetwork": "Cần có mạng để sửa hand. Thử lại khi có mạng."
   },
   "review": {
     "title": "Review hand",
@@ -198,5 +201,9 @@
     "tag_math_error": "Sai toán",
     "tag_tilt": "Tilt",
     "tag_none": "Không lỗi"
+  },
+  "sync": {
+    "pending": "{count} hand đang chờ đồng bộ (đã lưu trên máy).",
+    "failed": "{count} hand không đồng bộ được (phiên đã xóa hoặc dữ liệu sai)."
   }
 }

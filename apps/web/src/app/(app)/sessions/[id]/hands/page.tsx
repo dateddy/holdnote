@@ -2,6 +2,7 @@ import { getLocale, getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { cardLabel } from '@/components/hand/card-label';
+import { SyncStatus } from '@/components/hand/sync-status';
 import {
   filterHands,
   handBbOf,
@@ -60,6 +61,8 @@ export default async function HandListPage({
           {t('backToSession')}
         </Link>
       </header>
+
+      <SyncStatus />
 
       <dl className="grid grid-cols-4 gap-2 rounded-md border border-current/20 p-3 text-center text-sm">
         <div>

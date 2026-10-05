@@ -18,7 +18,7 @@ Mỗi task cỡ một phiên làm việc. Làm theo thứ tự trừ khi chủ d
 - [x] 2.4 Ghi nhanh: chế độ ghi tắt + hàng phím, chuyển qua lại với chế độ nút.
 - [x] 2.5 Danh sách hand + bộ lọc + nhãn Thiếu dữ liệu.
 - [x] 2.6 Chi tiết hand + khối review tay.
-- [ ] 2.7 Offline: hàng đợi IndexedDB, đồng bộ lại, Hoàn tác.
+- [x] 2.7 Offline: hàng đợi IndexedDB, đồng bộ lại, Hoàn tác.
 - [ ] 2.8 PWA: manifest, icon, cài lên màn hình chính.
 
 ## Giai đoạn 3 — AI review

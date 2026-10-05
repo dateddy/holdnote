@@ -163,7 +163,10 @@
     "reviewedLabel": "Reviewed",
     "saveChanges": "Save changes",
     "savedChanges": "Changes saved.",
-    "detailTitle": "Hand #{num}"
+    "detailTitle": "Hand #{num}",
+    "undo": "Undo",
+    "undoFailed": "Could not undo. Try again.",
+    "needNetwork": "You need a connection to edit a hand. Try again when online."
   },
   "review": {
     "title": "Hand review",
@@ -198,5 +201,9 @@
     "tag_math_error": "Math error",
     "tag_tilt": "Tilt",
     "tag_none": "No mistake"
+  },
+  "sync": {
+    "pending": "{count} hand(s) waiting to sync (saved on this device).",
+    "failed": "{count} hand(s) could not sync (session deleted or invalid data)."
   }
 }

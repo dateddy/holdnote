@@ -1,5 +1,6 @@
 import { getLocale, getTranslations } from 'next-intl/server';
 import Link from 'next/link';
+import { SyncStatus } from '@/components/hand/sync-status';
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 
@@ -37,6 +38,7 @@ export default async function SessionPage({ params }: PageProps<'/sessions/[id]'
           {startedAt ? t('startedAt', { time: startedAt }) : t('notStarted')}
         </p>
       </section>
+      <SyncStatus />
       {startedAt ? (
         <Link
           href={`/sessions/${id}/record`}

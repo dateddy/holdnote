@@ -19,9 +19,11 @@ import { applyShorthand } from '@/lib/hands/shorthand';
 import { isOneOf } from '@/lib/sessions/form';
 import { formatMoney } from '@/lib/sessions/format';
 import { createClient } from '@/lib/supabase/client';
+import { saveHand, undoHand } from '@/lib/offline/sync';
 import { ActionRows } from './action-rows';
 import { CardGrid } from './card-grid';
 import { ShorthandInput } from './shorthand-input';
+import { UndoToast } from './undo-toast';
 
 export type OpponentOption = { id: string; name: string };
 
@@ -62,7 +64,10 @@ export function HandForm({
   const [switchBlocked, setSwitchBlocked] = useState(false);
   const [num, setNum] = useState(edit?.num ?? lastNum + 1);
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'failed'>('idle');
-  const [savedNum, setSavedNum] = useState<number | null>(null);
+  const [undo, setUndo] = useState<{ id: string; num: number; snapshot: HandDraft } | null>(null);
+  const [undoBusy, setUndoBusy] = useState(false);
+  const [offline, setOffline] = useState(false);
+  const [undoFailed, setUndoFailed] = useState(false);
   const locked = useRef(false);
 
   const set = <K extends keyof HandDraft>(key: K, value: HandDraft[K]) =>
@@ -108,37 +113,29 @@ export function HandForm({
     if (locked.current || !canSave(draft) || lineErrors.length > 0) return;
     locked.current = true;
     setStatus('saving');
-    const supabase = createClient();
-
     if (edit) {
+      const supabase = createClient();
       const row: Partial<ReturnType<typeof toHandRow>> = toHandRow(session, draft, edit.num);
       delete row.num;
-      const { error } = await supabase.from('hands').update(row).eq('id', edit.handId);
+      const { error, status: http } = await supabase
+        .from('hands')
+        .update(row)
+        .eq('id', edit.handId);
       locked.current = false;
+      setOffline(Boolean(error) && !http);
       setStatus(error ? 'failed' : 'saved');
       if (!error) router.refresh();
       return;
     }
 
-    let target = num;
-    let error = null;
-    for (let attempt = 0; attempt < 2; attempt++) {
-      ({ error } = await supabase
-        .from('hands')
-        .insert({ ...toHandRow(session, draft, target), session_id: sessionId }));
-      if (!error || error.code !== '23505') break;
-      // Another tab took this number: read the latest and retry once.
-      const { data } = await supabase
-        .from('hands')
-        .select('num')
-        .eq('session_id', sessionId)
-        .order('num', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      target = (data?.num ?? target) + 1;
-    }
-
-    if (error) {
+    // Store on this device first; the queue sends it as soon as the network allows.
+    const before = raw;
+    try {
+      const item = await saveHand({ sessionId, row: toHandRow(session, draft, num) });
+      setUndo({ id: item.id, num, snapshot: before });
+      setUndoBusy(false);
+      setUndoFailed(false);
+    } catch {
       setStatus('failed');
       locked.current = false;
       return;
@@ -151,14 +148,27 @@ export function HandForm({
       players_dealt: toNumber(draft.playersDealt),
     };
     setDraft({ ...emptyDraft(session, prev), heroPos: draft.heroPos });
-    setSavedNum(target);
-    setNum(target + 1);
-    setStatus('saved');
+    setNum(num + 1);
+    setStatus('idle');
     window.scrollTo({ top: 0, behavior: 'smooth' });
     // The save button stays locked for 2 seconds (spec 3.5).
     setTimeout(() => {
       locked.current = false;
     }, 2000);
+  }
+
+  async function undoLast() {
+    if (!undo) return;
+    setUndoBusy(true);
+    try {
+      await undoHand(undo.id);
+      setDraft(undo.snapshot);
+      setNum(undo.num);
+      setUndo(null);
+    } catch {
+      setUndoFailed(true);
+      setUndoBusy(false);
+    }
   }
 
   const posRow = (field: 'heroPos' | 'villPos') => (
@@ -184,14 +194,18 @@ export function HandForm({
           {t('savedChanges')}
         </p>
       )}
-      {status === 'saved' && !edit && savedNum !== null && (
-        <p role="status" className="rounded-md bg-foreground/10 p-3 text-sm">
-          {t('saved', { num: savedNum })}
-        </p>
+      {undo && (
+        <UndoToast
+          num={undo.num}
+          busy={undoBusy}
+          failed={undoFailed}
+          onUndo={undoLast}
+          onExpire={() => setUndo(null)}
+        />
       )}
       {status === 'failed' && (
         <p role="alert" className="rounded-md bg-red-600/10 p-3 text-sm text-red-700">
-          {t('saveFailed')}
+          {offline ? t('needNetwork') : t('saveFailed')}
         </p>
       )}
 
