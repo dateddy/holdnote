@@ -96,3 +96,53 @@ export function toReviewRow(draft: ReviewDraft, isMtt: boolean): ReviewRow {
     accepted: draft.accepted,
   };
 }
+
+/** Fields a reviewer writes. `accepted` is a decision about them, not one of them. */
+export type ReviewField =
+  'range' | 'math' | 'line' | 'icmText' | 'errorTags' | 'evVerdict' | 'lesson';
+
+export const REVIEW_FIELDS: readonly ReviewField[] = [
+  'range',
+  'math',
+  'line',
+  'icmText',
+  'errorTags',
+  'evVerdict',
+  'lesson',
+];
+
+/** True when `key` has the same value in both drafts (tags compare as a set, text ignores edge spaces). */
+export function sameField(a: ReviewDraft, b: ReviewDraft, key: ReviewField): boolean {
+  const x = a[key];
+  const y = b[key];
+  if (Array.isArray(x) && Array.isArray(y)) {
+    return x.length === y.length && [...x].sort().join() === [...y].sort().join();
+  }
+  return String(x).trim() === String(y).trim();
+}
+
+/** Did the student change anything the AI wrote? Then the saved review becomes a manual one. */
+export function contentChanged(a: ReviewDraft, b: ReviewDraft): boolean {
+  return REVIEW_FIELDS.some((k) => !sameField(a, b, k));
+}
+
+/** Error codes of `/api/review` that the screen has a message for. */
+export const AI_ERRORS = [
+  'quota_exhausted',
+  'budget_locked',
+  'rate_limited',
+  'invalid_output',
+  'timeout',
+  'provider_busy',
+  'not_configured',
+  'key_rejected',
+  'unauthorized',
+  'not_found',
+  'offline',
+  'server_error',
+] as const;
+
+/** Unknown codes fall back to a generic server error. */
+export function aiErrorCode(code: unknown): (typeof AI_ERRORS)[number] {
+  return AI_ERRORS.find((c) => c === code) ?? 'server_error';
+}

@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
+  aiErrorCode,
+  contentChanged,
   emptyReview,
   ERROR_TAGS,
   EV_VERDICTS,
   fromReviewRow,
+  sameField,
   toReviewRow,
   toggleTag,
 } from './review';
@@ -66,5 +69,30 @@ describe('toReviewRow', () => {
     };
     expect(toReviewRow(fromReviewRow(row), true)).toEqual(row);
     expect(fromReviewRow(null)).toEqual(emptyReview());
+  });
+});
+
+describe('AI review helpers', () => {
+  const base = {
+    ...emptyReview(),
+    range: 'wide',
+    errorTags: ['tilt', 'bad_bluff'],
+    evVerdict: 'mistake',
+  };
+
+  it('sameField compares tags as a set and ignores edge spaces in text', () => {
+    expect(sameField(base, { ...base, errorTags: ['bad_bluff', 'tilt'] }, 'errorTags')).toBe(true);
+    expect(sameField(base, { ...base, range: ' wide ' }, 'range')).toBe(true);
+    expect(sameField(base, { ...base, errorTags: ['tilt'] }, 'errorTags')).toBe(false);
+  });
+  it('contentChanged ignores accepted but sees any field edit', () => {
+    expect(contentChanged(base, { ...base, accepted: true })).toBe(false);
+    expect(contentChanged(base, { ...base, lesson: 'new' })).toBe(true);
+    expect(contentChanged(base, { ...base, evVerdict: 'correct' })).toBe(true);
+  });
+  it('aiErrorCode falls back to server_error', () => {
+    expect(aiErrorCode('quota_exhausted')).toBe('quota_exhausted');
+    expect(aiErrorCode('weird')).toBe('server_error');
+    expect(aiErrorCode(undefined)).toBe('server_error');
   });
 });

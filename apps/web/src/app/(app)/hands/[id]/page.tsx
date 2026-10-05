@@ -10,8 +10,11 @@ import {
   HAND_EDIT_COLUMNS,
   HAND_SESSION_COLUMNS,
 } from '@/lib/hands/build';
+import { loadUsage } from '@/lib/ai/quota';
+import { aiStatus } from '@/lib/ai/status';
 import { fromReviewRow, REVIEW_COLUMNS } from '@/lib/review/review';
 import { formatMoney } from '@/lib/sessions/format';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 
 export default async function HandDetailPage({ params }: PageProps<'/hands/[id]'>) {
@@ -51,6 +54,10 @@ export default async function HandDetailPage({ params }: PageProps<'/hands/[id]'
     getTranslations('hand'),
     getLocale(),
   ]);
+
+  const { data: claims } = await supabase.auth.getClaims();
+  const userId = claims?.claims.sub;
+  const status = userId ? aiStatus(await loadUsage(createAdminClient(), userId)) : null;
 
   // Pot odds come from poker-core, never from the reviewer's head (CLAUDE.md rule 5).
   const draft = fromHandRow(session, hand);
@@ -92,7 +99,13 @@ export default async function HandDetailPage({ params }: PageProps<'/hands/[id]'
       <ReviewForm
         handId={hand.id}
         reviewId={review?.id ?? null}
+        source={review?.source ?? null}
         initial={fromReviewRow(review)}
+        ai={{
+          plan: status?.plan ?? 'free',
+          remaining: status?.remaining ?? null,
+          locked: status?.budgetLocked ?? false,
+        }}
         isMtt={session.kind === 'mtt'}
         mathHints={mathHints}
       />
