@@ -166,7 +166,9 @@
     "detailTitle": "Hand #{num}",
     "undo": "Undo",
     "undoFailed": "Could not undo. Try again.",
-    "needNetwork": "You need a connection to edit a hand. Try again when online."
+    "needNetwork": "You need a connection to edit a hand. Try again when online.",
+    "levelAnte": "Level ante",
+    "anteIsBb": "BB ante: the ante equals the level BB."
   },
   "review": {
     "title": "Hand review",

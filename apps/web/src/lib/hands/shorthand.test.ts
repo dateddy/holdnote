@@ -5,6 +5,7 @@ import { applyShorthand, backspaceToken, insertToken } from './shorthand';
 
 const cash: HandSession = {
   kind: 'cash',
+  mode: 'live',
   sb: 25,
   bb: 50,
   straddle: null,

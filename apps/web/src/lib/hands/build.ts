@@ -31,6 +31,7 @@ export const BOARD_SLOTS = [2, 3, 4, 5, 6] as const;
 /** The session columns the hand screens need. */
 export type HandSession = {
   kind: string;
+  mode: string;
   sb: number | null;
   bb: number | null;
   straddle: number | null;
@@ -41,7 +42,8 @@ export type HandSession = {
   mtt: unknown;
 };
 
-export const HAND_SESSION_COLUMNS = 'kind, sb, bb, straddle, ante_mode, ante, buyin, seats, mtt';
+export const HAND_SESSION_COLUMNS =
+  'kind, mode, sb, bb, straddle, ante_mode, ante, buyin, seats, mtt';
 
 /** What the previous hand of the session passes on. */
 export type PreviousHand = {
@@ -49,6 +51,7 @@ export type PreviousHand = {
   result: number | null;
   level_bb?: number | null;
   players_dealt?: number | null;
+  ante?: number | null;
 };
 
 /** Everything typed on the Ghi nhanh screen. Strings stay raw until {@link deriveHand}. */
@@ -68,6 +71,8 @@ export type HandDraft = {
   villStack: string;
   levelBb: string;
   playersDealt: string;
+  /** Per-player ante of this level, typed for online MTT hands (DEC-034). */
+  ante: string;
   thought: string;
   flagged: boolean;
 };
@@ -107,7 +112,7 @@ export function emptyDraft(session: HandSession, prev: PreviousHand | null): Han
 export function nextHandDefaults(
   session: HandSession,
   prev: PreviousHand | null,
-): Pick<HandDraft, 'heroStack' | 'levelBb' | 'playersDealt'> {
+): Pick<HandDraft, 'heroStack' | 'levelBb' | 'playersDealt' | 'ante'> {
   const stack = startingStack(session, prev);
   const level = prev?.level_bb ?? (session.kind === 'mtt' ? session.bb : null);
   const dealt = prev?.players_dealt ?? session.seats;
@@ -115,7 +120,19 @@ export function nextHandDefaults(
     heroStack: stack == null ? '' : String(stack),
     levelBb: session.kind === 'mtt' && level != null ? String(level) : '',
     playersDealt: dealt == null ? '' : String(dealt),
+    ante: levelAnte(session) === 'typed' ? String(prev?.ante ?? session.ante ?? '') : '',
   };
+}
+
+/**
+ * How the ante of an MTT hand is set (DEC-034): `bb` = the BB posts an ante equal to the level BB;
+ * `typed` = online per-player ante that changes every level. Otherwise the session value applies.
+ */
+export function levelAnte(session: HandSession): 'bb' | 'typed' | null {
+  if (session.kind !== 'mtt') return null;
+  if (session.ante_mode === 'bb') return 'bb';
+  if (session.ante_mode === 'each' && session.mode === 'online') return 'typed';
+  return null;
 }
 
 /** Hero stack at the start of the next hand: the buy-in first, then last stack plus last result. */
@@ -154,10 +171,12 @@ export function handBb(session: HandSession, draft: HandDraft): number | null {
   return session.bb;
 }
 
-export function blindsFor(session: HandSession, bb: number): Blinds {
+export function blindsFor(session: HandSession, bb: number, anteText = ''): Blinds {
   const sb = bb === session.bb && session.sb != null ? session.sb : roundMoney(bb / 2);
   const mode = isOneOf(['each', 'bb'] as const, session.ante_mode) ? session.ante_mode : 'none';
-  const ante = session.ante ?? 0;
+  const kind = levelAnte(session);
+  const typed = kind === 'typed' ? parseAmount(anteText) : null;
+  const ante = kind === 'bb' ? bb : typed != null && typed > 0 ? typed : (session.ante ?? 0);
   return {
     sb,
     bb,
@@ -189,7 +208,7 @@ export function deriveHand(session: HandSession, draft: HandDraft): HandDerived 
   if (bb == null) return blank;
 
   const input: HandInput = {
-    blinds: blindsFor(session, bb),
+    blinds: blindsFor(session, bb, draft.ante),
     actions: draft.actions,
     ...(num(draft.playersDealt) !== undefined && { playersDealt: num(draft.playersDealt) }),
     ...(position(draft.heroPos) && { heroPos: position(draft.heroPos) }),
@@ -240,6 +259,7 @@ export function toHandRow(session: HandSession, draft: HandDraft, num_: number) 
     villain_stack: num(draft.villStack) ?? null,
     eff_stack: d.eff?.amount ?? null,
     level_bb: session.kind === 'mtt' ? d.bb : null,
+    ...levelAnteColumns(session, d),
     players_dealt: integerOrNull(draft.playersDealt),
     thought: draft.thought.trim() || null,
     flagged: draft.flagged,
@@ -254,7 +274,7 @@ function integerOrNull(raw: string): number | null {
 
 /** Columns of a saved hand that {@link fromHandRow} reads. */
 export const HAND_EDIT_COLUMNS =
-  'id, num, session_id, hero_cards, board, villain_cards, hero_pos, villain_pos, opponent_id, actions, raw_line, outcome, result, hero_stack, villain_stack, level_bb, players_dealt, thought, flagged';
+  'id, num, session_id, hero_cards, board, villain_cards, hero_pos, villain_pos, opponent_id, actions, raw_line, outcome, result, hero_stack, villain_stack, level_bb, players_dealt, ante, thought, flagged';
 
 export type HandRowIn = {
   hero_cards: string[] | null;
@@ -271,6 +291,7 @@ export type HandRowIn = {
   villain_stack: number | null;
   level_bb: number | null;
   players_dealt: number | null;
+  ante: number | null;
   thought: string | null;
   flagged: boolean;
 };
@@ -305,6 +326,7 @@ export function fromHandRow(session: HandSession, row: HandRowIn): HandDraft {
     villStack: str(row.villain_stack),
     levelBb: str(row.level_bb),
     playersDealt: str(row.players_dealt),
+    ante: levelAnte(session) === 'typed' ? str(row.ante) : '',
     thought: row.thought ?? '',
     flagged: row.flagged,
   };
@@ -313,4 +335,13 @@ export function fromHandRow(session: HandSession, row: HandRowIn): HandDraft {
     draft.resultText = String(row.result);
   }
   return draft;
+}
+
+/** Hand-level ante columns: only MTT hands record the ante of their level; null = session default. */
+function levelAnteColumns(session: HandSession, d: HandDerived) {
+  const ante = d.input?.blinds.ante;
+  if (session.kind !== 'mtt' || !ante || ante.mode === 'none') {
+    return { ante_mode: null, ante: null };
+  }
+  return { ante_mode: ante.mode, ante: ante.amount };
 }

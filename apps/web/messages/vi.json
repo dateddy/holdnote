@@ -166,7 +166,9 @@
     "detailTitle": "Hand #{num}",
     "undo": "Hoàn tác",
     "undoFailed": "Không hoàn tác được. Thử lại.",
-    "needNetwork": "Cần có mạng để sửa hand. Thử lại khi có mạng."
+    "needNetwork": "Cần có mạng để sửa hand. Thử lại khi có mạng.",
+    "levelAnte": "Ante của level",
+    "anteIsBb": "Ante theo BB: ante bằng BB của level."
   },
   "review": {
     "title": "Review hand",

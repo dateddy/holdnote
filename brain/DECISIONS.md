@@ -232,3 +232,11 @@ Append-only. Không sửa, không xóa mục cũ. Muốn đảo một quyết đ
 - Quyết định: (1) Offline chỉ cho hand mới ở màn Ghi nhanh; sửa hand và lưu review cần mạng. (2) Mọi lần Lưu ghi vào hàng đợi IndexedDB trước rồi mới đồng bộ; `hands.id` do client sinh (`crypto.randomUUID()`) nên chèn lặp không tạo trùng và Hoàn tác biết xóa gì. (3) Xung đột `unique(session_id, num)` thì đọc max + 1 rồi chèn lại; trùng khóa chính coi như đã đồng bộ; lỗi 4xx khác thì đánh dấu `failed` và báo, không thử vô hạn. (4) Mỗi mục ghi `user_id`, chỉ đồng bộ mục của tài khoản đang đăng nhập. (5) Không thêm dependency: IndexedDB thô, service worker viết tay `public/sw.js` (cache-first cho `/_next/static` và `/icons`, điều hướng network-first có cache dự phòng; không đụng `/api`, `/auth`, Supabase; cache trang bị xóa khi tới `/login`), chỉ đăng ký ở production. (6) Icon là chữ "H" trên nền xanh, sinh bằng `ImageResponse`, là bản tạm.
 - Lý do: Spec 3.5 "mất mạng vẫn lưu, có mạng tự đồng bộ", Hoàn tác trong toast; CLAUDE.md quy tắc 7 hạn chế thêm dependency; iOS không có Background Sync nên đồng bộ chạy khi app mở (mở trang, sự kiện `online`, 30 giây một lần).
 - Ai quyết: Claude Code (chờ Đạt xác nhận)
+
+## DEC-034 — Xác nhận DEC-032, DEC-033; sửa ante phiên MTT
+
+- Ngày: 2026-10-05
+- Quyết định: Đạt xác nhận DEC-033 và DEC-032, trừ điểm (2) về MTT. Điểm (2) đổi thành: (a) phiên MTT online có ante theo từng level (nhập "Ante của level" mỗi hand, mặc định lấy hand trước, hand đầu lấy ante phiên; lưu `hands.ante_mode` và `hands.ante`); (b) nếu ante kiểu BB (`ante_mode = bb`) thì ante = BB của level, tự tính, không cần nhập; (c) MTT live giữ ante theo phiên. BB và SB của level vẫn như DEC-032 (2). Cash không đổi.
+- Lý do: Online ante tăng theo level; ante BB luôn bằng BB nên không để người dùng nhập sai.
+- Ai quyết: Đạt
+- Supersedes: DEC-032 (2), phần "ante giữ theo phiên"

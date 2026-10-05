@@ -9,6 +9,7 @@ import {
   canSave,
   deriveHand,
   emptyDraft,
+  levelAnte,
   OUTCOMES,
   toHandRow,
   type HandDraft,
@@ -146,6 +147,7 @@ export function HandForm({
       result: derived.result,
       level_bb: toNumber(draft.levelBb),
       players_dealt: toNumber(draft.playersDealt),
+      ante: toNumber(draft.ante),
     };
     setDraft({ ...emptyDraft(session, prev), heroPos: draft.heroPos });
     setNum(num + 1);
@@ -352,6 +354,21 @@ export function HandForm({
                 className={INPUT}
               />
             </label>
+          )}
+          {levelAnte(session) === 'typed' && (
+            <label className="flex flex-col gap-1 text-sm">
+              {t('levelAnte')}
+              <input
+                inputMode="decimal"
+                autoComplete="off"
+                value={draft.ante}
+                onChange={(e) => set('ante', e.target.value)}
+                className={INPUT}
+              />
+            </label>
+          )}
+          {levelAnte(session) === 'bb' && (
+            <p className="col-span-2 text-sm opacity-70">{t('anteIsBb')}</p>
           )}
           {session.ante_mode === 'each' && (
             <label className="flex flex-col gap-1 text-sm">
