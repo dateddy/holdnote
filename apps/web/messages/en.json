@@ -205,5 +205,9 @@
   "sync": {
     "pending": "{count} hand(s) waiting to sync (saved on this device).",
     "failed": "{count} hand(s) could not sync (session deleted or invalid data)."
+  },
+  "pwa": {
+    "install": "Install on home screen",
+    "iosHint": "To install: tap Safari's Share button, then “Add to Home Screen”."
   }
 }

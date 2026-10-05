@@ -19,7 +19,7 @@ Mỗi task cỡ một phiên làm việc. Làm theo thứ tự trừ khi chủ d
 - [x] 2.5 Danh sách hand + bộ lọc + nhãn Thiếu dữ liệu.
 - [x] 2.6 Chi tiết hand + khối review tay.
 - [x] 2.7 Offline: hàng đợi IndexedDB, đồng bộ lại, Hoàn tác.
-- [ ] 2.8 PWA: manifest, icon, cài lên màn hình chính.
+- [x] 2.8 PWA: manifest, icon, cài lên màn hình chính.
 
 ## Giai đoạn 3 — AI review
 - [ ] 3.1 `/api/review`: dựng ngữ cảnh, gọi OpenRouter, Zod, lưu `reviews` + `ai_usage`.

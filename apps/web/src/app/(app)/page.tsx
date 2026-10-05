@@ -1,5 +1,6 @@
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
+import { InstallHint } from '@/components/pwa/install-hint';
 import { LocaleSwitcher } from '@/i18n/locale-switcher';
 import { createClient } from '@/lib/supabase/server';
 
@@ -26,6 +27,7 @@ export default async function Home() {
       >
         {t('home.startSession')}
       </Link>
+      <InstallHint />
       <LocaleSwitcher />
     </main>
   );

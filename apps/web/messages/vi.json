@@ -205,5 +205,9 @@
   "sync": {
     "pending": "{count} hand đang chờ đồng bộ (đã lưu trên máy).",
     "failed": "{count} hand không đồng bộ được (phiên đã xóa hoặc dữ liệu sai)."
+  },
+  "pwa": {
+    "install": "Cài lên màn hình chính",
+    "iosHint": "Để cài: bấm nút Chia sẻ của Safari, rồi chọn “Thêm vào MH chính”."
   }
 }
