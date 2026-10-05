@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { buildReviewContext, type ReviewHand, type ReviewSession } from './context';
 import { BYOK_HOURLY_LIMIT, decideAccess, FREE_MONTHLY_LIMIT, monthStart } from './quota';
 import { InvalidOutputError, runReview } from './run-review';
+import { aiStatus } from './status';
 import { aiReviewSchema, normalizeTags, toAiReviewRow } from './schema';
 
 const session: ReviewSession = {
@@ -231,5 +232,23 @@ describe('runReview', () => {
     await run(f);
     await runReview({ apiKey: 'k', model: 'm', userMessage: 'other hand', fetchImpl: f as never });
     expect(systems[0]).toBe(systems[1]);
+  });
+});
+
+describe('aiStatus', () => {
+  const u = { hasOwnKey: false, model: null, monthCalls: 12, appSpendUsd: 1, lastHourCalls: 0 };
+  it('free plan shows reviews left, own key shows no limit', () => {
+    expect(aiStatus(u)).toMatchObject({
+      plan: 'free',
+      remaining: 18,
+      limit: 30,
+      budgetLocked: false,
+    });
+    expect(aiStatus({ ...u, appSpendUsd: 25 }).budgetLocked).toBe(true);
+    expect(aiStatus({ ...u, hasOwnKey: true, model: 'a/b' })).toMatchObject({
+      plan: 'byok',
+      model: 'a/b',
+      remaining: null,
+    });
   });
 });

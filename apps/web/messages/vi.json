@@ -19,7 +19,8 @@
   },
   "home": {
     "greeting": "Xin chào {name}",
-    "startSession": "Bắt đầu phiên"
+    "startSession": "Bắt đầu phiên",
+    "settings": "Cài đặt"
   },
   "sessions": {
     "newTitle": "Phiên mới",
@@ -203,6 +204,31 @@
     "tag_math_error": "Sai toán",
     "tag_tilt": "Tilt",
     "tag_none": "Không lỗi"
+  },
+  "settings": {
+    "title": "Cài đặt",
+    "home": "Trang chủ",
+    "aiTitle": "AI review",
+    "planFree": "Gói miễn phí.",
+    "remaining": "Còn {remaining}/{limit} lượt review tháng này (phản biện tính 1 lượt).",
+    "budgetLocked": "AI gói miễn phí tạm khóa đến đầu tháng sau. Dùng key riêng để tiếp tục.",
+    "planByok": "Gói tự mang key.",
+    "byokNote": "Không giới hạn lượt, tối đa 30 lần mỗi giờ. Chi phí tính vào tài khoản OpenRouter của bạn.",
+    "keyHelp": "Dán API key OpenRouter của bạn để dùng không giới hạn. Key được mã hóa trên server và không hiện lại.",
+    "apiKey": "API key OpenRouter",
+    "apiKeySet": "Đã có key (nhập key mới để thay)",
+    "model": "Model",
+    "modelDefault": "Để trống = model mặc định",
+    "saveKey": "Lưu key",
+    "saving": "Đang lưu…",
+    "removeKey": "Xóa key, về gói miễn phí",
+    "keySaved": "Đã lưu key.",
+    "keyRemoved": "Đã xóa key.",
+    "error_key_rejected": "OpenRouter không chấp nhận key này.",
+    "error_bad_request": "Key hoặc tên model không hợp lệ.",
+    "error_offline": "Không kết nối được. Kiểm tra mạng rồi thử lại.",
+    "error_unauthorized": "Phiên đăng nhập hết hạn. Đăng nhập lại.",
+    "error_server_error": "Lỗi server. Thử lại sau."
   },
   "sync": {
     "pending": "{count} hand đang chờ đồng bộ (đã lưu trên máy).",

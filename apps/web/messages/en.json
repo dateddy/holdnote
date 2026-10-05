@@ -19,7 +19,8 @@
   },
   "home": {
     "greeting": "Hi {name}",
-    "startSession": "Start a session"
+    "startSession": "Start a session",
+    "settings": "Settings"
   },
   "sessions": {
     "newTitle": "New session",
@@ -203,6 +204,31 @@
     "tag_math_error": "Math error",
     "tag_tilt": "Tilt",
     "tag_none": "No mistake"
+  },
+  "settings": {
+    "title": "Settings",
+    "home": "Home",
+    "aiTitle": "AI review",
+    "planFree": "Free plan.",
+    "remaining": "{remaining}/{limit} reviews left this month (a rebuttal counts as 1).",
+    "budgetLocked": "Free-plan AI is paused until next month. Use your own key to keep going.",
+    "planByok": "Bring-your-own-key plan.",
+    "byokNote": "No monthly limit, at most 30 calls an hour. Cost goes to your OpenRouter account.",
+    "keyHelp": "Paste your OpenRouter API key for unlimited use. The key is encrypted on the server and never shown again.",
+    "apiKey": "OpenRouter API key",
+    "apiKeySet": "Key saved (enter a new one to replace it)",
+    "model": "Model",
+    "modelDefault": "Empty = default model",
+    "saveKey": "Save key",
+    "saving": "Saving…",
+    "removeKey": "Remove key, back to free plan",
+    "keySaved": "Key saved.",
+    "keyRemoved": "Key removed.",
+    "error_key_rejected": "OpenRouter did not accept this key.",
+    "error_bad_request": "Invalid key or model name.",
+    "error_offline": "Cannot connect. Check your network and try again.",
+    "error_unauthorized": "Your session expired. Sign in again.",
+    "error_server_error": "Server error. Try again later."
   },
   "sync": {
     "pending": "{count} hand(s) waiting to sync (saved on this device).",

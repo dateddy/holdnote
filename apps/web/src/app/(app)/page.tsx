@@ -27,6 +27,9 @@ export default async function Home() {
       >
         {t('home.startSession')}
       </Link>
+      <Link href="/settings" className="text-sm underline underline-offset-4">
+        {t('home.settings')}
+      </Link>
       <InstallHint />
       <LocaleSwitcher />
     </main>

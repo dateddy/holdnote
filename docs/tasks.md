@@ -23,7 +23,7 @@ Mỗi task cỡ một phiên làm việc. Làm theo thứ tự trừ khi chủ d
 
 ## Giai đoạn 3 — AI review
 - [x] 3.1 `/api/review`: dựng ngữ cảnh, gọi OpenRouter, Zod, lưu `reviews` + `ai_usage`.
-- [ ] 3.2 Quota gói miễn phí, ngân sách cứng, gói tự mang key (Vault).
+- [x] 3.2 Quota gói miễn phí, ngân sách cứng, gói tự mang key (Vault).
 - [ ] 3.3 Nút AI review, nhãn "AI", Phản biện.
 - [ ] 3.4 Script benchmark model trên hand đã review trong `legacy/data`.
 
