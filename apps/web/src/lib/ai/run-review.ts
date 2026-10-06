@@ -2,14 +2,23 @@ import { chatJson, type ChatMessage, type ChatResult } from './openrouter';
 import { SYSTEM_PROMPT } from './prompt';
 import { aiReviewJsonSchema, aiReviewSchema, type AiReview } from './schema';
 
-export type ReviewRun = {
+export type Usage = { tokensIn: number; tokensOut: number; costUsd: number };
+
+export type ReviewRun = Usage & {
   review: AiReview;
-  tokensIn: number;
-  tokensOut: number;
-  costUsd: number;
+  /** 1 = valid at once, 2 = valid after the retry. */
+  attempts: 1 | 2;
 };
 
-export class InvalidOutputError extends Error {}
+/** Both replies were invalid. Carries what the two calls cost, for budget tracking. */
+export class InvalidOutputError extends Error {
+  constructor(
+    message: string,
+    readonly usage: Usage,
+  ) {
+    super(message);
+  }
+}
 
 function parse(content: string): { ok: true; value: AiReview } | { ok: false; error: string } {
   let json: unknown;
@@ -26,7 +35,7 @@ function parse(content: string): { ok: true; value: AiReview } | { ok: false; er
   };
 }
 
-function usage(calls: ChatResult[]) {
+function usage(calls: ChatResult[]): Usage {
   return {
     tokensIn: calls.reduce((n, c) => n + c.tokensIn, 0),
     tokensOut: calls.reduce((n, c) => n + c.tokensOut, 0),
@@ -60,7 +69,7 @@ export async function runReview(opts: {
 
   const first = await call(messages);
   const a = parse(first.content);
-  if (a.ok) return { review: a.value, ...usage([first]) };
+  if (a.ok) return { review: a.value, attempts: 1, ...usage([first]) };
 
   const second = await call([
     ...messages,
@@ -71,6 +80,6 @@ export async function runReview(opts: {
     },
   ]);
   const b = parse(second.content);
-  if (b.ok) return { review: b.value, ...usage([first, second]) };
-  throw new InvalidOutputError(b.error);
+  if (b.ok) return { review: b.value, attempts: 2, ...usage([first, second]) };
+  throw new InvalidOutputError(b.error, usage([first, second]));
 }

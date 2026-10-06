@@ -12,6 +12,13 @@ export class OpenRouterError extends Error {
   constructor(
     readonly kind: 'auth' | 'rate' | 'upstream' | 'timeout' | 'empty',
     message: string,
+    /** What an `empty` reply still cost, and why it stopped (`length` = ran out of tokens). */
+    readonly detail?: {
+      finishReason: string | null;
+      tokensIn: number;
+      tokensOut: number;
+      costUsd: number;
+    },
   ) {
     super(message);
   }
@@ -42,7 +49,9 @@ export async function chatJson(opts: {
         model: opts.model,
         messages: opts.messages,
         temperature: 0.3,
-        max_tokens: 1200,
+        // Reasoning models spend tokens thinking before the JSON: leave room, and keep it short.
+        max_tokens: 4000,
+        reasoning: { effort: 'low' },
         usage: { include: true },
         response_format: {
           type: 'json_schema',
@@ -53,19 +62,31 @@ export async function chatJson(opts: {
     });
   } catch (e) {
     const timeout = e instanceof Error && (e.name === 'TimeoutError' || e.name === 'AbortError');
-    throw new OpenRouterError(timeout ? 'timeout' : 'upstream', 'request failed');
+    throw new OpenRouterError(
+      timeout ? 'timeout' : 'upstream',
+      `request failed: ${e instanceof Error ? `${e.name} ${e.message} ${String((e as { cause?: unknown }).cause ?? '')}` : 'unknown'}`,
+    );
   }
 
   if (res.status === 401 || res.status === 403) throw new OpenRouterError('auth', 'key rejected');
   if (res.status === 429) throw new OpenRouterError('rate', 'provider rate limit');
   if (!res.ok) throw new OpenRouterError('upstream', `status ${res.status}`);
 
+  // The timeout also covers reading the body: a slow model can answer headers, then stall.
   const body = (await res.json().catch(() => null)) as {
-    choices?: { message?: { content?: string | null } }[];
+    choices?: { finish_reason?: string | null; message?: { content?: string | null } }[];
     usage?: { prompt_tokens?: number; completion_tokens?: number; cost?: number };
   } | null;
   const content = body?.choices?.[0]?.message?.content;
-  if (!content) throw new OpenRouterError('empty', 'no content');
+  if (!body) throw new OpenRouterError('timeout', 'reply cut off');
+  if (!content) {
+    throw new OpenRouterError('empty', 'no content', {
+      finishReason: body?.choices?.[0]?.finish_reason ?? null,
+      tokensIn: body?.usage?.prompt_tokens ?? 0,
+      tokensOut: body?.usage?.completion_tokens ?? 0,
+      costUsd: body?.usage?.cost ?? 0,
+    });
+  }
   return {
     content,
     tokensIn: body?.usage?.prompt_tokens ?? 0,
