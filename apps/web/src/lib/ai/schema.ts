@@ -3,17 +3,19 @@ import { ERROR_TAGS, EV_VERDICTS } from '@/lib/review/review';
 
 /** The JSON the model must return (spec 5.4). Each text field is capped at roughly 80 words. */
 const text = z.string().max(800);
+const written = (what: string) =>
+  text.describe(`${what}. Max 80 words. In the output language named at the top of the message.`);
 
 export const aiReviewSchema = z.object({
-  range: text,
-  math: text,
-  line: text,
-  icm: text,
+  range: written('Opponent range, street by street'),
+  math: written('Use the given pot odds, MDF and SPR; do not recompute'),
+  line: written('Recommended line with sizes as a fraction of pot'),
+  icm: written('ICM note for tournaments, empty string for cash'),
   error_tags: z.array(z.enum(ERROR_TAGS)).max(4),
   ev_verdict: z.enum(EV_VERDICTS),
   key_mistake_street: z.enum(['preflop', 'flop', 'turn', 'river', 'none']),
   repeats_known_leak: z.boolean(),
-  lesson: text,
+  lesson: written('One lesson the student can apply next time'),
   missing_info: z.array(z.string().max(120)).max(6),
 });
 
@@ -30,14 +32,19 @@ export function normalizeTags(tags: readonly string[]): string[] {
 }
 
 /** The `reviews` columns for an AI result (fed to `replace_current_review`). */
-export function toAiReviewRow(r: AiReview, model: string, isMtt: boolean) {
+export function toAiReviewRow(
+  r: AiReview,
+  model: string,
+  isMtt: boolean,
+  missingLabel = 'Missing',
+) {
   const missing = r.missing_info.filter((m) => m.trim());
   return {
     source: 'ai' as const,
     model,
     range_text: r.range.trim() || null,
     math_text:
-      [r.math.trim(), missing.length ? `Missing: ${missing.join(', ')}` : '']
+      [r.math.trim(), missing.length ? `${missingLabel}: ${missing.join(', ')}` : '']
         .filter(Boolean)
         .join('\n') || null,
     line_text: r.line.trim() || null,

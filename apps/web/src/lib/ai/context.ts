@@ -9,7 +9,7 @@ import {
 } from 'poker-core';
 import { deriveHand, fromHandRow, type HandRowIn, type HandSession } from '@/lib/hands/build';
 import { ERROR_TAGS } from '@/lib/review/review';
-import { OUTPUT_LANGUAGE } from './prompt';
+import { languagePack } from './languages';
 
 export type ReviewHand = HandRowIn & {
   num: number;
@@ -119,7 +119,8 @@ export function buildReviewContext(input: ReviewContextInput): string {
  * result (win/lose, money) is left out on purpose: the review judges decisions, not outcomes.
  */
 export function renderReviewContext(f: ReviewFacts): string {
-  const lines: string[] = [];
+  const pack = languagePack(f.locale);
+  const lines: string[] = [pack.instruction, ''];
 
   const game = [
     f.kind === 'mtt' ? 'Tournament (MTT)' : 'Cash game',
@@ -157,6 +158,25 @@ export function renderReviewContext(f: ReviewFacts): string {
     if (f.board.length) lines.push(`Board: ${f.board.join(' ')}.`);
 
     const { steps } = computePot(f.input);
+    const byIndex = new Map(steps.map((s) => [s.index, s]));
+    const whoOf = (act: Action) => {
+      const name =
+        act.actor === 'hero'
+          ? 'Hero'
+          : act.actor === 'villain'
+            ? 'Villain'
+            : (act.who ?? act.pos ?? 'Other');
+      const at =
+        act.pos ?? (act.actor === 'hero' ? f.heroPos : act.actor === 'villain' ? f.villPos : null);
+      return at && at !== name ? `${name} (${at})` : name;
+    };
+    const describe = (act: Action) =>
+      `${whoOf(act)} ${ACT_WORD[act.act]}${
+        act.amount != null && act.act !== 'fold' && act.act !== 'check'
+          ? ` ${inBb(act.amount)}`
+          : ''
+      }`;
+
     lines.push('Actions (pot after each action):');
     let street = '';
     for (const s of steps) {
@@ -164,28 +184,25 @@ export function renderReviewContext(f: ReviewFacts): string {
         street = s.action.street;
         lines.push(`- ${street}:`);
       }
-      const who =
-        s.action.actor === 'hero'
-          ? 'Hero'
-          : s.action.actor === 'villain'
-            ? 'Villain'
-            : (s.action.who ?? s.action.pos ?? 'Other');
-      const amount =
-        s.action.amount != null && s.action.act !== 'fold' && s.action.act !== 'check'
-          ? ` ${inBb(s.action.amount)}`
-          : '';
-      lines.push(`  ${who} ${ACT_WORD[s.action.act]}${amount} -> pot ${inBb(s.potAfter)}`);
+      lines.push(`  ${describe(s.action)} -> pot ${inBb(s.potAfter)}`);
     }
 
-    const odds = potOddsAtDecisions(f.input);
-    if (odds.length) {
-      lines.push('Hero decisions facing a bet (computed):');
-      for (const o of odds) {
-        const mdf = o.mdf == null ? '' : `, MDF ${Math.round(o.mdf * 100)}%`;
+    const odds = new Map(potOddsAtDecisions(f.input).map((o) => [o.index, o]));
+    const heroSteps = steps.filter((s) => s.action.actor === 'hero');
+    if (heroSteps.length) {
+      lines.push('Hero decisions, in order (pot odds and MDF are computed):');
+      heroSteps.forEach((s, i) => {
+        const faced = s.facingIndex === null ? null : byIndex.get(s.facingIndex);
+        const o = odds.get(s.index);
+        const price = o
+          ? `; to call ${inBb(o.toCall)} into ${inBb(o.potBefore)}, pot odds ${Math.round(o.potOdds * 100)}%${
+              o.mdf == null ? '' : `, MDF ${Math.round(o.mdf * 100)}%`
+            }`
+          : '';
         lines.push(
-          `- ${o.street} ${o.act}: to call ${inBb(o.toCall)} into ${inBb(o.potBefore)}, pot odds ${Math.round(o.potOdds * 100)}%${mdf}`,
+          `${i + 1}. ${s.action.street}: facing ${faced ? describe(faced.action) : 'no bet'} -> ${describe(s.action)}${price}`,
         );
-      }
+      });
     }
     const spr = computeSpr(f.input);
     if (spr.length) {
@@ -208,6 +225,6 @@ export function renderReviewContext(f: ReviewFacts): string {
     );
   }
 
-  lines.push('', `Output language: ${OUTPUT_LANGUAGE[f.locale] ?? 'English'}.`);
+  lines.push('', pack.reminder);
   return lines.join('\n');
 }

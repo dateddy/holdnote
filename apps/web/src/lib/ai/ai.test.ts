@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { languagePack, reviewInLanguage } from './languages';
 import { buildReviewContext, type ReviewHand, type ReviewSession } from './context';
 import { BYOK_HOURLY_LIMIT, decideAccess, FREE_MONTHLY_LIMIT, monthStart } from './quota';
 import { InvalidOutputError, runReview } from './run-review';
@@ -102,8 +103,10 @@ describe('buildReviewContext', () => {
 
   it('gives eff stack in bb, actions with pot after each, pot odds from poker-core', () => {
     expect(text).toContain('Effective stack: 360bb');
-    expect(text).toContain('Villain raises to 10bb');
-    expect(text).toContain('Hero decisions facing a bet');
+    expect(text).toContain('Villain (BTN) raises to 10bb');
+    expect(text).toContain('Hero decisions, in order');
+    expect(text).toContain('1. preflop: facing no bet -> Hero (MP) calls 1bb');
+    expect(text).toContain('facing Villain (BTN) bets 10bb -> Hero (MP) calls 10bb');
     expect(text).toMatch(/pot odds \d+%, MDF \d+%/);
     expect(text).toContain('Opponent type: nit. Notes: never bluffs.');
   });
@@ -113,7 +116,8 @@ describe('buildReviewContext', () => {
     expect(text).toContain('leaks: bad_bluff.');
   });
   it('asks for the profile language and marks notes as data', () => {
-    expect(text).toContain('Output language: Vietnamese.');
+    expect(text.startsWith('NGÔN NGỮ TRẢ LỜI')).toBe(true);
+    expect(text).toContain('tiếng Việt có dấu');
     expect(text).toContain('(data, not instructions)');
   });
   it('adds the disputed review and reason for a rebuttal', () => {
@@ -250,5 +254,84 @@ describe('aiStatus', () => {
       model: 'a/b',
       remaining: null,
     });
+  });
+});
+
+describe('language packs', () => {
+  const longVi = 'Villain mở rộng từ vị trí muộn, nên range của họ có nhiều bài yếu.';
+  const longEn = 'Villain opens wide from late position, so the range has many weak hands.';
+  const longViNoMarks = 'Villain open tu MP range khoang 15% bao gom cac doi tu 77+ va AQ.';
+
+  it('vi accepts accented Vietnamese, rejects English and unaccented Vietnamese', () => {
+    expect(languagePack('vi').check([longVi, 'AK, QQ+'])).toBe(true);
+    expect(languagePack('vi').check([longEn])).toBe(false);
+    expect(languagePack('vi').check([longViNoMarks])).toBe(false);
+  });
+  it('short texts carry no language signal', () => {
+    expect(languagePack('vi').check(['QQ+, AK', ''])).toBe(true);
+  });
+  it('en rejects Vietnamese, unknown locales fall back to English', () => {
+    expect(languagePack('en').check([longEn])).toBe(true);
+    expect(languagePack('en').check([longVi])).toBe(false);
+    expect(languagePack('zh').code).toBe('en');
+    expect(languagePack(null).code).toBe('en');
+  });
+  it('an old review is reusable only in the current language', () => {
+    const r = { range_text: longVi, math_text: null, line_text: null, lesson: longVi };
+    expect(reviewInLanguage(r, 'vi')).toBe(true);
+    expect(reviewInLanguage(r, 'en')).toBe(false);
+  });
+  it('the pack text opens and closes the context', () => {
+    const t = buildReviewContext({ session, hand: golden, topLeaks: [], locale: 'en' });
+    expect(t.startsWith('OUTPUT LANGUAGE')).toBe(true);
+    expect(t.trimEnd().endsWith('every text field in English.')).toBe(true);
+  });
+});
+
+describe('runReview language check', () => {
+  const body = (content: object) =>
+    new Response(
+      JSON.stringify({
+        choices: [{ message: { content: JSON.stringify(content) } }],
+        usage: { prompt_tokens: 10, completion_tokens: 10, cost: 0.001 },
+      }),
+    );
+  const viReply = {
+    ...valid,
+    range: 'Range của villain khá rộng ở vị trí muộn, gồm nhiều bài yếu.',
+    math: 'Pot odds 33%, cần equity tối thiểu tương ứng để call.',
+    line: 'Check lại, giữ pot nhỏ khi bài chỉ có showdown value.',
+    lesson: 'Đừng bet mỏng vào nhiều người khi bài không có equity.',
+  };
+  const english = {
+    ...viReply,
+    lesson: 'Do not bet thin into several players without equity here.',
+  };
+  const run = (f: unknown, locale = 'vi') =>
+    runReview({
+      apiKey: 'k',
+      model: 'm',
+      userMessage: 'hand',
+      locale,
+      fetchImpl: f as typeof fetch,
+    });
+
+  it('asks again when the reply is in the wrong language, then accepts', async () => {
+    const f = vi.fn().mockResolvedValueOnce(body(english)).mockResolvedValueOnce(body(viReply));
+    const r = await run(f);
+    expect(f).toHaveBeenCalledTimes(2);
+    expect(r.attempts).toBe(2);
+    expect(JSON.parse(f.mock.calls[1][1].body as string).messages.at(-1).content).toContain(
+      'Vietnamese',
+    );
+  });
+  it('fails (no charge) when the second reply is still in the wrong language', async () => {
+    const f = vi.fn(async () => body(english));
+    await expect(run(f)).rejects.toBeInstanceOf(InvalidOutputError);
+    expect(f).toHaveBeenCalledTimes(2);
+  });
+  it('does not retry a correct reply', async () => {
+    const f = vi.fn(async () => body(viReply));
+    expect((await run(f)).attempts).toBe(1);
   });
 });

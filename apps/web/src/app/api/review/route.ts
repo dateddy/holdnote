@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { buildReviewContext } from '@/lib/ai/context';
+import { languagePack, reviewInLanguage } from '@/lib/ai/languages';
 import { OpenRouterError } from '@/lib/ai/openrouter';
 import { budgetFromEnv, decideAccess, loadUsage } from '@/lib/ai/quota';
 import { InvalidOutputError, runReview } from '@/lib/ai/run-review';
@@ -63,7 +64,14 @@ export async function POST(request: Request) {
   const usage = await loadUsage(admin, userId);
 
   // Unchanged hand, AI review already current: hand it back, no model call, no charge (spec 5.5).
-  if (!rebuttal && current?.source === 'ai' && current.created_at > hand.updated_at) {
+  // It must also be in the language the profile uses now: after a language change, review again.
+  const locale = profile?.locale ?? 'vi';
+  if (
+    !rebuttal &&
+    current?.source === 'ai' &&
+    current.created_at > hand.updated_at &&
+    reviewInLanguage(current, locale)
+  ) {
     const access = decideAccess({ ...usage, budgetUsd: budgetFromEnv() });
     const remaining = access.ok ? access.remaining : 0;
     return NextResponse.json({ review: current, remaining, cached: true });
@@ -107,13 +115,13 @@ export async function POST(request: Request) {
     hand,
     opponent,
     topLeaks,
-    locale: profile?.locale ?? 'en',
+    locale,
     rebuttal: rebuttal && current ? { reason: rebuttal, previous: current } : null,
   });
 
   let run;
   try {
-    run = await runReview({ apiKey, model, userMessage });
+    run = await runReview({ apiKey, model, userMessage, locale });
   } catch (e) {
     if (e instanceof InvalidOutputError) return fail('invalid_output', 502);
     if (e instanceof OpenRouterError) {
@@ -125,7 +133,12 @@ export async function POST(request: Request) {
     throw e;
   }
 
-  const row = toAiReviewRow(run.review, model, session.kind === 'mtt');
+  const row = toAiReviewRow(
+    run.review,
+    model,
+    session.kind === 'mtt',
+    languagePack(locale).missingLabel,
+  );
   const { data: reviewId, error: saveError } = await supabase.rpc('replace_current_review', {
     p_hand_id: handId,
     p_review: row,

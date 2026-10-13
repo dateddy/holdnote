@@ -22,17 +22,19 @@ import {
   type LegacyHand,
 } from '../../../packages/poker-core/test/legacy/loader';
 import { compareReviews, evOfOld, summarize, type Comparison, type Row } from '../src/lib/ai/bench';
+import { languagePack } from '../src/lib/ai/languages';
 import { renderReviewContext } from '../src/lib/ai/context';
 import { OpenRouterError } from '../src/lib/ai/openrouter';
 import { InvalidOutputError, runReview, type ReviewRun } from '../src/lib/ai/run-review';
 import { toAiReviewRow } from '../src/lib/ai/schema';
 
+/** `model@low|medium|high` sets the reasoning effort; default low (what the app uses). */
 const DEFAULT_MODELS = [
   'openai/gpt-6-luna',
-  'qwen/qwen3.8-flash',
-  'deepseek/deepseek-v4-pro',
+  'openai/gpt-6-luna@medium',
   'google/gemini-3.5-flash-lite',
 ];
+const locale = process.env.BENCH_LOCALE ?? 'vi';
 
 /** Fields of the old JSON beyond what the shared loader types. */
 type Old = LegacyHand & {
@@ -116,7 +118,7 @@ function prepare(): Item[] {
           villType || h.villRead ? { player_type: villType, notes: h.villRead ?? null } : null,
         thought: [h.thought, h.question].filter(Boolean).join(' / ') || null,
         topLeaks: [],
-        locale: 'vi',
+        locale,
       }),
       old: { groups: h.rErr, ev: evOfOld(h.rEv), text: h },
     });
@@ -138,12 +140,20 @@ type Result = {
   cmp: Comparison | null;
 };
 
-async function runOne(item: Item, model: string): Promise<Result> {
+async function runOne(item: Item, spec: string): Promise<Result> {
   const t0 = Date.now();
-  const base = { hand: item.id, model, tokensIn: 0, tokensOut: 0, costUsd: 0 };
+  const [model, effort] = spec.split('@');
+  const reasoningEffort = (effort as 'low' | 'medium' | 'high' | undefined) ?? 'low';
+  const base = { hand: item.id, model: spec, tokensIn: 0, tokensOut: 0, costUsd: 0 };
   try {
-    const run: ReviewRun = await runReview({ apiKey: apiKey!, model, userMessage: item.context });
-    const row = toAiReviewRow(run.review, model, false);
+    const run: ReviewRun = await runReview({
+      apiKey: apiKey!,
+      model,
+      userMessage: item.context,
+      locale,
+      reasoningEffort,
+    });
+    const row = toAiReviewRow(run.review, model, false, languagePack(locale).missingLabel);
     return {
       ...base,
       ok: true,
@@ -184,7 +194,9 @@ const money = (n: number) => `$${n.toFixed(4)}`;
 
 function report(items: Item[], results: Result[], spent: number, stoppedEarly: boolean): string {
   const out: string[] = [];
-  out.push(`# Benchmark AI review — ${new Date().toISOString().slice(0, 16).replace('T', ' ')}`);
+  out.push(
+    `# Benchmark AI review (${locale}) — ${new Date().toISOString().slice(0, 16).replace('T', ' ')}`,
+  );
   out.push(
     '',
     `${items.length} hand, ${models.length} model, chi ${money(spent)} (trần ${money(maxUsd)}).`,

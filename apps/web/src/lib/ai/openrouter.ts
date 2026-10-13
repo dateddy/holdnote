@@ -32,6 +32,7 @@ export async function chatJson(opts: {
   model: string;
   messages: ChatMessage[];
   schema: Record<string, unknown>;
+  reasoningEffort?: 'low' | 'medium' | 'high';
   timeoutMs?: number;
   fetchImpl?: typeof fetch;
 }): Promise<ChatResult> {
@@ -51,7 +52,7 @@ export async function chatJson(opts: {
         temperature: 0.3,
         // Reasoning models spend tokens thinking before the JSON: leave room, and keep it short.
         max_tokens: 4000,
-        reasoning: { effort: 'low' },
+        reasoning: { effort: opts.reasoningEffort ?? 'low' },
         usage: { include: true },
         response_format: {
           type: 'json_schema',

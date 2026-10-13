@@ -1,4 +1,5 @@
 import { chatJson, type ChatMessage, type ChatResult } from './openrouter';
+import { languagePack, type LanguagePack } from './languages';
 import { SYSTEM_PROMPT } from './prompt';
 import { aiReviewJsonSchema, aiReviewSchema, type AiReview } from './schema';
 
@@ -20,7 +21,10 @@ export class InvalidOutputError extends Error {
   }
 }
 
-function parse(content: string): { ok: true; value: AiReview } | { ok: false; error: string } {
+function parse(
+  content: string,
+  pack: LanguagePack,
+): { ok: true; value: AiReview } | { ok: false; error: string } {
   let json: unknown;
   try {
     json = JSON.parse(content);
@@ -28,7 +32,14 @@ function parse(content: string): { ok: true; value: AiReview } | { ok: false; er
     return { ok: false, error: 'The reply was not valid JSON.' };
   }
   const r = aiReviewSchema.safeParse(json);
-  if (r.success) return { ok: true, value: r.data };
+  if (r.success) {
+    const v = r.data;
+    // Right shape, wrong language: ask again rather than show it (spec 5.1 retry).
+    if (!pack.check([v.range, v.math, v.line, v.icm, v.lesson])) {
+      return { ok: false, error: pack.fixRequest };
+    }
+    return { ok: true, value: v };
+  }
   return {
     ok: false,
     error: r.error.issues.map((i) => `${i.path.join('.') || '(root)'}: ${i.message}`).join('; '),
@@ -52,8 +63,13 @@ export async function runReview(opts: {
   apiKey: string;
   model: string;
   userMessage: string;
+  /** Profile locale: the reply must be written in this language. */
+  locale?: string;
+  /** Reasoning effort for models that think. Default `low`. */
+  reasoningEffort?: 'low' | 'medium' | 'high';
   fetchImpl?: typeof fetch;
 }): Promise<ReviewRun> {
+  const pack = languagePack(opts.locale);
   const messages: ChatMessage[] = [
     { role: 'system', content: SYSTEM_PROMPT },
     { role: 'user', content: opts.userMessage },
@@ -64,11 +80,12 @@ export async function runReview(opts: {
       model: opts.model,
       messages: m,
       schema: aiReviewJsonSchema as Record<string, unknown>,
+      reasoningEffort: opts.reasoningEffort,
       fetchImpl: opts.fetchImpl,
     });
 
   const first = await call(messages);
-  const a = parse(first.content);
+  const a = parse(first.content, pack);
   if (a.ok) return { review: a.value, attempts: 1, ...usage([first]) };
 
   const second = await call([
@@ -79,7 +96,7 @@ export async function runReview(opts: {
       content: `Your reply did not match the schema: ${a.error}\nReturn ONLY corrected JSON.`,
     },
   ]);
-  const b = parse(second.content);
+  const b = parse(second.content, pack);
   if (b.ok) return { review: b.value, attempts: 2, ...usage([first, second]) };
   throw new InvalidOutputError(b.error, usage([first, second]));
 }
