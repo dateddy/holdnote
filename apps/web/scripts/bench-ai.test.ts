@@ -21,7 +21,16 @@ import {
   toCase,
   type LegacyHand,
 } from '../../../packages/poker-core/test/legacy/loader';
-import { compareReviews, evOfOld, summarize, type Comparison, type Row } from '../src/lib/ai/bench';
+import {
+  compareReviews,
+  evOfOld,
+  groupRecall,
+  inSplit,
+  styleStats,
+  summarize,
+  type Comparison,
+  type Row,
+} from '../src/lib/ai/bench';
 import { languagePack } from '../src/lib/ai/languages';
 import { renderReviewContext } from '../src/lib/ai/context';
 import { OpenRouterError } from '../src/lib/ai/openrouter';
@@ -123,7 +132,9 @@ function prepare(): Item[] {
       old: { groups: h.rErr, ev: evOfOld(h.rEv), text: h },
     });
   }
-  return items.slice(0, limit);
+  // BENCH_SPLIT=tune|test: tune the prompt on one half, measure on the other (default: all).
+  const split = (process.env.BENCH_SPLIT as 'tune' | 'test' | undefined) ?? 'all';
+  return inSplit(items, split).slice(0, limit);
 }
 
 type Result = {
@@ -190,6 +201,8 @@ async function runOne(item: Item, spec: string): Promise<Result> {
   }
 }
 
+const GROUPS = ['Sizing', 'Đọc sai range', 'Cảm xúc', 'Preflop', 'Không lỗi'];
+
 const money = (n: number) => `$${n.toFixed(4)}`;
 
 function report(items: Item[], results: Result[], spent: number, stoppedEarly: boolean): string {
@@ -216,6 +229,32 @@ function report(items: Item[], results: Result[], spent: number, stoppedEarly: b
       `| ${m} | ${s.runs} | ${s.valid} | ${s.validFirstTry} | ${s.groupsExact} | ${s.groupsOverlap} | ${s.errorFlag} | ${s.ev} | ${money(s.costPerHand)} | ${s.seconds.toFixed(1)} |`,
     );
   }
+  const oldById = new Map(items.map((i) => [i.id, i.old.groups]));
+  out.push(
+    '',
+    '## Bắt được lỗi theo nhóm của Đạt (AI có nhóm đó / số hand Đạt gán nhóm đó)',
+    '',
+    `| Model | ${GROUPS.join(' | ')} | Chưa chắc | Hero/Villain mỗi review | Từ trong lesson | Lesson đánh số |`,
+    `|---|${GROUPS.map(() => '---').join('|')}|---|---|---|---|`,
+  );
+  for (const m of models) {
+    const ok = results.filter((r) => r.model === m && r.review);
+    const recall = groupRecall(
+      ok.map((r) => ({ oldGroups: oldById.get(r.hand) ?? [], aiTags: r.review!.error_tags })),
+    );
+    const st = styleStats(
+      ok.map((r) => ({
+        texts: [r.review!.range_text, r.review!.math_text, r.review!.line_text, r.review!.lesson],
+        lesson: r.review!.lesson,
+        ev: r.review!.ev_verdict ?? '',
+      })),
+    );
+    const cells = GROUPS.map((g) => `${recall[g]?.hit ?? 0}/${recall[g]?.n ?? 0}`);
+    out.push(
+      `| ${m} | ${cells.join(' | ')} | ${st.unsure} | ${st.heroVillainPerReview.toFixed(1)} | ${st.lessonWords.toFixed(0)} | ${st.numberedLessons} |`,
+    );
+  }
+
   const failed = results.filter((r) => !r.ok);
   if (failed.length) {
     const byKind = new Map<string, number>();

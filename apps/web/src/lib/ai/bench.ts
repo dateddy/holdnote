@@ -94,3 +94,45 @@ export function summarize(rows: readonly Row[]) {
     seconds: rows.length ? rows.reduce((n, r) => n + r.ms, 0) / rows.length / 1000 : 0,
   };
 }
+
+/** Deterministic halves for tuning the prompt on one and measuring on the other. */
+export function inSplit<T>(items: readonly T[], split: 'tune' | 'test' | 'all'): T[] {
+  if (split === 'all') return [...items];
+  return items.filter((_, i) => (i % 2 === 0) === (split === 'tune'));
+}
+
+/** Per old error group: in how many hands the old review has it, and how often the AI found it. */
+export function groupRecall(
+  rows: readonly { oldGroups: readonly string[]; aiTags: readonly string[] }[],
+): Record<string, { n: number; hit: number }> {
+  const out: Record<string, { n: number; hit: number }> = {};
+  for (const r of rows) {
+    const ai = groupsOfTags(r.aiTags);
+    for (const g of new Set(r.oldGroups)) {
+      out[g] ??= { n: 0, hit: 0 };
+      out[g].n++;
+      if (ai.includes(g)) out[g].hit++;
+    }
+  }
+  return out;
+}
+
+const wordCount = (s: string | null | undefined) =>
+  (s ?? '').trim().split(/\s+/).filter(Boolean).length;
+
+/** Style of the AI texts: "Hero/Villain" instead of "mình/đối thủ", and how long the lessons are. */
+export function styleStats(
+  reviews: readonly { texts: readonly (string | null)[]; lesson: string | null; ev: string }[],
+) {
+  const n = reviews.length;
+  const heroVillain = reviews.reduce(
+    (c, r) => c + (r.texts.join(' ').match(/\b(Hero|Villain)\b/g)?.length ?? 0),
+    0,
+  );
+  return {
+    heroVillainPerReview: n ? (heroVillain || 0) / n : 0,
+    lessonWords: n ? reviews.reduce((c, r) => c + wordCount(r.lesson), 0) / n : 0,
+    unsure: pct(reviews.filter((r) => r.ev === 'unsure').length, n),
+    numberedLessons: pct(reviews.filter((r) => /(^|\s)1\.\s/.test(r.lesson ?? '')).length, n),
+  };
+}

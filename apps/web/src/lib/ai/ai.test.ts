@@ -335,3 +335,30 @@ describe('runReview language check', () => {
     expect((await run(f)).attempts).toBe(1);
   });
 });
+
+describe('sizingNote', () => {
+  const text = buildReviewContext({ session, hand: golden, topLeaks: [], locale: 'vi' });
+  it('shows hero bet size as a % of pot and raise multiples', () => {
+    // river: Hero bets 100bb into an 81.5bb pot.
+    expect(text).toMatch(/Hero \(MP\) bets 100bb; 123% of pot/);
+  });
+  it('says how many limpers a first preflop raise isolates', () => {
+    const hand = {
+      ...golden,
+      hero_pos: 'CO',
+      villain_pos: 'BTN',
+      actions: [
+        { street: 'preflop', actor: 'villain', pos: 'BTN', act: 'call', amount: 50 },
+        { street: 'preflop', actor: 'other', who: 'V1', act: 'call', amount: 50 },
+        { street: 'preflop', actor: 'hero', pos: 'CO', act: 'raise', amount: 100 },
+        { street: 'preflop', actor: 'villain', pos: 'BTN', act: 'fold' },
+        { street: 'preflop', actor: 'other', who: 'V1', act: 'fold' },
+      ],
+      board: [],
+      result: 0,
+      outcome: 'win',
+    };
+    const t = buildReviewContext({ session, hand, topLeaks: [], locale: 'en' });
+    expect(t).toContain('isolates 2 limpers');
+  });
+});

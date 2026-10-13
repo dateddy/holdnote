@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { compareReviews, evOfOld, groupOfTag, groupsOfTags, summarize } from './bench';
+import {
+  compareReviews,
+  evOfOld,
+  groupOfTag,
+  groupRecall,
+  groupsOfTags,
+  inSplit,
+  styleStats,
+  summarize,
+} from './bench';
 
 describe('bench helpers', () => {
   it('maps the 14 codes onto the old groups', () => {
@@ -55,5 +64,33 @@ describe('bench helpers', () => {
     expect(s).toMatchObject({ runs: 3, valid: '67%', validFirstTry: '33%', ev: '50%' });
     expect(s.costPerHand).toBeCloseTo(0.01 / 3);
     expect(s.seconds).toBeCloseTo(4);
+  });
+});
+
+describe('tune/test split and recall', () => {
+  it('splits into two disjoint halves', () => {
+    const all = [0, 1, 2, 3, 4];
+    expect(inSplit(all, 'tune')).toEqual([0, 2, 4]);
+    expect(inSplit(all, 'test')).toEqual([1, 3]);
+    expect(inSplit(all, 'all')).toEqual(all);
+  });
+  it('counts how often each old group is found', () => {
+    const r = groupRecall([
+      { oldGroups: ['Sizing', 'Preflop'], aiTags: ['sizing_too_small'] },
+      { oldGroups: ['Sizing'], aiTags: ['none'] },
+    ]);
+    expect(r).toEqual({ Sizing: { n: 2, hit: 1 }, Preflop: { n: 1, hit: 0 } });
+  });
+  it('measures Hero/Villain use, lesson length, numbering and unsure', () => {
+    const s = styleStats([
+      { texts: ['Hero bets, Villain calls'], lesson: '1. a b 2. c d', ev: 'unsure' },
+      { texts: ['mình bet'], lesson: 'one two three four', ev: 'correct' },
+    ]);
+    expect(s).toMatchObject({
+      heroVillainPerReview: 1,
+      lessonWords: 5,
+      unsure: '50%',
+      numberedLessons: '50%',
+    });
   });
 });

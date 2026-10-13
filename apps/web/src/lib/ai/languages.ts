@@ -28,11 +28,16 @@ const long = (texts: readonly string[]) => texts.filter((t) => t.trim().length >
 const vi: LanguagePack = {
   code: 'vi',
   instruction: [
-    'NGÔN NGỮ TRẢ LỜI: Viết toàn bộ các ô chữ bằng tiếng Việt có dấu đầy đủ.',
-    'Không viết tiếng Anh, không viết tiếng Việt không dấu. Giữ thuật ngữ poker tiếng Anh như c-bet, 3-bet, SPR, range.',
-    'Ví dụ một ô "lesson": "Gặp nit 3-bet ở stack 25bb, fold AJo là đúng; range của họ đè bài mình."',
+    'NGÔN NGỮ TRẢ LỜI: Viết toàn bộ các ô chữ bằng tiếng Việt có dấu đầy đủ, giọng của một người chơi giỏi nói với bạn bè: ngắn, cụ thể, có số.',
+    'Cách gọi: người chơi là "mình" (không viết "Hero"), người đối đầu là "đối thủ" (không viết "Villain"), nói với người học là "bạn".',
+    'Giữ nguyên tiếng Anh các thuật ngữ poker: pair, two pair, set, straight, flush, full house, top pair, overpair, overcard, kicker, draw, gutshot, outs, combo, broadway, suited connector, check, check back, bet, call, raise, fold, c-bet, 3-bet, squeeze, iso, limp, shove, stab, donk, semi-bluff, bluff, value, fold equity, equity, range, pot odds, SPR, EV, preflop, flop, turn, river, board.',
+    'Cụm tiếng Việt nên dùng: bắt bluff, bỏ cuộc, cướp blind, board ướt, board khô, giữ pot nhỏ, đọc range, đối thủ chặt, đối thủ loose.',
+    'Không viết câu đệm kiểu "bao gồm các bài", "là chính xác", "là hợp lý để", "là tiêu chuẩn". Đi thẳng vào kết luận và lý do.',
+    'Ô "lesson": 2 đến 4 ý đánh số, mỗi ý là một quy tắc dùng lại được, có số cụ thể. Ví dụ:',
+    '"1. Iso người limp: 3bb + 1bb mỗi limper; min-raise không iso được ai. 2. Pot 3 người, trúng pair thứ ba chưa đủ để call. 3. Dưới 15bb chỉ shove hoặc fold."',
   ].join('\n'),
-  reminder: 'Nhắc lại: mọi ô chữ viết bằng tiếng Việt có dấu.',
+  reminder:
+    'Nhắc lại: mọi ô chữ viết bằng tiếng Việt có dấu; gọi "mình" và "đối thủ", không viết Hero/Villain; lesson là 2-4 ý đánh số.',
   fixRequest:
     'Some text fields were not in Vietnamese with full diacritics. Rewrite every text field in Vietnamese with diacritics (tiếng Việt có dấu). Keep the same judgement.',
   missingLabel: 'Thiếu',

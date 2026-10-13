@@ -4,6 +4,7 @@ import {
   potOddsAtDecisions,
   toBb,
   type Action,
+  type ActionStep,
   type EffStack,
   type HandInput,
 } from 'poker-core';
@@ -83,6 +84,30 @@ const clean = (s: string | null | undefined, max = 400) =>
   (s ?? '').replace(/\s+/g, ' ').trim().slice(0, max);
 
 const fmt = (n: number) => String(Math.round(n * 100) / 100);
+
+/**
+ * How big a Hero bet or raise is, so the model can check it against the sizing reference.
+ * A bet is a % of the pot before it; a raise is a multiple of the bet it faces; the first
+ * preflop raise also says how many limpers it isolates.
+ */
+export function sizingNote(steps: readonly ActionStep[], step: ActionStep): string {
+  const { action } = step;
+  if (action.amount == null) return '';
+  if (action.act === 'bet' && step.potBefore > 0) {
+    return `; ${Math.round((action.amount / step.potBefore) * 100)}% of pot`;
+  }
+  if (action.act === 'raise' && step.level > 0) {
+    const earlier = steps.filter((s) => s.index < step.index && s.action.street === action.street);
+    const firstPreflopRaise =
+      action.street === 'preflop' && !earlier.some((s) => s.action.act === 'raise');
+    if (firstPreflopRaise) {
+      const limpers = earlier.filter((s) => s.action.act === 'call').length;
+      return limpers > 0 ? `; isolates ${limpers} limper${limpers > 1 ? 's' : ''}` : '';
+    }
+    return `; ${Math.round((action.amount / step.level) * 10) / 10}x the bet it faces`;
+  }
+  return '';
+}
 
 /** The user message for one hand, from database rows. */
 export function buildReviewContext(input: ReviewContextInput): string {
@@ -200,7 +225,7 @@ export function renderReviewContext(f: ReviewFacts): string {
             }`
           : '';
         lines.push(
-          `${i + 1}. ${s.action.street}: facing ${faced ? describe(faced.action) : 'no bet'} -> ${describe(s.action)}${price}`,
+          `${i + 1}. ${s.action.street}: facing ${faced ? describe(faced.action) : 'no bet'} -> ${describe(s.action)}${sizingNote(steps, s)}${price}`,
         );
       });
     }
