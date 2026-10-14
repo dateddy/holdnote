@@ -23,3 +23,21 @@ export { computeEff, computeSpr, type EffStack, type StreetSpr } from './engine/
 export { potOddsAtDecisions, type Decision } from './engine/odds';
 export { previewNext, suggestAmount, type NextSpot, type SizedAct } from './engine/sizing';
 export { formatShorthand } from './shorthand/format';
+export {
+  LEAK_WINDOW,
+  bbPerHour,
+  cumulativeSeries,
+  disciplineStats,
+  leakTable,
+  mttStats,
+  sessionResult,
+  stopLossBreached,
+  type Discipline,
+  type LeakLine,
+  type LeakRow,
+  type MttGroup,
+  type SeriesPoint,
+  type SessionResult,
+  type StatsMtt,
+  type StatsSession,
+} from './stats';
