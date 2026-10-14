@@ -1,4 +1,5 @@
 import { getLocale, getTranslations } from 'next-intl/server';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { toBb } from 'poker-core';
 import { formatMoney } from '@/lib/sessions/format';
@@ -80,6 +81,12 @@ export default async function BeforeSessionPage({ params }: PageProps<'/sessions
           ) : (
             <p className="text-sm opacity-70">{t('noOpponents')}</p>
           )}
+          <Link
+            href={`/opponents/new?venue=${encodeURIComponent(venue)}`}
+            className="text-sm underline underline-offset-4"
+          >
+            {t('addOpponent')}
+          </Link>
         </section>
       )}
 

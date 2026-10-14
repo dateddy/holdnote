@@ -31,7 +31,7 @@ Mỗi task cỡ một phiên làm việc. Làm theo thứ tự trừ khi chủ d
 - [x] 4.1 Tổng kết phiên + AI tổng kết.
 - [x] 4.2 Bảng leak + xu hướng.
 - [x] 4.3 Biểu đồ kết quả, thống kê MTT, kỷ luật.
-- [ ] 4.4 Đối thủ, luật của bạn, trang chủ.
+- [x] 4.4 Đối thủ, luật của bạn, trang chủ.
 
 ## Giai đoạn 5 — Beta
 - [ ] 5.1 Onboarding 3 bước + hand mẫu.

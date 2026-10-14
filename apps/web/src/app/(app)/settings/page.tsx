@@ -23,6 +23,15 @@ export default async function SettingsPage() {
         </Link>
       </header>
 
+      <nav className="flex gap-4 text-sm">
+        <Link href="/rules" className="underline underline-offset-4">
+          {t('rulesLink')}
+        </Link>
+        <Link href="/opponents" className="underline underline-offset-4">
+          {t('opponentsLink')}
+        </Link>
+      </nav>
+
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-semibold">{t('aiTitle')}</h2>
         {status?.plan === 'free' && (

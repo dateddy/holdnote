@@ -1,38 +1,267 @@
-import { getTranslations } from 'next-intl/server';
+import { getLocale, getTranslations } from 'next-intl/server';
 import Link from 'next/link';
+import { leakTable, roundMoney, sessionResult, type LeakRow } from 'poker-core';
 import { InstallHint } from '@/components/pwa/install-hint';
 import { LocaleSwitcher } from '@/i18n/locale-switcher';
+import { loadUsage } from '@/lib/ai/quota';
+import { aiStatus } from '@/lib/ai/status';
+import { topLeaks } from '@/lib/home/home';
+import { ERROR_TAGS } from '@/lib/review/review';
+import { isOneOf } from '@/lib/sessions/form';
+import { formatMoney } from '@/lib/sessions/format';
+import { STATS_COLUMNS, toStatsSession } from '@/lib/sessions/summary';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 
-// Temporary home until the real one (task 4.4).
+const BIG =
+  'flex h-14 items-center justify-center rounded-md bg-foreground text-lg font-medium text-background';
+const CARD = 'space-y-2 rounded-md border border-current/20 p-4';
+
+/** Home (spec 3.3): the open session or a start button, then leaks, rules and what is left to do. */
 export default async function Home() {
   const supabase = await createClient();
-  const { data: profile } = await supabase.from('profiles').select('display_name').single();
-  const t = await getTranslations();
+  const { data: claims } = await supabase.auth.getClaims();
+  const userId = claims?.claims.sub;
+
+  const [
+    { data: profile },
+    { data: open },
+    { data: recentRows },
+    { data: allSessions },
+    { data: leaks },
+    { data: rules },
+    { count: handCount },
+    { count: reviewedCount },
+  ] = await Promise.all([
+    supabase.from('profiles').select('display_name').single(),
+    // Open = seated and not ended (DEC-028); a session not seated yet still waits on Pre-session.
+    supabase
+      .from('sessions')
+      .select('id, kind, venue, stake_label, start_at, bb, currency')
+      .is('end_at', null)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from('sessions')
+      .select(STATS_COLUMNS)
+      .order('date', { ascending: false })
+      .order('created_at', { ascending: false })
+      .limit(5),
+    supabase.from('sessions').select('id, date'),
+    supabase.from('leak_stats').select('session_id, tag, hand_count'),
+    supabase.from('user_rules').select('id, text').eq('active', true).order('sort').limit(5),
+    supabase.from('hands').select('id', { count: 'exact', head: true }),
+    supabase
+      .from('reviews')
+      .select('id', { count: 'exact', head: true })
+      .eq('is_current', true)
+      .eq('accepted', true),
+  ]);
+
+  const { data: openHands } = open
+    ? await supabase.from('hands').select('result, level_bb').eq('session_id', open.id)
+    : { data: null };
+  const status = userId ? aiStatus(await loadUsage(createAdminClient(), userId)) : null;
+
+  const leakRows: LeakRow[] = (leaks ?? []).flatMap((l) =>
+    l.session_id && l.tag
+      ? [{ sessionId: l.session_id, tag: l.tag, handCount: l.hand_count ?? 0 }]
+      : [],
+  );
+  const top = topLeaks(leakTable(leakRows, allSessions ?? [])).filter((l) =>
+    isOneOf(ERROR_TAGS, l.tag),
+  );
+  const unreviewed = Math.max(0, (handCount ?? 0) - (reviewedCount ?? 0));
+
+  const [t, tCommon, tReview, tSessions, locale] = await Promise.all([
+    getTranslations('home'),
+    getTranslations('common'),
+    getTranslations('review'),
+    getTranslations('sessions'),
+    getLocale(),
+  ]);
+  const num = (n: number) =>
+    new Intl.NumberFormat(locale, { maximumFractionDigits: 2, signDisplay: 'exceptZero' }).format(
+      n,
+    );
+
+  let openResult: { money: number; bb: number } | null = null;
+  if (open && openHands) {
+    let money = 0;
+    let bb = 0;
+    for (const h of openHands) {
+      if (h.result == null) continue;
+      money += h.result;
+      const handBb = h.level_bb ?? open.bb;
+      if (handBb) bb += h.result / handBb;
+    }
+    openResult = { money: roundMoney(money), bb: roundMoney(bb) };
+  }
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 p-6">
       <header className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-semibold">{t('common.appName')}</h1>
+        <h1 className="text-2xl font-semibold">{tCommon('appName')}</h1>
         <form action="/auth/signout" method="post">
           <button type="submit" className="text-sm underline underline-offset-4">
-            {t('common.signOut')}
+            {tCommon('signOut')}
           </button>
         </form>
       </header>
-      <p>{t('home.greeting', { name: profile?.display_name ?? '' })}</p>
-      <Link
-        href="/sessions/new"
-        className="flex h-14 items-center justify-center rounded-md bg-foreground text-lg font-medium text-background"
-      >
-        {t('home.startSession')}
-      </Link>
-      <Link href="/stats" className="text-sm underline underline-offset-4">
-        {t('home.stats')}
-      </Link>
-      <Link href="/settings" className="text-sm underline underline-offset-4">
-        {t('home.settings')}
-      </Link>
+      <p>{t('greeting', { name: profile?.display_name ?? '' })}</p>
+
+      {open ? (
+        <section className={CARD}>
+          <Link href={`/sessions/${open.id}`} className="block space-y-1">
+            <p className="font-medium">
+              {[tSessions(open.kind === 'mtt' ? 'mtt' : 'cash'), open.venue, open.stake_label]
+                .filter(Boolean)
+                .join(' · ')}
+            </p>
+            <p className="text-sm opacity-70">
+              {open.start_at
+                ? tSessions('startedAt', {
+                    time: new Date(open.start_at).toLocaleTimeString(locale, {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    }),
+                  })
+                : tSessions('notStarted')}
+              {' · '}
+              {t('handsCount', { n: openHands?.length ?? 0 })}
+              {openResult && openHands?.length
+                ? ` · ${
+                    open.kind === 'mtt'
+                      ? `${num(openResult.bb)} bb`
+                      : `${num(openResult.bb)} bb (${formatMoney(openResult.money, open.currency, locale)})`
+                  }`
+                : ''}
+            </p>
+          </Link>
+          <Link
+            href={open.start_at ? `/sessions/${open.id}/record` : `/sessions/${open.id}/before`}
+            className={BIG}
+          >
+            {open.start_at ? t('recordHand') : tSessions('goBefore')}
+          </Link>
+        </section>
+      ) : (
+        <Link href="/sessions/new" className={BIG}>
+          {t('startSession')}
+        </Link>
+      )}
+
+      <dl className="grid grid-cols-2 gap-2 text-center text-sm">
+        <div className="rounded-md border border-current/20 p-3">
+          <dt className="opacity-70">{t('unreviewed')}</dt>
+          <dd className="text-xl font-medium">{unreviewed}</dd>
+        </div>
+        <div className="rounded-md border border-current/20 p-3">
+          <dt className="opacity-70">{t('aiLeft')}</dt>
+          <dd className="text-xl font-medium">
+            {status?.plan === 'byok'
+              ? t('aiOwnKey')
+              : status?.budgetLocked
+                ? t('aiPaused')
+                : (status?.remaining ?? '–')}
+          </dd>
+        </div>
+      </dl>
+
+      <section className="space-y-2">
+        <div className="flex items-center justify-between">
+          <h2 className="font-medium">{t('leaksTitle')}</h2>
+          <Link href="/stats" className="text-sm underline underline-offset-4">
+            {t('stats')}
+          </Link>
+        </div>
+        {top.length === 0 ? (
+          <p className="text-sm opacity-70">{t('leaksNone')}</p>
+        ) : (
+          <ol className="list-decimal space-y-1 pl-5">
+            {top.map((l) => (
+              <li key={l.tag}>
+                {tReview(`tag_${l.tag}` as 'tag_tilt')}{' '}
+                <span className="text-sm opacity-70">
+                  {t('leakRecent', { n: l.trend.filter(Boolean).length, of: l.trend.length })}
+                </span>
+              </li>
+            ))}
+          </ol>
+        )}
+      </section>
+
+      <section className="space-y-2">
+        <div className="flex items-center justify-between">
+          <h2 className="font-medium">{t('rulesTitle')}</h2>
+          <Link href="/rules" className="text-sm underline underline-offset-4">
+            {t('editRules')}
+          </Link>
+        </div>
+        {rules?.length ? (
+          <ol className="list-decimal space-y-1 pl-5">
+            {rules.map((r) => (
+              <li key={r.id}>{r.text}</li>
+            ))}
+          </ol>
+        ) : (
+          <p className="text-sm opacity-70">{t('rulesNone')}</p>
+        )}
+      </section>
+
+      <section className="space-y-2">
+        <h2 className="font-medium">{t('recentTitle')}</h2>
+        {!recentRows?.length ? (
+          <p className="text-sm opacity-70">{t('recentNone')}</p>
+        ) : (
+          <ul className="divide-y divide-current/10 rounded-md border border-current/20">
+            {recentRows.map((row) => {
+              const s = toStatsSession(row);
+              const r = sessionResult(s);
+              return (
+                <li key={s.id}>
+                  <Link
+                    href={`/sessions/${s.id}`}
+                    className="flex items-center justify-between gap-2 p-3"
+                  >
+                    <span className="flex flex-col">
+                      <span>
+                        {[tSessions(s.kind), s.venue, s.stakeLabel].filter(Boolean).join(' · ')}
+                      </span>
+                      <span className="text-sm opacity-70">{s.date}</span>
+                    </span>
+                    <span className="text-sm tabular-nums">
+                      {!s.endAt
+                        ? t('inProgress')
+                        : r
+                          ? r.bb != null
+                            ? `${num(r.bb)} bb`
+                            : formatMoney(r.money, s.currency, locale)
+                          : '–'}
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
+
+      <nav className="flex flex-wrap gap-x-4 gap-y-2 text-sm">
+        <Link href="/stats" className="underline underline-offset-4">
+          {t('stats')}
+        </Link>
+        <Link href="/opponents" className="underline underline-offset-4">
+          {t('opponents')}
+        </Link>
+        <Link href="/rules" className="underline underline-offset-4">
+          {t('rulesTitle')}
+        </Link>
+        <Link href="/settings" className="underline underline-offset-4">
+          {t('settings')}
+        </Link>
+      </nav>
       <InstallHint />
       <LocaleSwitcher />
     </main>

@@ -21,7 +21,23 @@
     "greeting": "Hi {name}",
     "startSession": "Start a session",
     "settings": "Settings",
-    "stats": "Stats and leaks"
+    "stats": "Stats and leaks",
+    "recordHand": "Record hand",
+    "handsCount": "{n} hands",
+    "unreviewed": "Hands not reviewed",
+    "aiLeft": "AI reviews left",
+    "aiOwnKey": "Own key",
+    "aiPaused": "Paused",
+    "leaksTitle": "Your top leaks",
+    "leaksNone": "No leaks yet. Review hands to find them.",
+    "leakRecent": "{n}/{of} recent sessions",
+    "rulesTitle": "Your rules",
+    "rulesNone": "No rules yet. Add them in a session summary or on the rules page.",
+    "editRules": "Edit",
+    "recentTitle": "Recent sessions",
+    "recentNone": "No sessions yet.",
+    "inProgress": "In progress",
+    "opponents": "Opponents"
   },
   "sessions": {
     "newTitle": "New session",
@@ -81,7 +97,8 @@
     "title": "{kind} session",
     "recordHand": "Record hand",
     "endSession": "End session",
-    "viewSummary": "Session summary"
+    "viewSummary": "Session summary",
+    "addOpponent": "Add an opponent"
   },
   "hand": {
     "screenTitle": "Record hand",
@@ -258,7 +275,9 @@
     "error_offline": "Cannot connect. Check your network and try again.",
     "error_unauthorized": "Your session expired. Sign in again.",
     "error_server_error": "Server error. Try again later.",
-    "summaryRemaining": "{remaining}/{limit} session summaries left this month."
+    "summaryRemaining": "{remaining}/{limit} session summaries left this month.",
+    "rulesLink": "Your rules",
+    "opponentsLink": "Opponents"
   },
   "sync": {
     "pending": "{count} hand(s) waiting to sync (saved on this device).",
@@ -359,5 +378,51 @@
     "disciplineSessions": "Sessions",
     "stopLossBreaches": "Went past the stop-loss",
     "tiltSessions": "Played while tilted"
+  },
+  "opponents": {
+    "title": "Opponents",
+    "home": "Home",
+    "back": "Back",
+    "add": "Add an opponent",
+    "newTitle": "New opponent",
+    "none": "No opponents yet. Add players you meet often, with a note on how they play.",
+    "name": "Name or description",
+    "nameHint": "A name or what you recognise them by, e.g. \"Red cap, seat 3\".",
+    "playerType": "Player type",
+    "venue": "Usual venue / site",
+    "venueHint": "Same spelling as your sessions, so they show up when you record hands there.",
+    "notes": "Notes",
+    "save": "Save",
+    "saving": "Saving…",
+    "saveFailed": "Could not save. Try again.",
+    "delete": "Delete opponent",
+    "deleteHint": "Hands with this opponent are kept; only the link is removed.",
+    "handsTitle": "Hands against them ({n})",
+    "handsNone": "No hands linked yet. Pick the name when you record a hand.",
+    "error_required": "Required",
+    "error_invalid": "Invalid value",
+    "error_tooLong": "Too long",
+    "type_nit": "Nit (very tight)",
+    "type_tag": "TAG (tight-aggressive)",
+    "type_lag": "LAG (loose-aggressive)",
+    "type_station": "Calling station",
+    "type_maniac": "Maniac",
+    "type_unknown": "Unknown"
+  },
+  "rules": {
+    "title": "Your rules",
+    "home": "Home",
+    "intro": "Active rules are shown before every session. Rules from a session summary land here too.",
+    "placeholder": "New rule, e.g. \"Open 3bb, never min-raise\"",
+    "add": "Add",
+    "none": "No rules yet.",
+    "ruleN": "Rule {n}",
+    "save": "Save",
+    "turnOff": "Turn off",
+    "turnOn": "Turn on",
+    "up": "Move up",
+    "down": "Move down",
+    "delete": "Delete",
+    "fromSession": "From a session summary"
   }
 }
