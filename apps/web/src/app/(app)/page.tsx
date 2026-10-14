@@ -1,5 +1,6 @@
 import { getLocale, getTranslations } from 'next-intl/server';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { leakTable, roundMoney, sessionResult, type LeakRow } from 'poker-core';
 import { InstallHint } from '@/components/pwa/install-hint';
 import { LocaleSwitcher } from '@/i18n/locale-switcher';
@@ -33,7 +34,7 @@ export default async function Home() {
     { count: handCount },
     { count: reviewedCount },
   ] = await Promise.all([
-    supabase.from('profiles').select('display_name').single(),
+    supabase.from('profiles').select('display_name, onboarded_at').single(),
     // Open = seated and not ended (DEC-028); a session not seated yet still waits on Pre-session.
     supabase
       .from('sessions')
@@ -58,6 +59,9 @@ export default async function Home() {
       .eq('is_current', true)
       .eq('accepted', true),
   ]);
+
+  // New accounts go through onboarding once; finishing or skipping sets onboarded_at (spec 3.2).
+  if (profile && !profile.onboarded_at) redirect('/onboarding');
 
   const { data: openHands } = open
     ? await supabase.from('hands').select('result, level_bb').eq('session_id', open.id)

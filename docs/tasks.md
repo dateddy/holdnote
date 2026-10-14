@@ -34,7 +34,7 @@ Mỗi task cỡ một phiên làm việc. Làm theo thứ tự trừ khi chủ d
 - [x] 4.4 Đối thủ, luật của bạn, trang chủ.
 
 ## Giai đoạn 5 — Beta
-- [ ] 5.1 Onboarding 3 bước + hand mẫu.
+- [x] 5.1 Onboarding 3 bước + hand mẫu.
 - [ ] 5.2 Script migrate `legacy/data` → tài khoản chủ dự án.
 - [ ] 5.3 Hoàn thiện bản tiếng Anh, cài đặt, xuất/xóa dữ liệu.
 - [ ] 5.4 Deploy Vercel + domain holdnote.app.

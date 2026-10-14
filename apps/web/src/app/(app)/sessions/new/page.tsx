@@ -1,27 +1,39 @@
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
-import { isOneOf, KINDS, PREFILL_COLUMNS, prefillFrom } from '@/lib/sessions/form';
+import { isOneOf, KINDS, MODES, PREFILL_COLUMNS, prefillFrom } from '@/lib/sessions/form';
 import { createClient } from '@/lib/supabase/server';
 import { SessionForm } from './session-form';
 
 export default async function NewSessionPage({ searchParams }: PageProps<'/sessions/new'>) {
   const params = await searchParams;
-  const kind = isOneOf(KINDS, params.kind) ? params.kind : 'cash';
-
   const supabase = await createClient();
-  const [{ data: profile }, { data: previous }] = await Promise.all([
-    supabase.from('profiles').select('currency').single(),
-    // Last session of the same kind pre-fills the form (spec 3.4).
-    supabase
-      .from('sessions')
-      .select(PREFILL_COLUMNS)
-      .eq('kind', kind)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-  ]);
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('currency, play_mode, play_kind')
+    .single();
+  // Default kind: what the player said they mostly play in onboarding (DEC-042).
+  const kind = isOneOf(KINDS, params.kind)
+    ? params.kind
+    : isOneOf(KINDS, profile?.play_kind)
+      ? profile.play_kind
+      : 'cash';
 
-  const initial = { ...prefillFrom(previous, profile?.currency ?? 'VND'), kind };
+  // Last session of the same kind pre-fills the form (spec 3.4).
+  const { data: previous } = await supabase
+    .from('sessions')
+    .select(PREFILL_COLUMNS)
+    .eq('kind', kind)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const base = prefillFrom(previous, profile?.currency ?? 'VND');
+  const initial = {
+    ...base,
+    kind,
+    // No earlier session to copy: use the onboarding answer for live/online.
+    ...(!previous && isOneOf(MODES, profile?.play_mode) && { mode: profile.play_mode }),
+  };
   const t = await getTranslations('sessions');
 
   return (

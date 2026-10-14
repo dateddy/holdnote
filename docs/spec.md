@@ -106,14 +106,14 @@ Postgres trên Supabase, 8 bảng. Mọi bảng dữ liệu người dùng có `
 
 | Bảng | Trường chính |
 |---|---|
-| `profiles` | `id` (= auth user), `display_name`, `locale`, `currency`, `display_unit` (money/bb), `entry_mode` (buttons/shorthand), `plan` (free/byok/pro), `created_at` |
+| `profiles` | `id` (= auth user), `display_name`, `locale`, `currency`, `display_unit` (money/bb), `entry_mode` (buttons/shorthand), `plan` (free/byok/pro), `onboarded_at` (null = chưa xong onboarding), `play_mode` (live/online), `play_kind` (cash/mtt), `created_at` |
 | `sessions` | `id`, `user_id`, `kind` (cash/mtt), `mode` (live/online), `venue`, `date`, `start_at`, `end_at`, `currency` (đơn vị tiền của phiên, mặc định lấy từ profile), `stake_label`, `sb`, `bb`, `straddle`, `ante_mode` (none/each/bb), `ante`, `seats`, `buyin`, `cashout`, `stop_loss`, `table_read` jsonb, `self_state`, `mtt` jsonb (tên giải, loại, re-entry, level vào, hạng, số người, tiền thưởng, giai đoạn bị loại), `summary` jsonb (điểm, điểm tốt, leak tags, luật phiên sau, nhận xét), `created_at`, `updated_at` |
 | `hands` | `id`, `user_id`, `session_id`, `num`, `hero_cards`, `board` (≤5 lá), `villain_cards`, `hero_pos`, `villain_pos`, `opponent_id`, `actions` jsonb, `raw_line`, `outcome`, `result`, `pot_final`, `hero_stack`, `villain_stack`, `eff_stack`, `level_bb`, `ante_mode` (null = theo phiên), `ante`, `players_dealt` (số người được chia bài hand đó), `stage`, `players_left`, `thought`, `question`, `flagged`, `tags` text[], `missing_data`, `created_at`, `updated_at` |
 | `reviews` | `id`, `user_id`, `hand_id`, `source` (manual/ai), `model`, `range_text`, `math_text`, `line_text`, `icm_text`, `error_tags` text[], `ev_verdict` (correct/mistake/unsure), `lesson`, `accepted`, `is_current`, `created_at` |
 | `opponents` | `id`, `user_id`, `name`, `player_type`, `venue`, `notes`, `updated_at` |
 | `user_rules` | `id`, `user_id`, `text`, `source_session_id`, `active`, `sort` |
-| `ai_usage` | `id`, `user_id`, `kind` (hand_review/rebuttal/session_summary), `model`, `tokens_in`, `tokens_out`, `cost_usd`, `created_at` |
-| `user_api_keys` | `user_id`, `provider`, `vault_secret_id` (uuid trỏ tới secret trong Supabase Vault; key không nằm trong bảng), `created_at`. Client không bao giờ đọc lại key. |
+| `ai_usage` | `id`, `user_id`, `kind` (hand_review/rebuttal/session_summary), `model`, `tokens_in`, `tokens_out`, `cost_usd`, `billed_to` (app/user), `created_at` |
+| `user_api_keys` | `user_id`, `provider`, `model` (null = mặc định), `vault_secret_id` (uuid trỏ tới secret trong Supabase Vault; key không nằm trong bảng), `created_at`. Client không bao giờ đọc lại key. |
 
 Quan hệ: user → nhiều phiên → nhiều hand → nhiều review (chỉ một `is_current = true`). Hand có thể trỏ tới một đối thủ. Xóa phiên thì xóa theo hand và review.
 
@@ -155,29 +155,13 @@ Một lần bấm = một lần gọi model cho một hand, trả JSON theo sche
 Chọn model: benchmark 3–4 model trên ~30 hand đã review kỹ trong `legacy/data`, so độ trùng loại lỗi và EV, tỷ lệ JSON hợp lệ, chi phí/hand, chất lượng tiếng Việt.
 
 ### 5.3 Prompt hệ thống
-```
-You are a poker coach reviewing ONE hand for a student. Judge decisions by expected value, never by the result.
+Bản đầy đủ nằm trong code, là nguồn duy nhất: `apps/web/src/lib/ai/prompt.ts` (lõi tiếng Anh, cố định cho mọi người dùng, cache được) và `apps/web/src/lib/ai/languages.ts` (gói ngôn ngữ). DEC-037.
 
-Context you receive:
-- The hand as an ordered action list with the pot after each action.
-- Pre-computed math (pot odds, MDF, SPR, effective stack in bb). Use these numbers; do not recompute them.
-- Game type ({{game_type}}), stakes, live or online, player count.
-- Opponent type and notes, if any.
-- The student's most frequent leaks: {{top_leaks}}.
+Lõi (tóm tắt): huấn luyện viên review MỘT hand, chấm theo EV, không theo kết quả. Dữ kiện nhận được: hành động có vị trí và pot sau mỗi bước; danh sách quyết định của Hero có % pot của mỗi bet/raise, pot odds, MDF; eff stack bb, SPR; loại game; đối thủ và ghi chú; câu suy nghĩ của người chơi; leak hay gặp.
 
-Rules:
-1. Reconstruct the opponent's likely range street by street from their actions and type.
-2. Evaluate each hero decision that matters. Name the single most important mistake, if any.
-3. Recommend a concrete line with sizes as a fraction of pot.
-4. If this hand repeats one of the student's known leaks, say so explicitly.
-5. Pick error tags ONLY from: {{error_tag_codes}}. Use "none" if the play was fine.
-6. ev_verdict: "correct", "mistake" or "unsure". Use "unsure" when close or info is missing; list what is missing.
-7. For tournaments, fill icm; otherwise leave it empty.
-8. Be direct and short. No praise padding. Each text field max 80 words.
-9. Write every text field in {{output_language}}. Keep standard poker terms in English (c-bet, 3-bet, SPR).
+Quy tắc chính: chỉ dùng dữ kiện đã cho; chấm cả hand từng street (quyết định cuối đúng không làm hand đúng); kiểm size theo bảng chuẩn tham chiếu cho stake thấp (chỉ báo lỗi size khi lệch rõ); nghĩ theo stack bb (≤15bb: shove/fold); so câu suy nghĩ với hành động (misread_range, read_right_act_wrong, tilt); `unsure` khi phụ thuộc read hoặc thiếu thông tin; mã lỗi chỉ lấy trong danh sách cố định; lesson 2–4 ý đánh số, tối đa 100 từ, các ô khác tối đa 80 từ; ngôn ngữ trả lời theo `profiles.locale`.
 
-Return ONLY JSON matching the provided schema.
-```
+Gói ngôn ngữ (đặt ở đầu và cuối user message): hướng dẫn viết bằng chính ngôn ngữ đó, ví dụ mẫu, hàm kiểm tra (sai thì gọi lại 1 lần; sai nữa thì báo lỗi, không trừ lượt). Tiếng Việt: gọi "mình" / "đối thủ" / "bạn", giữ thuật ngữ poker tiếng Anh (pair, two pair, set, straight, flush, check back, c-bet, 3-bet, iso, shove, ...). Ngôn ngữ chưa có gói dùng tiếng Anh.
 
 ### 5.4 Schema output
 ```json
@@ -196,7 +180,7 @@ Return ONLY JSON matching the provided schema.
 ```
 
 ### 5.5 Giữ chi phí thấp
-Một hand mỗi lần; prompt hệ thống + danh sách mã lỗi đứng đầu, cố định (prompt caching); giới hạn 80 từ/trường; hand chưa sửa từ lần review trước → trả review cũ; ngân sách cứng gói miễn phí $20/tháng, vượt thì khóa AI gói miễn phí tới đầu tháng sau.
+Một hand mỗi lần; prompt hệ thống + danh sách mã lỗi đứng đầu, cố định (prompt caching); giới hạn 80 từ/trường (lesson 100 từ); hand chưa sửa từ lần review trước → trả review cũ; ngân sách cứng gói miễn phí $20/tháng, vượt thì khóa AI gói miễn phí tới đầu tháng sau.
 
 ### 5.6 AI tổng kết phiên
 Input: review hiện tại của phiên (rút gọn), kết quả, trạng thái tự khai. Output: điểm gợi ý, 3 điểm tốt, 3 leak theo thiệt hại, tối đa 4 luật phiên sau. Người dùng sửa rồi mới lưu.

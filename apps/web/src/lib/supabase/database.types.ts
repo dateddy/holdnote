@@ -200,7 +200,10 @@ export type Database = {
           entry_mode: string;
           id: string;
           locale: string;
+          onboarded_at: string | null;
           plan: string;
+          play_kind: string | null;
+          play_mode: string | null;
         };
         Insert: {
           created_at?: string;
@@ -210,7 +213,10 @@ export type Database = {
           entry_mode?: string;
           id: string;
           locale?: string;
+          onboarded_at?: string | null;
           plan?: string;
+          play_kind?: string | null;
+          play_mode?: string | null;
         };
         Update: {
           created_at?: string;
@@ -220,7 +226,10 @@ export type Database = {
           entry_mode?: string;
           id?: string;
           locale?: string;
+          onboarded_at?: string | null;
           plan?: string;
+          play_kind?: string | null;
+          play_mode?: string | null;
         };
         Relationships: [];
       };

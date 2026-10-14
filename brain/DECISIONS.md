@@ -240,3 +240,59 @@ Append-only. Không sửa, không xóa mục cũ. Muốn đảo một quyết đ
 - Lý do: Online ante tăng theo level; ante BB luôn bằng BB nên không để người dùng nhập sai.
 - Ai quyết: Đạt
 - Supersedes: DEC-032 (2), phần "ante giữ theo phiên"
+
+## DEC-035 — Cột và hàm cho AI review
+
+- Ngày: 2026-10-05
+- Quyết định: Thêm `ai_usage.billed_to` (`app`/`user`, mặc định `app`) để ngân sách $20 chỉ tính tiền app trả; thêm `user_api_keys.model` (null = model mặc định); hàm Vault `set/get/delete_user_api_key` (security definer, chỉ `service_role`); `replace_current_review` (security invoker, `authenticated`) đổi review hiện tại trong một giao dịch; `ai_app_spend_since` (chỉ `service_role`) cộng chi phí app. Migration `20261005170000` và `20261005171000`.
+- Lý do: Spec 5.5 cần ngân sách cứng chỉ tính phần app trả; spec 5.2 cho người dùng chọn model; Vault không truy cập được từ API.
+- Ai quyết: Đạt
+
+## DEC-036 — Quy ước AI review
+
+- Ngày: 2026-10-05
+- Quyết định: (1) Sửa review AI rồi Lưu thì tạo dòng `manual` mới, bản AI thành lịch sử; chỉ tick "Đã review" thì cập nhật `accepted` trên dòng AI. (2) Hand chưa đổi (review AI tạo sau `hands.updated_at`) thì trả lại review cũ, không trừ lượt. (3) Phản biện tính 1 lượt, chung hạn mức 30/tháng với review. (4) `missing_info` ghép cuối `math_text` ("Missing: …"); `key_mistake_street`, `repeats_known_leak` chỉ trả về client, không lưu. (5) Tháng tính theo UTC. (6) Ngữ cảnh gửi AI dùng bb và không có kết quả thắng/thua. (7) Thêm dependency `zod`. (8) `/api/*` chưa đăng nhập trả 401 JSON.
+- Lý do: Spec 3.7, 5.1, 5.5 chưa nói rõ các điểm này.
+- Ai quyết: Claude Code (chờ Đạt xác nhận)
+
+## DEC-037 — Prompt AI review v2, gói ngôn ngữ, model mặc định
+
+- Ngày: 2026-10-13
+- Quyết định: (1) Model gói miễn phí: `google/gemini-3.5-flash-lite` (đặt qua `OPENROUTER_MODEL`), mức suy luận `low`, `max_tokens` 4000. (2) Prompt lõi tiếng Anh cố định (`lib/ai/prompt.ts`) + gói ngôn ngữ `vi`/`en` (`lib/ai/languages.ts`) đặt ở đầu và cuối user message; sai ngôn ngữ thì gọi lại 1 lần, sai nữa thì báo lỗi, không trừ lượt; đổi ngôn ngữ trong hồ sơ thì review AI cũ không được dùng lại (gọi lại, tính 1 lượt). Ngôn ngữ chưa có gói dùng tiếng Anh. (3) Prompt v2: chấm cả hand từng street, bảng chuẩn size cho stake thấp, nghĩ theo stack bb, so câu suy nghĩ với hành động, lesson 2–4 ý đánh số tối đa 100 từ. (4) Tiếng Việt: gọi "mình"/"đối thủ"/"bạn", giữ thuật ngữ bài tiếng Anh (pair, two pair, flush...). (5) Ngữ cảnh gửi AI thêm vị trí từng hành động, danh sách quyết định của Hero có % pot và số limper. (6) Bản prompt đầy đủ nằm trong code; spec 5.3 chỉ tóm tắt.
+- Lý do: Benchmark 69 hand (legacy). Gemini cũ viết 60% ô bằng tiếng Anh/không dấu; sau khi sửa 0%. Trên 34 hand đo riêng, bắt lỗi Sizing 1/12 → 5/11, Preflop 4/7 → 5/6, nhưng báo "sai" nhầm hand Đạt chấm "Đúng" 1/17 → 10/18 và khớp EV 64% → 45%. Đạt chọn giữ prompt v2.
+- Ai quyết: Đạt
+
+## DEC-038 — Xác nhận DEC-035, DEC-036, DEC-037
+
+- Ngày: 2026-10-13
+- Quyết định: Đạt xác nhận DEC-035 (cột và hàm cho AI review), DEC-036 (quy ước AI review) và DEC-037 (prompt v2, gói ngôn ngữ, model Gemini mặc định). Từ nay coi như đã chốt.
+- Lý do: Đạt duyệt sau báo cáo benchmark và chốt phiên 13/10/2026.
+- Ai quyết: Đạt
+
+## DEC-039 — Hình dạng tổng kết phiên và kết quả MTT
+
+- Ngày: 2026-10-14
+- Quyết định: (1) `sessions.summary` = `{grade: A|B|C|D|null, good: string[≤3], leak_tags: mã lỗi[], rules: string[≤4], notes}`; `leak_tags` phẳng vì view `leak_stats` đọc như vậy; không nhận mã `none`. (2) `sessions.self_state` = `clear|tired|tilt` (kiểm bằng TS, không thêm check SQL). (3) Kết quả MTT nằm trong `sessions.mtt` cạnh thông tin vào giải: `reentries` (số lần đã dùng), `place`, `entries`, `prize`, `bounty`, `bust_stage` (`early|mid|bubble|itm|final_table`). (4) Kết quả: cash = cashout − buyin; MTT = prize + bounty − buyin × (1 + reentries); MTT không có bb. ROI = (nhận về − chi) / chi; ITM = `prize > 0`; vi phạm stop-loss = lỗ > stop-loss (lỗ bằng stop-loss không tính). (5) Lưu tổng kết đặt `end_at = now()` nếu phiên còn mở; luật phiên sau thêm vào `user_rules` (`source_session_id`), sửa lại thì giữ luật trùng chữ, xóa luật bị bỏ, thêm luật mới. (6) AI tổng kết: `POST /api/summary` chỉ trả bản nháp, không lưu; 4 lượt/tháng gói miễn phí, tách khỏi 30 lượt review; JSON hoặc ngôn ngữ sai thì gọi lại 1 lần, vẫn sai thì không trừ lượt; cần ít nhất 1 hand trong phiên. Không đổi schema SQL.
+- Lý do: Spec 3.8, 5.6 và 6 chưa nói rõ các điểm này; không cần migration vì đều là jsonb/text.
+- Ai quyết: Claude Code (chờ Đạt xác nhận)
+
+## DEC-040 — Trang thống kê
+
+- Ngày: 2026-10-14
+- Quyết định: (1) `/stats` một trang: bảng leak, kết quả cộng dồn, giải đấu, kỷ luật. (2) Bảng leak lấy mọi phiên (không lọc), gộp `leak_stats` nguồn review và summary; "5 phiên gần nhất" tính theo `sessions.date`; một phiên có mã lỗi nếu có trong review hiện tại hoặc trong `summary.leak_tags`; "Lặp lại" = có mặt ≥3 trong 5 phiên gần nhất. (3) Biểu đồ: SVG tự vẽ, không thêm thư viện; mặc định cash theo bb (MTT không có bb); chế độ tiền chỉ cộng một loại tiền (DEC-014): chọn tiền tệ, nếu không chọn thì lấy loại có nhiều phiên nhất. (4) Bộ lọc loại/hình thức/địa điểm (không phân biệt hoa thường)/stake/tiền tệ/đơn vị là form GET, không cần JS; bộ lọc áp dụng cho biểu đồ, giải đấu và kỷ luật, không áp dụng cho bảng leak. (5) Phiên chưa có kết quả không vào biểu đồ, hiện số phiên bị bỏ. (6) Kỷ luật: số phiên vượt stop-loss, số phiên `self_state = tilt`. (7) Tính toán nằm trong `poker-core/src/stats`.
+- Lý do: Spec 3.10 và 6 chưa nói rõ các điểm này.
+- Ai quyết: Claude Code (chờ Đạt xác nhận)
+
+## DEC-041 — Xác nhận DEC-039, DEC-040
+
+- Ngày: 2026-10-14
+- Quyết định: Đạt xác nhận DEC-039 (hình dạng tổng kết phiên và kết quả MTT) và DEC-040 (trang thống kê). Từ nay coi như đã chốt.
+- Lý do: Đạt duyệt sau khi xong task 4.1–4.3.
+- Ai quyết: Đạt
+
+## DEC-042 — Onboarding: cột profiles và hand mẫu không lưu
+
+- Ngày: 2026-10-14
+- Quyết định: (1) Thêm `profiles.onboarded_at` (timestamptz, null = chưa xong), `profiles.play_mode` (`live|online`), `profiles.play_kind` (`cash|mtt`), cấp quyền select/update theo cột cho `authenticated`. Migration `20261014120000_profiles_onboarding.sql`. Không điền sẵn cho tài khoản cũ: họ thấy onboarding một lần và bỏ qua được. (2) Trang chủ chuyển sang `/onboarding` khi `onboarded_at` null; bỏ qua hay hoàn tất đều đặt `onboarded_at`. (3) Bước 2 điền sẵn loại phiên (cash/MTT) và live/online cho phiên đầu tiên; có phiên trước thì vẫn lấy theo phiên trước. (4) Bước 3: hand mẫu cố định (cash live 25/50, A♠Q♠ BTN vs BB, thua −11bb, lỗi `call_too_loose`); lời review nằm trong file ngôn ngữ. Ghi lại hand mẫu dùng màn Ghi nhanh ở chế độ luyện tập, không lưu gì, so từng phần (bài, board, vị trí, hành động, kết quả).
+- Lý do: Spec 3.2 cần nhớ trạng thái onboarding qua nhiều máy; hand ghi thử không nên thành dữ liệu rác.
+- Ai quyết: Đạt (thêm cột, không lưu hand thử); chi tiết còn lại Claude Code (chờ Đạt xác nhận)

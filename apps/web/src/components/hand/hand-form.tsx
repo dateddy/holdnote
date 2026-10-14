@@ -44,6 +44,8 @@ type Props = {
   entryMode: 'buttons' | 'shorthand';
   /** Set on the hand detail screen: update this hand instead of adding one. */
   edit?: { handId: string; num: number; initial: HandDraft };
+  /** Onboarding practice (spec 3.2): nothing is saved; the button hands the draft back. */
+  practice?: { label: string; onCheck: (draft: HandDraft) => void };
 };
 
 export function HandForm({
@@ -55,6 +57,7 @@ export function HandForm({
   opponents,
   entryMode,
   edit,
+  practice,
 }: Props) {
   const t = useTranslations('hand');
   const router = useRouter();
@@ -112,6 +115,10 @@ export function HandForm({
 
   async function save() {
     if (locked.current || !canSave(draft) || lineErrors.length > 0) return;
+    if (practice) {
+      practice.onCheck(draft);
+      return;
+    }
     locked.current = true;
     setStatus('saving');
     if (edit) {
@@ -429,7 +436,13 @@ export function HandForm({
         disabled={!canSave(draft) || lineErrors.length > 0 || status === 'saving'}
         className="h-14 rounded-md bg-foreground text-lg font-medium text-background disabled:opacity-40"
       >
-        {status === 'saving' ? t('saving') : edit ? t('saveChanges') : t('save')}
+        {practice
+          ? practice.label
+          : status === 'saving'
+            ? t('saving')
+            : edit
+              ? t('saveChanges')
+              : t('save')}
       </button>
       {lineErrors.length > 0 && <p className="text-sm opacity-70">{t('fixLineToSave')}</p>}
       {!canSave(draft) && <p className="text-sm opacity-70">{t('needCards')}</p>}

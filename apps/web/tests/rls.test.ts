@@ -153,6 +153,22 @@ describe.skipIf(!configured)('RLS', () => {
       expect(plan.error).not.toBeNull();
     });
 
+    it('can set own onboarding fields, within the allowed values', async () => {
+      const now = new Date().toISOString();
+      const ok = await a
+        .from('profiles')
+        .update({ onboarded_at: now, play_mode: 'live', play_kind: 'mtt' })
+        .eq('id', aId)
+        .select('onboarded_at, play_mode, play_kind');
+      expect(ok.error).toBeNull();
+      expect(ok.data?.[0]).toMatchObject({ play_mode: 'live', play_kind: 'mtt' });
+      const bad = await a
+        .from('profiles')
+        .update({ play_kind: 'sng' } as never)
+        .eq('id', aId);
+      expect(bad.error).not.toBeNull();
+    });
+
     it('cannot write ai_usage (quota is server-side)', async () => {
       const ins = await a
         .from('ai_usage')
