@@ -44,7 +44,7 @@ export default async function NewSessionPage({ searchParams }: PageProps<'/sessi
           {(await getTranslations('common'))('back')}
         </Link>
       </header>
-      {previous && <p className="text-sm opacity-70">{t('prefilled')}</p>}
+      {previous && <p className="text-sm text-muted">{t('prefilled')}</p>}
       <SessionForm key={kind} initial={initial} />
     </main>
   );

@@ -10,8 +10,8 @@ export function SampleHand({ withReview }: { withReview: boolean }) {
   const tReview = useTranslations('review');
 
   return (
-    <section className="space-y-3 rounded-md border border-current/20 p-4">
-      <p className="text-sm opacity-70">{t('sampleGame')}</p>
+    <section className="space-y-3 rounded-md border border-line bg-surface p-4">
+      <p className="text-sm text-muted">{t('sampleGame')}</p>
       <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
         <b className="text-xl">
           {SAMPLE.heroCards.map((c) => (
@@ -33,13 +33,13 @@ export function SampleHand({ withReview }: { withReview: boolean }) {
         ))}
       </ol>
       <p className="text-sm">
-        <span className="opacity-70">{t('sampleShorthand')}</span>{' '}
-        <code className="rounded bg-foreground/10 px-1">{SAMPLE.line}</code>
+        <span className="text-muted">{t('sampleShorthand')}</span>{' '}
+        <code className="rounded bg-accent/15 px-1">{SAMPLE.line}</code>
       </p>
       <p className="font-medium">{t('sampleResult')}</p>
 
       {withReview && (
-        <div className="space-y-2 border-t border-current/20 pt-3 text-sm">
+        <div className="space-y-2 border-t border-line bg-surface pt-3 text-sm">
           <p>
             <b>{tReview('range')}:</b> {t('sample_range')}
           </p>

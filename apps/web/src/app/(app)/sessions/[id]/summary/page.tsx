@@ -56,7 +56,7 @@ export default async function SessionSummaryPage({ params }: PageProps<'/session
             {t('back')}
           </Link>
         </div>
-        <p className="text-sm opacity-70">
+        <p className="text-sm text-muted">
           {[tSessions(row.kind === 'mtt' ? 'mtt' : 'cash'), row.venue, row.stake_label]
             .filter(Boolean)
             .join(' · ')}

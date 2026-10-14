@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 const ERRORS = ['key_rejected', 'bad_request', 'offline', 'unauthorized', 'server_error'] as const;
-const INPUT = 'h-12 w-full rounded-md border border-current/20 bg-transparent px-3 text-base';
+import { INPUT_CLASS as INPUT } from '@/components/ui/input';
 
 type Props = { hasKey: boolean; model: string | null };
 
@@ -80,7 +80,7 @@ export function AiKeyForm({ hasKey, model }: Props) {
         </p>
       )}
       {error && (
-        <p role="alert" className="text-sm text-red-700">
+        <p role="alert" className="text-sm text-loss">
           {t(`error_${ERRORS.find((e) => e === error) ?? 'server_error'}`)}
         </p>
       )}
@@ -89,7 +89,7 @@ export function AiKeyForm({ hasKey, model }: Props) {
         type="button"
         disabled={status === 'busy' || apiKey.trim().length < 10}
         onClick={() => send('PUT')}
-        className="h-12 rounded-md bg-foreground text-base font-medium text-background disabled:opacity-40"
+        className="h-12 rounded-md bg-accent text-base font-medium text-accent-foreground disabled:opacity-40"
       >
         {status === 'busy' ? t('saving') : t('saveKey')}
       </button>
@@ -98,7 +98,7 @@ export function AiKeyForm({ hasKey, model }: Props) {
           type="button"
           disabled={status === 'busy'}
           onClick={() => send('DELETE')}
-          className="h-12 rounded-md border border-current/20 text-base disabled:opacity-40"
+          className="h-12 rounded-md border border-line bg-surface text-base disabled:opacity-40"
         >
           {t('removeKey')}
         </button>

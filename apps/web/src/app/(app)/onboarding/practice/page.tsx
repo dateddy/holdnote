@@ -30,13 +30,13 @@ export default async function PracticePage() {
         <li>{t('guide3')}</li>
         <li>{t('guide4')}</li>
       </ol>
-      <details className="rounded-md border border-current/20 p-3">
+      <details className="rounded-md border border-line bg-surface p-3">
         <summary className="cursor-pointer text-sm font-medium">{t('showSample')}</summary>
         <div className="pt-3">
           <SampleHand withReview={false} />
         </div>
       </details>
-      <p className="text-xs opacity-70">{t('practiceNotSaved')}</p>
+      <p className="text-xs text-muted">{t('practiceNotSaved')}</p>
       <PracticeHand
         locale={locale}
         entryMode={profile?.entry_mode === 'shorthand' ? 'shorthand' : 'buttons'}

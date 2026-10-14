@@ -33,7 +33,7 @@ export default async function BeforeSessionPage({ params }: PageProps<'/sessions
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 p-6">
       <header className="space-y-1">
         <h1 className="text-2xl font-semibold">{t('beforeTitle')}</h1>
-        <p className="text-sm opacity-70">
+        <p className="text-sm text-muted">
           {[t(session.kind === 'mtt' ? 'mtt' : 'cash'), session.venue, session.stake_label]
             .filter(Boolean)
             .join(' · ')}
@@ -61,7 +61,7 @@ export default async function BeforeSessionPage({ params }: PageProps<'/sessions
             ))}
           </ol>
         ) : (
-          <p className="text-sm opacity-70">{t('noRules')}</p>
+          <p className="text-sm text-muted">{t('noRules')}</p>
         )}
       </section>
 
@@ -74,12 +74,12 @@ export default async function BeforeSessionPage({ params }: PageProps<'/sessions
                 <li key={o.id}>
                   <b>{o.name}</b>
                   {o.player_type && o.player_type !== 'unknown' ? ` (${o.player_type})` : ''}
-                  {o.notes && <p className="text-sm opacity-70">{o.notes}</p>}
+                  {o.notes && <p className="text-sm text-muted">{o.notes}</p>}
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="text-sm opacity-70">{t('noOpponents')}</p>
+            <p className="text-sm text-muted">{t('noOpponents')}</p>
           )}
           <Link
             href={`/opponents/new?venue=${encodeURIComponent(venue)}`}
@@ -93,7 +93,7 @@ export default async function BeforeSessionPage({ params }: PageProps<'/sessions
       <form action={enterTable.bind(null, id)} className="mt-auto">
         <button
           type="submit"
-          className="h-14 w-full rounded-md bg-foreground text-lg font-medium text-background"
+          className="h-14 w-full rounded-md bg-accent text-lg font-medium text-accent-foreground"
         >
           {t('enterTable')}
         </button>

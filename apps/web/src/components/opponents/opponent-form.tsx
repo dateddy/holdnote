@@ -5,7 +5,7 @@ import { useActionState } from 'react';
 import { saveOpponent, type OpponentState } from '@/app/(app)/opponents/actions';
 import { PLAYER_TYPES, type OpponentValues } from '@/lib/opponents/form';
 
-const INPUT = 'h-12 w-full rounded-md border border-current/20 bg-transparent px-3 text-base';
+import { INPUT_CLASS as INPUT } from '@/components/ui/input';
 
 /** Create or edit an opponent (spec 3.9). */
 export function OpponentForm({ id, initial }: { id: string | null; initial: OpponentValues }) {
@@ -17,7 +17,7 @@ export function OpponentForm({ id, initial }: { id: string | null; initial: Oppo
   const v = state.values;
   const err = (field: keyof OpponentValues) =>
     state.errors[field] ? (
-      <span role="alert" className="text-sm text-red-700">
+      <span role="alert" className="text-sm text-loss">
         {t(`error_${state.errors[field]}`)}
       </span>
     ) : null;
@@ -27,7 +27,7 @@ export function OpponentForm({ id, initial }: { id: string | null; initial: Oppo
       <label className="flex flex-col gap-1 text-sm">
         {t('name')}
         <input name="name" defaultValue={v.name} className={INPUT} maxLength={60} required />
-        <span className="text-xs opacity-70">{t('nameHint')}</span>
+        <span className="text-xs text-muted">{t('nameHint')}</span>
         {err('name')}
       </label>
       <label className="flex flex-col gap-1 text-sm">
@@ -45,7 +45,7 @@ export function OpponentForm({ id, initial }: { id: string | null; initial: Oppo
       <label className="flex flex-col gap-1 text-sm">
         {t('venue')}
         <input name="venue" defaultValue={v.venue} className={INPUT} maxLength={100} />
-        <span className="text-xs opacity-70">{t('venueHint')}</span>
+        <span className="text-xs text-muted">{t('venueHint')}</span>
         {err('venue')}
       </label>
       <label className="flex flex-col gap-1 text-sm">
@@ -55,19 +55,19 @@ export function OpponentForm({ id, initial }: { id: string | null; initial: Oppo
           rows={4}
           defaultValue={v.notes}
           maxLength={1000}
-          className="w-full rounded-md border border-current/20 bg-transparent p-3 text-base"
+          className="w-full rounded-md border border-line bg-surface p-3 text-base"
         />
         {err('notes')}
       </label>
       {state.failed && (
-        <p role="alert" className="text-sm text-red-700">
+        <p role="alert" className="text-sm text-loss">
           {t('saveFailed')}
         </p>
       )}
       <button
         type="submit"
         disabled={pending}
-        className="h-14 rounded-md bg-foreground text-lg font-medium text-background disabled:opacity-40"
+        className="h-14 rounded-md bg-accent text-lg font-medium text-accent-foreground disabled:opacity-40"
       >
         {pending ? t('saving') : t('save')}
       </button>

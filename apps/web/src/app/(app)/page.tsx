@@ -14,9 +14,9 @@ import { STATS_COLUMNS, toStatsSession } from '@/lib/sessions/summary';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 
-const BIG =
-  'flex h-14 items-center justify-center rounded-md bg-foreground text-lg font-medium text-background';
-const CARD = 'space-y-2 rounded-md border border-current/20 p-4';
+import { buttonClass } from '@/components/ui/button';
+import { CARD_CLASS as CARD } from '@/components/ui/card';
+const BIG = buttonClass({ size: 'lg' });
 
 /** Home (spec 3.3): the open session or a start button, then leaks, rules and what is left to do. */
 export default async function Home() {
@@ -123,7 +123,7 @@ export default async function Home() {
                 .filter(Boolean)
                 .join(' · ')}
             </p>
-            <p className="text-sm opacity-70">
+            <p className="text-sm text-muted">
               {open.start_at
                 ? tSessions('startedAt', {
                     time: new Date(open.start_at).toLocaleTimeString(locale, {
@@ -157,12 +157,12 @@ export default async function Home() {
       )}
 
       <dl className="grid grid-cols-2 gap-2 text-center text-sm">
-        <div className="rounded-md border border-current/20 p-3">
-          <dt className="opacity-70">{t('unreviewed')}</dt>
+        <div className="rounded-md border border-line bg-surface p-3">
+          <dt className="text-muted">{t('unreviewed')}</dt>
           <dd className="text-xl font-medium">{unreviewed}</dd>
         </div>
-        <div className="rounded-md border border-current/20 p-3">
-          <dt className="opacity-70">{t('aiLeft')}</dt>
+        <div className="rounded-md border border-line bg-surface p-3">
+          <dt className="text-muted">{t('aiLeft')}</dt>
           <dd className="text-xl font-medium">
             {status?.plan === 'byok'
               ? t('aiOwnKey')
@@ -181,13 +181,13 @@ export default async function Home() {
           </Link>
         </div>
         {top.length === 0 ? (
-          <p className="text-sm opacity-70">{t('leaksNone')}</p>
+          <p className="text-sm text-muted">{t('leaksNone')}</p>
         ) : (
           <ol className="list-decimal space-y-1 pl-5">
             {top.map((l) => (
               <li key={l.tag}>
                 {tReview(`tag_${l.tag}` as 'tag_tilt')}{' '}
-                <span className="text-sm opacity-70">
+                <span className="text-sm text-muted">
                   {t('leakRecent', { n: l.trend.filter(Boolean).length, of: l.trend.length })}
                 </span>
               </li>
@@ -210,16 +210,16 @@ export default async function Home() {
             ))}
           </ol>
         ) : (
-          <p className="text-sm opacity-70">{t('rulesNone')}</p>
+          <p className="text-sm text-muted">{t('rulesNone')}</p>
         )}
       </section>
 
       <section className="space-y-2">
         <h2 className="font-medium">{t('recentTitle')}</h2>
         {!recentRows?.length ? (
-          <p className="text-sm opacity-70">{t('recentNone')}</p>
+          <p className="text-sm text-muted">{t('recentNone')}</p>
         ) : (
-          <ul className="divide-y divide-current/10 rounded-md border border-current/20">
+          <ul className="divide-y divide-line rounded-md border border-line bg-surface">
             {recentRows.map((row) => {
               const s = toStatsSession(row);
               const r = sessionResult(s);
@@ -233,7 +233,7 @@ export default async function Home() {
                       <span>
                         {[tSessions(s.kind), s.venue, s.stakeLabel].filter(Boolean).join(' · ')}
                       </span>
-                      <span className="text-sm opacity-70">{s.date}</span>
+                      <span className="text-sm text-muted">{s.date}</span>
                     </span>
                     <span className="text-sm tabular-nums">
                       {!s.endAt

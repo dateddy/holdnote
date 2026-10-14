@@ -28,11 +28,8 @@ import { UndoToast } from './undo-toast';
 
 export type OpponentOption = { id: string; name: string };
 
-const INPUT = 'h-12 w-full rounded-md border border-current/20 bg-transparent px-3 text-base';
-const chip = (on: boolean) =>
-  `flex h-11 items-center justify-center rounded-md border px-3 text-sm ${
-    on ? 'border-foreground bg-foreground text-background' : 'border-current/20'
-  }`;
+import { INPUT_CLASS as INPUT } from '@/components/ui/input';
+import { chipClass as chip } from '@/components/ui/chip';
 
 type Props = {
   sessionId: string;
@@ -199,7 +196,7 @@ export function HandForm({
   return (
     <div className="flex flex-col gap-6">
       {status === 'saved' && edit && (
-        <p role="status" className="rounded-md bg-foreground/10 p-3 text-sm">
+        <p role="status" className="rounded-md bg-accent/15 p-3 text-sm">
           {t('savedChanges')}
         </p>
       )}
@@ -213,7 +210,7 @@ export function HandForm({
         />
       )}
       {status === 'failed' && (
-        <p role="alert" className="rounded-md bg-red-600/10 p-3 text-sm text-red-700">
+        <p role="alert" className="rounded-md bg-loss/10 p-3 text-sm text-loss">
           {offline ? t('needNetwork') : t('saveFailed')}
         </p>
       )}
@@ -272,7 +269,7 @@ export function HandForm({
               errors={lineErrors}
             />
             {switchBlocked && (
-              <p role="alert" className="text-sm text-red-700">
+              <p role="alert" className="text-sm text-loss">
                 {t('fixLineFirst')}
               </p>
             )}
@@ -375,7 +372,7 @@ export function HandForm({
             </label>
           )}
           {levelAnte(session) === 'bb' && (
-            <p className="col-span-2 text-sm opacity-70">{t('anteIsBb')}</p>
+            <p className="col-span-2 text-sm text-muted">{t('anteIsBb')}</p>
           )}
           {session.ante_mode === 'each' && (
             <label className="flex flex-col gap-1 text-sm">
@@ -391,17 +388,17 @@ export function HandForm({
           )}
         </div>
         <dl className="grid grid-cols-2 gap-1 text-sm">
-          <dt className="opacity-70">{t('eff')}</dt>
+          <dt className="text-muted">{t('eff')}</dt>
           <dd>{derived.eff ? `${money(derived.eff.amount)} (${derived.eff.bb} bb)` : '–'}</dd>
           {derived.spr.map((s) => (
             <div key={s.street} className="contents">
-              <dt className="opacity-70">{t('spr', { street: t(`street_${s.street}`) })}</dt>
+              <dt className="text-muted">{t('spr', { street: t(`street_${s.street}`) })}</dt>
               <dd>{s.spr}</dd>
             </div>
           ))}
-          <dt className="opacity-70">{t('pot')}</dt>
+          <dt className="text-muted">{t('pot')}</dt>
           <dd>{derived.potFinal == null ? '–' : money(derived.potFinal)}</dd>
-          <dt className="opacity-70">{t('result')}</dt>
+          <dt className="text-muted">{t('result')}</dt>
           <dd>
             {derived.result == null
               ? '–'
@@ -434,7 +431,7 @@ export function HandForm({
         type="button"
         onClick={save}
         disabled={!canSave(draft) || lineErrors.length > 0 || status === 'saving'}
-        className="h-14 rounded-md bg-foreground text-lg font-medium text-background disabled:opacity-40"
+        className="h-14 rounded-md bg-accent text-lg font-medium text-accent-foreground disabled:opacity-40"
       >
         {practice
           ? practice.label
@@ -444,10 +441,10 @@ export function HandForm({
               ? t('saveChanges')
               : t('save')}
       </button>
-      {lineErrors.length > 0 && <p className="text-sm opacity-70">{t('fixLineToSave')}</p>}
-      {!canSave(draft) && <p className="text-sm opacity-70">{t('needCards')}</p>}
+      {lineErrors.length > 0 && <p className="text-sm text-muted">{t('fixLineToSave')}</p>}
+      {!canSave(draft) && <p className="text-sm text-muted">{t('needCards')}</p>}
       {canSave(draft) && derived.missing && (
-        <p className="text-sm opacity-70">{t('willBeMissing')}</p>
+        <p className="text-sm text-muted">{t('willBeMissing')}</p>
       )}
     </div>
   );

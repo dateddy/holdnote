@@ -25,10 +25,10 @@ export function SyncStatus() {
 
   if (counts.pending === 0 && counts.failed === 0) return null;
   return (
-    <div role="status" className="space-y-1 rounded-md bg-amber-500/15 p-3 text-sm text-amber-900">
+    <div role="status" className="space-y-1 rounded-md bg-warn/15 p-3 text-sm text-warn">
       {counts.pending > 0 && <p>{t('pending', { count: counts.pending })}</p>}
       {counts.failed > 0 && (
-        <p role="alert" className="text-red-700">
+        <p role="alert" className="text-loss">
           {t('failed', { count: counts.failed })}
         </p>
       )}

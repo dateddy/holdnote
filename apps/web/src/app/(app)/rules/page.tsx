@@ -4,7 +4,7 @@ import { RULE_MAX } from '@/lib/rules/rules';
 import { createClient } from '@/lib/supabase/server';
 import { addRule, deleteRule, moveRule, setRuleActive, updateRule } from './actions';
 
-const SMALL = 'h-9 rounded-md border border-current/20 px-2 text-sm disabled:opacity-30';
+const SMALL = 'h-9 rounded-md border border-line bg-surface px-2 text-sm disabled:opacity-30';
 
 /** "Your rules" (spec 3.3, 3.11): shown before every session while active. */
 export default async function RulesPage() {
@@ -25,7 +25,7 @@ export default async function RulesPage() {
           {t('home')}
         </Link>
       </header>
-      <p className="text-sm opacity-70">{t('intro')}</p>
+      <p className="text-sm text-muted">{t('intro')}</p>
 
       <form action={addRule} className="flex gap-2">
         <input
@@ -34,24 +34,24 @@ export default async function RulesPage() {
           maxLength={RULE_MAX}
           placeholder={t('placeholder')}
           aria-label={t('placeholder')}
-          className="h-12 min-w-0 flex-1 rounded-md border border-current/20 bg-transparent px-3 text-base"
+          className="h-12 min-w-0 flex-1 rounded-md border border-line bg-surface px-3 text-base"
         />
         <button
           type="submit"
-          className="h-12 rounded-md bg-foreground px-4 font-medium text-background"
+          className="h-12 rounded-md bg-accent px-4 font-medium text-accent-foreground"
         >
           {t('add')}
         </button>
       </form>
 
       {list.length === 0 ? (
-        <p className="text-sm opacity-70">{t('none')}</p>
+        <p className="text-sm text-muted">{t('none')}</p>
       ) : (
         <ol className="flex flex-col gap-3">
           {list.map((r, i) => (
             <li
               key={r.id}
-              className={`space-y-2 rounded-md border border-current/20 p-3 ${r.active ? '' : 'opacity-60'}`}
+              className={`space-y-2 rounded-md border border-line bg-surface p-3 ${r.active ? '' : 'text-muted'}`}
             >
               <form action={updateRule.bind(null, r.id)} className="flex gap-2">
                 <input
@@ -60,7 +60,7 @@ export default async function RulesPage() {
                   required
                   maxLength={RULE_MAX}
                   aria-label={t('ruleN', { n: i + 1 })}
-                  className="h-10 min-w-0 flex-1 rounded-md border border-current/20 bg-transparent px-2 text-base"
+                  className="h-10 min-w-0 flex-1 rounded-md border border-line bg-surface px-2 text-base"
                 />
                 <button type="submit" className={SMALL}>
                   {t('save')}
@@ -88,7 +88,7 @@ export default async function RulesPage() {
                   </button>
                 </form>
                 <form action={deleteRule.bind(null, r.id)} className="ml-auto">
-                  <button type="submit" className={`${SMALL} text-red-700`}>
+                  <button type="submit" className={`${SMALL} text-loss`}>
                     {t('delete')}
                   </button>
                 </form>
@@ -96,7 +96,7 @@ export default async function RulesPage() {
               {r.source_session_id && (
                 <Link
                   href={`/sessions/${r.source_session_id}/summary`}
-                  className="text-xs underline underline-offset-4 opacity-70"
+                  className="text-xs underline underline-offset-4 text-muted"
                 >
                   {t('fromSession')}
                 </Link>

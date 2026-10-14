@@ -10,8 +10,9 @@ import { finishOnboarding, saveBasics, savePlay } from './actions';
 const LANGUAGE_NAMES: Record<string, string> = { vi: 'Tiếng Việt', en: 'English' };
 
 const OPTION =
-  'flex h-12 cursor-pointer items-center justify-center rounded-md border border-current/20 px-3 has-checked:border-foreground has-checked:bg-foreground has-checked:text-background';
-const BIG = 'h-14 w-full rounded-md bg-foreground text-lg font-medium text-background';
+  'flex h-12 cursor-pointer items-center justify-center rounded-md border border-line bg-surface px-3 has-checked:border-accent has-checked:bg-accent has-checked:text-accent-foreground';
+import { buttonClass } from '@/components/ui/button';
+const BIG = buttonClass({ size: 'lg' });
 
 /** Onboarding (spec 3.2): three steps, each can be skipped. */
 export default async function OnboardingPage({ searchParams }: PageProps<'/onboarding'>) {
@@ -39,7 +40,7 @@ export default async function OnboardingPage({ searchParams }: PageProps<'/onboa
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 p-6">
       <header className="flex items-center justify-between gap-4">
-        <p className="text-sm opacity-70">{t('progress', { step, of: 3 })}</p>
+        <p className="text-sm text-muted">{t('progress', { step, of: 3 })}</p>
         <form action={finishOnboarding}>
           <button type="submit" className="text-sm underline underline-offset-4">
             {t('skip')}
@@ -63,7 +64,7 @@ export default async function OnboardingPage({ searchParams }: PageProps<'/onboa
                 radio('currency', c, t(`currency_${c}`), c === (profile?.currency ?? 'VND')),
               )}
             </div>
-            <p className="text-xs opacity-70">{t('currencyHint')}</p>
+            <p className="text-xs text-muted">{t('currencyHint')}</p>
           </fieldset>
           <button type="submit" className={BIG}>
             {t('next')}
@@ -89,7 +90,7 @@ export default async function OnboardingPage({ searchParams }: PageProps<'/onboa
                 radio('kind', k, tSessions(k), k === (profile?.play_kind ?? 'cash')),
               )}
             </div>
-            <p className="text-xs opacity-70">{t('playHint')}</p>
+            <p className="text-xs text-muted">{t('playHint')}</p>
           </fieldset>
           <button type="submit" className={BIG}>
             {t('next')}
@@ -106,7 +107,7 @@ export default async function OnboardingPage({ searchParams }: PageProps<'/onboa
             {t('tryIt')}
           </Link>
           <form action={finishOnboarding}>
-            <button type="submit" className="h-12 w-full rounded-md border border-current/20">
+            <button type="submit" className="h-12 w-full rounded-md border border-line bg-surface">
               {t('finish')}
             </button>
           </form>

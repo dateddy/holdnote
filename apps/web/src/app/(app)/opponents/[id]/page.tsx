@@ -50,9 +50,9 @@ export default async function OpponentPage({ params }: PageProps<'/opponents/[id
       <section className="space-y-2">
         <h2 className="text-lg font-semibold">{t('handsTitle', { n: hands?.length ?? 0 })}</h2>
         {!hands?.length ? (
-          <p className="text-sm opacity-70">{t('handsNone')}</p>
+          <p className="text-sm text-muted">{t('handsNone')}</p>
         ) : (
-          <ul className="divide-y divide-current/10 rounded-md border border-current/20">
+          <ul className="divide-y divide-line rounded-md border border-line bg-surface">
             {hands.map((h) => {
               const s = sessionOf.get(h.session_id);
               const res = resultBb(h.result, h.level_bb ?? s?.bb ?? null);
@@ -63,7 +63,7 @@ export default async function OpponentPage({ params }: PageProps<'/opponents/[id
                     className="flex items-center justify-between gap-2 p-3"
                   >
                     <span className="flex items-center gap-2">
-                      <span className="text-sm opacity-70">
+                      <span className="text-sm text-muted">
                         {s?.date} #{h.num}
                       </span>
                       <b>
@@ -90,13 +90,10 @@ export default async function OpponentPage({ params }: PageProps<'/opponents/[id
       </section>
 
       <form action={deleteOpponent.bind(null, id)}>
-        <button
-          type="submit"
-          className="h-12 w-full rounded-md border border-red-700/40 text-red-700"
-        >
+        <button type="submit" className="h-12 w-full rounded-md border border-red-700/40 text-loss">
           {t('delete')}
         </button>
-        <p className="pt-1 text-xs opacity-70">{t('deleteHint')}</p>
+        <p className="pt-1 text-xs text-muted">{t('deleteHint')}</p>
       </form>
     </main>
   );

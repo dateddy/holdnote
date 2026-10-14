@@ -16,7 +16,7 @@ import {
 } from '@/lib/stats/filters';
 import { createClient } from '@/lib/supabase/server';
 
-const SELECT = 'h-10 w-full rounded-md border border-current/20 bg-transparent px-2 text-sm';
+const SELECT = 'h-10 w-full rounded-md border border-line bg-surface px-2 text-sm';
 
 export default async function StatsPage({ searchParams }: PageProps<'/stats'>) {
   const filters = parseFilters(await searchParams);
@@ -77,7 +77,7 @@ export default async function StatsPage({ searchParams }: PageProps<'/stats'>) {
           <>
             <table className="w-full text-left text-sm">
               <thead>
-                <tr className="border-b border-current/20">
+                <tr className="border-b border-line bg-surface">
                   <th className="py-1 pr-2 font-medium">{t('leak')}</th>
                   <th className="px-2 py-1 text-right font-medium">{t('hands')}</th>
                   <th className="px-2 py-1 text-right font-medium">{t('sessions')}</th>
@@ -90,7 +90,7 @@ export default async function StatsPage({ searchParams }: PageProps<'/stats'>) {
                     <td className="py-2 pr-2">
                       {tReview(`tag_${l.tag}` as 'tag_tilt')}
                       {l.repeated && (
-                        <span className="ml-2 rounded bg-foreground px-1.5 py-0.5 text-xs text-background">
+                        <span className="ml-2 rounded bg-accent px-1.5 py-0.5 text-xs text-accent-foreground">
                           {t('repeated')}
                         </span>
                       )}
@@ -118,7 +118,7 @@ export default async function StatsPage({ searchParams }: PageProps<'/stats'>) {
                 ))}
               </tbody>
             </table>
-            <p className="text-xs opacity-70">{t('leaksNote')}</p>
+            <p className="text-xs text-muted">{t('leaksNote')}</p>
           </>
         )}
       </section>
@@ -201,7 +201,7 @@ export default async function StatsPage({ searchParams }: PageProps<'/stats'>) {
           </select>
           <button
             type="submit"
-            className="col-span-2 h-10 rounded-md bg-foreground text-sm font-medium text-background"
+            className="col-span-2 h-10 rounded-md bg-accent text-sm font-medium text-accent-foreground"
           >
             {t('apply')}
           </button>
@@ -221,12 +221,12 @@ export default async function StatsPage({ searchParams }: PageProps<'/stats'>) {
             />
           </>
         )}
-        {view.unit === 'bb' && <p className="text-xs opacity-70">{t('bbNote')}</p>}
+        {view.unit === 'bb' && <p className="text-xs text-muted">{t('bbNote')}</p>}
         {view.unit === 'money' && view.currency && (
-          <p className="text-xs opacity-70">{t('moneyNote', { currency: view.currency })}</p>
+          <p className="text-xs text-muted">{t('moneyNote', { currency: view.currency })}</p>
         )}
         {view.missing > 0 && (
-          <p className="text-xs opacity-70">{t('missingResult', { n: view.missing })}</p>
+          <p className="text-xs text-muted">{t('missingResult', { n: view.missing })}</p>
         )}
       </section>
 
@@ -236,7 +236,7 @@ export default async function StatsPage({ searchParams }: PageProps<'/stats'>) {
           {mtt.map((g) => (
             <dl
               key={g.currency}
-              className="grid grid-cols-2 gap-x-4 gap-y-1 rounded-md border border-current/20 p-3 text-sm"
+              className="grid grid-cols-2 gap-x-4 gap-y-1 rounded-md border border-line bg-surface p-3 text-sm"
             >
               <dt className="col-span-2 font-medium">{g.currency}</dt>
               <dt>{t('mttCount')}</dt>
@@ -262,7 +262,7 @@ export default async function StatsPage({ searchParams }: PageProps<'/stats'>) {
 
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">{t('disciplineTitle')}</h2>
-        <dl className="grid grid-cols-2 gap-x-4 gap-y-1 rounded-md border border-current/20 p-3 text-sm">
+        <dl className="grid grid-cols-2 gap-x-4 gap-y-1 rounded-md border border-line bg-surface p-3 text-sm">
           <dt>{t('disciplineSessions')}</dt>
           <dd className="text-right tabular-nums">{discipline.sessions}</dd>
           <dt>{t('stopLossBreaches')}</dt>

@@ -6,7 +6,7 @@ import { RANKS, SUITS } from 'poker-core';
 import { SLOT_COUNT } from '@/lib/hands/build';
 import { cardLabel, RED, SUIT_SYMBOL } from './card-label';
 
-const BTN = 'h-11 min-w-0 flex-1 rounded-md border border-current/20 text-base';
+const BTN = 'h-11 min-w-0 flex-1 rounded-md border border-line bg-surface text-base';
 
 /** Seven card slots (2 hero, flop, turn, river) sharing one rank + suit picker. */
 export function CardGrid({
@@ -59,7 +59,7 @@ export function CardGrid({
             aria-pressed={active === i}
             aria-label={label(i)}
             className={`flex h-14 flex-col items-center justify-center rounded-md border text-lg ${
-              active === i ? 'border-foreground bg-foreground/10' : 'border-current/20'
+              active === i ? 'border-accent bg-accent/15' : 'border-line bg-surface'
             } ${i === 2 ? 'ml-2' : ''}`}
           >
             {card ? cardLabel(card) : <span className="text-xs opacity-50">{label(i)}</span>}
@@ -77,7 +77,7 @@ export function CardGrid({
               disabled={rankFull(r)}
               aria-pressed={rank === r}
               onClick={() => setRank(r)}
-              className={`${BTN} basis-[13%] ${rank === r ? 'bg-foreground text-background' : ''} disabled:opacity-30`}
+              className={`${BTN} basis-[13%] ${rank === r ? 'bg-accent text-accent-foreground' : ''} disabled:opacity-30`}
             >
               {r}
             </button>
@@ -92,7 +92,7 @@ export function CardGrid({
             disabled={!rank || used.has(`${rank}${s}`)}
             onClick={() => rank && place(`${rank}${s}`)}
             aria-label={s === '?' ? t('unknownSuit') : s}
-            className={`${BTN} h-12 text-xl disabled:opacity-30 ${RED.has(s) ? 'text-red-600' : ''}`}
+            className={`${BTN} h-12 text-xl disabled:opacity-30 ${RED.has(s) ? 'text-loss' : ''}`}
           >
             {SUIT_SYMBOL[s]}
           </button>

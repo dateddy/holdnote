@@ -26,13 +26,13 @@ export function PracticeHand({
   return (
     <div className="flex flex-col gap-5">
       {check && (
-        <section role="status" className="space-y-2 rounded-md border border-current/20 p-4">
+        <section role="status" className="space-y-2 rounded-md border border-line bg-surface p-4">
           <p className="font-medium">{allRight ? t('practiceAllRight') : t('practiceSomeWrong')}</p>
           <ul className="space-y-1 text-sm">
             {PRACTICE_PARTS.map((p) => (
               <li key={p}>
                 {check[p] ? '✓' : '✗'} {t(`part_${p}`)}
-                {!check[p] && <span className="opacity-70"> · {t(`hint_${p}`)}</span>}
+                {!check[p] && <span className="text-muted"> · {t(`hint_${p}`)}</span>}
               </li>
             ))}
           </ul>
@@ -40,7 +40,7 @@ export function PracticeHand({
             <form action={finishOnboarding}>
               <button
                 type="submit"
-                className="h-12 w-full rounded-md bg-foreground font-medium text-background"
+                className="h-12 w-full rounded-md bg-accent font-medium text-accent-foreground"
               >
                 {t('finish')}
               </button>

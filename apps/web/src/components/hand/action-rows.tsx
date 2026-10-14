@@ -26,8 +26,8 @@ const FRACTIONS = [
 ] as const;
 
 const BTN = 'flex h-11 flex-1 items-center justify-center rounded-md border px-2 text-sm';
-const OFF = 'border-current/20';
-const ON = 'border-foreground bg-foreground text-background';
+const OFF = 'border-line bg-surface';
+const ON = 'border-accent bg-accent text-accent-foreground';
 
 type Who = { actor: Action['actor']; pos?: Position };
 
@@ -110,11 +110,11 @@ export function ActionRows({
         const rows = actions.map((a, index) => ({ a, index })).filter((x) => x.a.street === street);
 
         return (
-          <section key={street} className="space-y-2 rounded-md border border-current/20 p-3">
+          <section key={street} className="space-y-2 rounded-md border border-line bg-surface p-3">
             <div className="flex items-center justify-between">
               <h4 className="font-medium">{t(`street_${street}`)}</h4>
               {spot && (
-                <span className="text-sm opacity-70">{t('potNow', { pot: money(spot.pot) })}</span>
+                <span className="text-sm text-muted">{t('potNow', { pot: money(spot.pot) })}</span>
               )}
             </div>
 
@@ -129,7 +129,7 @@ export function ActionRows({
                         <b>{actorLabel(a)}</b> {t(`act_${a.act}`)}
                         {amount !== undefined && ` ${money(amount)}`}
                       </span>
-                      {step && <span className="opacity-70">{money(step.potAfter)}</span>}
+                      {step && <span className="text-muted">{money(step.potAfter)}</span>}
                     </li>
                   );
                 })}
@@ -232,7 +232,7 @@ export function ActionRows({
                     value={amountText}
                     placeholder={t('amountTo')}
                     onChange={(e) => setAmountText(e.target.value)}
-                    className="h-11 min-w-0 flex-1 rounded-md border border-current/20 bg-transparent px-3 text-base"
+                    className="h-11 min-w-0 flex-1 rounded-md border border-line bg-surface px-3 text-base"
                   />
                   <button
                     type="button"
@@ -240,7 +240,7 @@ export function ActionRows({
                     onClick={() =>
                       add(street, who, sizing.act, parseAmount(amountText) ?? undefined)
                     }
-                    className="h-11 rounded-md bg-foreground px-4 text-background disabled:opacity-40"
+                    className="h-11 rounded-md bg-accent px-4 text-accent-foreground disabled:opacity-40"
                   >
                     {t('confirm')}
                   </button>

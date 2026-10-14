@@ -16,10 +16,10 @@ export default async function LoginPage({ searchParams }: PageProps<'/login'>) {
       </div>
       <div className="space-y-1 text-center">
         <h1 className="text-3xl font-semibold">{t('common.appName')}</h1>
-        <p className="text-sm opacity-70">{t('common.tagline')}</p>
+        <p className="text-sm text-muted">{t('common.tagline')}</p>
       </div>
       {authFailed && (
-        <p role="alert" className="rounded-md bg-red-500/10 p-3 text-sm text-red-600">
+        <p role="alert" className="rounded-md bg-loss/10 p-3 text-sm text-loss">
           {t('login.authFailed')}
         </p>
       )}

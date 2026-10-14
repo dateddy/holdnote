@@ -64,7 +64,7 @@ export function ResultsChart({ points, format, label }: Props) {
           </circle>
         ))}
       </svg>
-      <figcaption className="flex justify-between text-xs opacity-70">
+      <figcaption className="flex justify-between text-xs text-muted">
         <span>{points[0]!.date}</span>
         <span>
           {format(last.cumulative)} · {last.date}

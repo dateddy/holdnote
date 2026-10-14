@@ -29,9 +29,9 @@ export default async function SessionPage({ params }: PageProps<'/sessions/[id]'
           {(await getTranslations('common'))('back')}
         </Link>
       </header>
-      <section className="space-y-1 rounded-md border border-current/20 p-4">
+      <section className="space-y-1 rounded-md border border-line bg-surface p-4">
         <p className="font-medium">{t('title', { kind })}</p>
-        <p className="text-sm opacity-70">
+        <p className="text-sm text-muted">
           {[session.venue, session.stake_label].filter(Boolean).join(' · ')}
         </p>
         <p className="text-sm">
@@ -42,28 +42,28 @@ export default async function SessionPage({ params }: PageProps<'/sessions/[id]'
       {startedAt ? (
         <Link
           href={`/sessions/${id}/record`}
-          className="flex h-14 items-center justify-center rounded-md bg-foreground text-lg font-medium text-background"
+          className="flex h-14 items-center justify-center rounded-md bg-accent text-lg font-medium text-accent-foreground"
         >
           {t('recordHand')}
         </Link>
       ) : (
         <Link
           href={`/sessions/${id}/before`}
-          className="flex h-14 items-center justify-center rounded-md bg-foreground text-lg font-medium text-background"
+          className="flex h-14 items-center justify-center rounded-md bg-accent text-lg font-medium text-accent-foreground"
         >
           {t('goBefore')}
         </Link>
       )}
       <Link
         href={`/sessions/${id}/hands`}
-        className="flex h-12 items-center justify-center rounded-md border border-current/20"
+        className="flex h-12 items-center justify-center rounded-md border border-line bg-surface"
       >
         {tHand('handsList')}
       </Link>
       {startedAt && (
         <Link
           href={`/sessions/${id}/summary`}
-          className="flex h-12 items-center justify-center rounded-md border border-current/20"
+          className="flex h-12 items-center justify-center rounded-md border border-line bg-surface"
         >
           {session.end_at ? t('viewSummary') : t('endSession')}
         </Link>

@@ -22,24 +22,24 @@ export default async function OpponentsPage() {
       </header>
       <Link
         href="/opponents/new"
-        className="flex h-12 items-center justify-center rounded-md bg-foreground font-medium text-background"
+        className="flex h-12 items-center justify-center rounded-md bg-accent font-medium text-accent-foreground"
       >
         {t('add')}
       </Link>
       {!opponents?.length ? (
-        <p className="text-sm opacity-70">{t('none')}</p>
+        <p className="text-sm text-muted">{t('none')}</p>
       ) : (
-        <ul className="divide-y divide-current/10 rounded-md border border-current/20">
+        <ul className="divide-y divide-line rounded-md border border-line bg-surface">
           {opponents.map((o) => (
             <li key={o.id}>
               <Link href={`/opponents/${o.id}`} className="flex flex-col gap-0.5 p-3">
                 <span className="flex items-center justify-between gap-2">
                   <b>{o.name}</b>
                   {isOneOf(PLAYER_TYPES, o.player_type) && (
-                    <span className="text-sm opacity-70">{t(`type_${o.player_type}`)}</span>
+                    <span className="text-sm text-muted">{t(`type_${o.player_type}`)}</span>
                   )}
                 </span>
-                {o.venue && <span className="text-sm opacity-70">{o.venue}</span>}
+                {o.venue && <span className="text-sm text-muted">{o.venue}</span>}
                 {o.notes && <span className="line-clamp-2 text-sm">{o.notes}</span>}
               </Link>
             </li>

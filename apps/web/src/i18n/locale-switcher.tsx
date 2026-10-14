@@ -23,7 +23,7 @@ export function LocaleSwitcher() {
           aria-pressed={locale === current}
           disabled={pending}
           onClick={() => startTransition(() => setLocale(locale))}
-          className="rounded-md px-2 py-1 aria-pressed:bg-foreground aria-pressed:text-background disabled:opacity-50"
+          className="rounded-md px-2 py-1 aria-pressed:bg-accent aria-pressed:text-accent-foreground disabled:opacity-50"
         >
           {NAMES[locale]}
         </button>

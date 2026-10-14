@@ -43,12 +43,12 @@ export function InstallHint() {
           await prompt.prompt();
           setPrompt(null);
         }}
-        className="h-12 rounded-md border border-current/20 text-base"
+        className="h-12 rounded-md border border-line bg-surface text-base"
       >
         {t('install')}
       </button>
     );
   }
-  if (ios) return <p className="text-sm opacity-70">{t('iosHint')}</p>;
+  if (ios) return <p className="text-sm text-muted">{t('iosHint')}</p>;
   return null;
 }

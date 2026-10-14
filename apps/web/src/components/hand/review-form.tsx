@@ -19,11 +19,8 @@ import {
   type ReviewRow,
 } from '@/lib/review/review';
 
-const AREA = 'w-full rounded-md border border-current/20 bg-transparent p-3 text-base';
-const chip = (on: boolean) =>
-  `flex h-10 items-center justify-center rounded-md border px-3 text-sm ${
-    on ? 'border-foreground bg-foreground text-background' : 'border-current/20'
-  }`;
+const AREA = 'w-full rounded-md border border-line bg-surface p-3 text-base';
+import { chipClass as chip } from '@/components/ui/chip';
 
 /** A pot-odds line the review can quote: computed by poker-core, shown read-only. */
 export type MathHint = {
@@ -93,7 +90,7 @@ export function ReviewForm({ handId, reviewId, source, initial, isMtt, mathHints
   const fromAi = (key: ReviewField) => aiText !== null && sameField(draft, aiText, key);
   const aiTag = (key: ReviewField) =>
     fromAi(key) && (
-      <span className="ml-2 rounded bg-foreground/10 px-1.5 py-0.5 text-xs font-medium">
+      <span className="ml-2 rounded bg-accent/15 px-1.5 py-0.5 text-xs font-medium">
         {t('aiLabel')}
       </span>
     );
@@ -193,12 +190,12 @@ export function ReviewForm({ handId, reviewId, source, initial, isMtt, mathHints
     <section className="flex flex-col gap-4">
       <h2 className="text-lg font-semibold">{t('title')}</h2>
 
-      <div className="flex flex-col gap-2 rounded-md border border-current/20 p-3">
+      <div className="flex flex-col gap-2 rounded-md border border-line bg-surface p-3">
         <button
           type="button"
           onClick={() => callAi({})}
           disabled={run === 'busy' || outOfTurns}
-          className="h-12 rounded-md bg-foreground text-base font-medium text-background disabled:opacity-40"
+          className="h-12 rounded-md bg-accent text-base font-medium text-accent-foreground disabled:opacity-40"
         >
           {run === 'busy' ? t('aiRunning') : t('aiButton')}
         </button>
@@ -215,7 +212,7 @@ export function ReviewForm({ handId, reviewId, source, initial, isMtt, mathHints
           </p>
         )}
         {aiError && (
-          <p role="alert" className="text-sm text-red-700">
+          <p role="alert" className="text-sm text-loss">
             {t(`ai_${aiErrorCode(aiError)}`)}{' '}
             {(aiError === 'quota_exhausted' || aiError === 'budget_locked') && (
               <Link href="/settings" className="underline underline-offset-4">
@@ -229,7 +226,7 @@ export function ReviewForm({ handId, reviewId, source, initial, isMtt, mathHints
       {field('range', t('range'))}
 
       {mathHints.length > 0 && (
-        <ul className="space-y-0.5 rounded-md bg-foreground/5 p-3 text-sm">
+        <ul className="space-y-0.5 rounded-md bg-accent/5 p-3 text-sm">
           {mathHints.map((m, i) => (
             <li key={i}>
               {t('mathHint', {
@@ -316,7 +313,7 @@ export function ReviewForm({ handId, reviewId, source, initial, isMtt, mathHints
         </p>
       )}
       {status === 'failed' && (
-        <p role="alert" className="text-sm text-red-700">
+        <p role="alert" className="text-sm text-loss">
           {t('saveFailed')}
         </p>
       )}
@@ -324,19 +321,19 @@ export function ReviewForm({ handId, reviewId, source, initial, isMtt, mathHints
         type="button"
         onClick={save}
         disabled={status === 'saving'}
-        className="h-14 rounded-md bg-foreground text-lg font-medium text-background disabled:opacity-40"
+        className="h-14 rounded-md bg-accent text-lg font-medium text-accent-foreground disabled:opacity-40"
       >
         {status === 'saving' ? t('saving') : t('save')}
       </button>
 
       {id && (
-        <div className="flex flex-col gap-2 rounded-md border border-current/20 p-3">
+        <div className="flex flex-col gap-2 rounded-md border border-line bg-surface p-3">
           {!rebutOpen ? (
             <button
               type="button"
               onClick={() => setRebutOpen(true)}
               disabled={outOfTurns}
-              className="h-12 rounded-md border border-current/20 text-base disabled:opacity-40"
+              className="h-12 rounded-md border border-line bg-surface text-base disabled:opacity-40"
             >
               {t('rebutButton')}
             </button>
@@ -357,7 +354,7 @@ export function ReviewForm({ handId, reviewId, source, initial, isMtt, mathHints
                 <button
                   type="button"
                   onClick={() => setRebutOpen(false)}
-                  className="h-12 rounded-md border border-current/20 text-base"
+                  className="h-12 rounded-md border border-line bg-surface text-base"
                 >
                   {t('rebutCancel')}
                 </button>
@@ -365,7 +362,7 @@ export function ReviewForm({ handId, reviewId, source, initial, isMtt, mathHints
                   type="button"
                   onClick={() => callAi({ rebuttal: reason.trim() })}
                   disabled={run === 'busy' || reason.trim().length < 3}
-                  className="h-12 rounded-md bg-foreground text-base font-medium text-background disabled:opacity-40"
+                  className="h-12 rounded-md bg-accent text-base font-medium text-accent-foreground disabled:opacity-40"
                 >
                   {run === 'busy' ? t('aiRunning') : t('rebutSend')}
                 </button>

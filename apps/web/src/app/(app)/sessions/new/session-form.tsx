@@ -13,7 +13,7 @@ import {
 } from '@/lib/sessions/form';
 import { createSession, type CreateSessionState } from '../actions';
 
-const INPUT = 'h-12 rounded-md border border-current/20 bg-transparent px-3 text-base';
+import { INPUT_CLASS as INPUT } from '@/components/ui/input';
 
 export function SessionForm({ initial }: { initial: SessionFormValues }) {
   const t = useTranslations('sessions');
@@ -29,7 +29,7 @@ export function SessionForm({ initial }: { initial: SessionFormValues }) {
   const error = (field: SessionField) => {
     const code = state.errors[field];
     return code ? (
-      <span role="alert" className="text-sm text-red-600">
+      <span role="alert" className="text-sm text-loss">
         {t(`errors.${code}`)}
       </span>
     ) : null;
@@ -132,14 +132,14 @@ export function SessionForm({ initial }: { initial: SessionFormValues }) {
       {!isMtt && text('stopLoss', t('stopLoss'), { numeric: true })}
 
       {state.failed && (
-        <p role="alert" className="text-center text-sm text-red-600">
+        <p role="alert" className="text-center text-sm text-loss">
           {t('saveFailed')}
         </p>
       )}
       <button
         type="submit"
         disabled={pending}
-        className="h-14 rounded-md bg-foreground text-lg font-medium text-background disabled:opacity-50"
+        className="h-14 rounded-md bg-accent text-lg font-medium text-accent-foreground disabled:opacity-50"
       >
         {pending ? t('creating') : t('create')}
       </button>
@@ -148,8 +148,8 @@ export function SessionForm({ initial }: { initial: SessionFormValues }) {
 }
 
 const chip = (active: boolean) =>
-  `flex h-11 flex-1 cursor-pointer items-center justify-center rounded-md border border-current/20 px-3 text-sm ${
-    active ? 'bg-foreground text-background' : ''
+  `flex h-11 flex-1 cursor-pointer items-center justify-center rounded-md border px-3 text-sm ${
+    active ? 'border-accent bg-accent text-accent-foreground' : 'border-line bg-surface'
   } has-[:focus-visible]:outline-2`;
 
 function Segment({ legend, children }: { legend: string; children: React.ReactNode }) {

@@ -45,7 +45,7 @@ export default async function SettingsPage() {
               })}
             </p>
             {status.budgetLocked && (
-              <p role="alert" className="text-sm text-red-700">
+              <p role="alert" className="text-sm text-loss">
                 {t('budgetLocked')}
               </p>
             )}

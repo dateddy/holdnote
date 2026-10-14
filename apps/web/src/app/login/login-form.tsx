@@ -38,7 +38,7 @@ export function LoginForm({ next }: { next: string }) {
 
   if (status === 'sent') {
     return (
-      <p className="rounded-md bg-green-500/10 p-4 text-center text-sm">
+      <p className="rounded-md bg-win/10 p-4 text-center text-sm">
         {t.rich('sent', { email, b: (chunks) => <b>{chunks}</b> })}
       </p>
     );
@@ -49,15 +49,15 @@ export function LoginForm({ next }: { next: string }) {
       <button
         type="button"
         onClick={signInWithGoogle}
-        className="h-12 rounded-md border border-current/20 font-medium"
+        className="h-12 rounded-md border border-line bg-surface font-medium"
       >
         {t('google')}
       </button>
 
-      <div className="flex items-center gap-3 text-xs opacity-60">
-        <span className="h-px flex-1 bg-current/20" />
+      <div className="flex items-center gap-3 text-xs text-muted">
+        <span className="h-px flex-1 bg-line" />
         {t('or')}
-        <span className="h-px flex-1 bg-current/20" />
+        <span className="h-px flex-1 bg-line" />
       </div>
 
       <form onSubmit={sendMagicLink} className="flex flex-col gap-3">
@@ -70,20 +70,20 @@ export function LoginForm({ next }: { next: string }) {
             inputMode="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="h-12 rounded-md border border-current/20 bg-transparent px-3 text-base"
+            className="h-12 rounded-md border border-line bg-surface px-3 text-base"
           />
         </label>
         <button
           type="submit"
           disabled={status === 'sending'}
-          className="h-12 rounded-md bg-foreground font-medium text-background disabled:opacity-50"
+          className="h-12 rounded-md bg-accent font-medium text-accent-foreground disabled:opacity-50"
         >
           {status === 'sending' ? t('sending') : t('sendLink')}
         </button>
       </form>
 
       {status === 'error' && (
-        <p role="alert" className="text-center text-sm text-red-600">
+        <p role="alert" className="text-center text-sm text-loss">
           {t('sendFailed')}
         </p>
       )}

@@ -17,12 +17,9 @@ import {
   type SummaryFormValues,
 } from '@/lib/sessions/summary';
 
-const AREA = 'w-full rounded-md border border-current/20 bg-transparent p-3 text-base';
-const INPUT = 'h-12 w-full rounded-md border border-current/20 bg-transparent px-3 text-base';
-const chip = (on: boolean) =>
-  `flex h-10 items-center justify-center rounded-md border px-3 text-sm ${
-    on ? 'border-foreground bg-foreground text-background' : 'border-current/20'
-  }`;
+const AREA = 'w-full rounded-md border border-line bg-surface p-3 text-base';
+import { INPUT_CLASS as INPUT } from '@/components/ui/input';
+import { chipClass as chip } from '@/components/ui/chip';
 
 const LEAK_TAGS = ERROR_TAGS.filter((t) => t !== 'none');
 
@@ -81,14 +78,14 @@ export function SummaryForm({
   const outOfTurns = ai.plan === 'free' && (ai.locked || remaining === 0);
   const err = (field: keyof SummaryFormValues) =>
     state.errors[field] ? (
-      <span role="alert" className="text-sm text-red-700">
+      <span role="alert" className="text-sm text-loss">
         {t(`error_${state.errors[field]}`)}
       </span>
     ) : null;
 
   const aiMark = (same: boolean) =>
     draft && same ? (
-      <span className="ml-2 rounded bg-foreground/10 px-1.5 py-0.5 text-xs font-medium">
+      <span className="ml-2 rounded bg-accent/15 px-1.5 py-0.5 text-xs font-medium">
         {t('aiLabel')}
       </span>
     ) : null;
@@ -141,7 +138,7 @@ export function SummaryForm({
 
   return (
     <form action={formAction} className="flex flex-col gap-5">
-      <section className="space-y-1 rounded-md border border-current/20 p-4">
+      <section className="space-y-1 rounded-md border border-line bg-surface p-4">
         <h2 className="font-medium">{t('resultTitle')}</h2>
         <p className="text-lg">
           {result
@@ -151,11 +148,11 @@ export function SummaryForm({
             : t('resultNone')}
         </p>
         {rate != null && <p className="text-sm">{t('bbPerHour', { n: num(rate) })}</p>}
-        <p className="text-sm opacity-70">
+        <p className="text-sm text-muted">
           {t('handsLine', { count: handCount, reviewed: reviewedCount })}
         </p>
         {breached && (
-          <p role="alert" className="text-sm text-red-700">
+          <p role="alert" className="text-sm text-loss">
             {t('stopLossBroken', { amount: money(base.stopLoss ?? 0) })}
           </p>
         )}
@@ -250,12 +247,12 @@ export function SummaryForm({
         </label>
       )}
 
-      <div className="flex flex-col gap-2 rounded-md border border-current/20 p-3">
+      <div className="flex flex-col gap-2 rounded-md border border-line bg-surface p-3">
         <button
           type="button"
           onClick={callAi}
           disabled={run === 'busy' || outOfTurns || handCount === 0}
-          className="h-12 rounded-md bg-foreground text-base font-medium text-background disabled:opacity-40"
+          className="h-12 rounded-md bg-accent text-base font-medium text-accent-foreground disabled:opacity-40"
         >
           {run === 'busy' ? t('aiRunning') : t('aiButton')}
         </button>
@@ -272,7 +269,7 @@ export function SummaryForm({
           </p>
         )}
         {aiError && (
-          <p role="alert" className="text-sm text-red-700">
+          <p role="alert" className="text-sm text-loss">
             {tReview(`ai_${aiErrorCode(aiError)}`)}{' '}
             {(aiError === 'quota_exhausted' || aiError === 'budget_locked') && (
               <Link href="/settings" className="underline underline-offset-4">
@@ -364,7 +361,7 @@ export function SummaryForm({
         {v.leaks.map((tag) => (
           <input key={tag} type="hidden" name="leaks" value={tag} />
         ))}
-        <p className="text-xs opacity-70">{t('leakHint')}</p>
+        <p className="text-xs text-muted">{t('leakHint')}</p>
       </div>
 
       <label className="flex flex-col gap-1 text-sm">
@@ -379,7 +376,7 @@ export function SummaryForm({
           onChange={(e) => set('rules', e.target.value)}
           className={AREA}
         />
-        <span className="text-xs opacity-70">{t('rulesHint')}</span>
+        <span className="text-xs text-muted">{t('rulesHint')}</span>
       </label>
 
       <label className="flex flex-col gap-1 text-sm">
@@ -397,14 +394,14 @@ export function SummaryForm({
       </label>
 
       {state.failed && (
-        <p role="alert" className="text-sm text-red-700">
+        <p role="alert" className="text-sm text-loss">
           {t('saveFailed')}
         </p>
       )}
       <button
         type="submit"
         disabled={pending}
-        className="h-14 rounded-md bg-foreground text-lg font-medium text-background disabled:opacity-40"
+        className="h-14 rounded-md bg-accent text-lg font-medium text-accent-foreground disabled:opacity-40"
       >
         {pending ? t('saving') : t('save')}
       </button>
