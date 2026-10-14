@@ -35,6 +35,7 @@ Mỗi task cỡ một phiên làm việc. Làm theo thứ tự trừ khi chủ d
 
 ## Giai đoạn 5 — Beta
 - [x] 5.1 Onboarding 3 bước + hand mẫu.
+- [ ] 5.1b Thiết kế lại UI + tối ưu flow (DEC-044): hệ thiết kế, thanh điều hướng dưới, Ghi nhanh theo street, tách Kết thúc phiên khỏi Tổng kết, chi tiết hand dạng đọc.
 - [ ] 5.2 Script migrate `legacy/data` → tài khoản chủ dự án.
 - [ ] 5.3 Hoàn thiện bản tiếng Anh, cài đặt, xuất/xóa dữ liệu.
 - [ ] 5.4 Deploy Vercel + domain holdnote.app.

@@ -303,3 +303,11 @@ Append-only. Không sửa, không xóa mục cũ. Muốn đảo một quyết đ
 - Quyết định: Đạt xác nhận toàn bộ DEC-042 (cột onboarding trong `profiles`, chuyển hướng tới `/onboarding`, điền sẵn phiên đầu, hand mẫu luyện tập không lưu). Từ nay coi như đã chốt.
 - Lý do: Đạt duyệt sau khi xong task 4.4 và 5.1.
 - Ai quyết: Đạt
+
+## DEC-044 — Thiết kế lại UI và flow (task 5.1b)
+
+- Ngày: 2026-10-14
+- Quyết định: (1) Phong cách tối giản + một màu chủ đạo xanh lục, mặc định tối, có bản sáng; token màu cho thắng/thua/cảnh báo. (2) Thanh điều hướng dưới 4 tab: Trang chủ · Ghi hand · Thống kê · Cài đặt; đăng xuất và đổi ngôn ngữ chuyển vào Cài đặt. (3) Tách **Kết thúc phiên** (cash-out hoặc kết quả MTT + trạng thái, đặt `end_at`) khỏi **Tổng kết** (chấm điểm, điểm tốt, leak, luật, ghi chú, AI; làm sau review). (4) Ghi nhanh: board của mỗi street nằm trong hàng action của street đó, thanh ngữ cảnh và nút Lưu dính. (5) Chi tiết hand mở ở dạng đọc, form sửa thu gọn. (6) Vào bàn đi thẳng tới Ghi nhanh. Không đổi schema, không thêm dependency. Chưa làm: danh sách mọi phiên, hand xuyên phiên, nút "hand tiếp theo".
+- Lý do: Audit flow ngày 2026-10-14: Ghi nhanh phải kéo lên xuống, điều hướng thiếu, Kết thúc phiên gộp với Tổng kết nên rời bàn chậm.
+- Supersedes: DEC-039 mục (5) (lưu tổng kết đặt `end_at`); nay `end_at` đặt ở bước Kết thúc phiên. Spec 3.8 cần cập nhật theo.
+- Ai quyết: Đạt
