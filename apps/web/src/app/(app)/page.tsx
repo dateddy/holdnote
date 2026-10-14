@@ -27,6 +27,9 @@ export default async function Home() {
       >
         {t('home.startSession')}
       </Link>
+      <Link href="/stats" className="text-sm underline underline-offset-4">
+        {t('home.stats')}
+      </Link>
       <Link href="/settings" className="text-sm underline underline-offset-4">
         {t('home.settings')}
       </Link>
