@@ -98,7 +98,16 @@
     "recordHand": "Record hand",
     "endSession": "End session",
     "viewSummary": "Session summary",
-    "addOpponent": "Add an opponent"
+    "addOpponent": "Add an opponent",
+    "endTitle": "End session",
+    "endSave": "End session",
+    "ending": "Saving…",
+    "handsOnly": "{count} hands",
+    "goSummary": "Session summary",
+    "reviewHands": "Review hands",
+    "resultLabel": "Result",
+    "handsLabel": "Hands",
+    "endedAt": "Ended"
   },
   "hand": {
     "screenTitle": "Record hand",

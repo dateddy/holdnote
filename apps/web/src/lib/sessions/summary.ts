@@ -345,3 +345,37 @@ export function applyFormToStats(
         : m,
   };
 }
+
+/** Typed when leaving the table: the result and how the player felt (DEC-044). */
+export const END_FIELDS = [
+  'cashout',
+  'selfState',
+  'place',
+  'entries',
+  'prize',
+  'bounty',
+  'reentries',
+  'bustStage',
+] as const satisfies readonly SummaryField[];
+
+/** Typed in the debrief after reviewing hands (DEC-044). */
+export const NOTE_FIELDS = [
+  'grade',
+  'good',
+  'rules',
+  'notes',
+] as const satisfies readonly SummaryField[];
+
+export type EndParse =
+  | { ok: true; value: Pick<SummaryParsed, 'cashout' | 'self_state' | 'mttResult'> }
+  | { ok: false; errors: SummaryErrors };
+
+/** Validate only the "end session" fields; the debrief fields are left out of the check. */
+export function parseEndForm(v: SummaryFormValues, kind: 'cash' | 'mtt'): EndParse {
+  const end = emptySummaryForm();
+  for (const field of END_FIELDS) end[field] = v[field];
+  const parsed = parseSummaryForm(end, kind);
+  if (!parsed.ok) return parsed;
+  const { cashout, self_state, mttResult } = parsed.value;
+  return { ok: true, value: { cashout, self_state, mttResult } };
+}

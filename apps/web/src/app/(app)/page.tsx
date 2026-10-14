@@ -1,11 +1,11 @@
 import { getLocale, getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { leakTable, roundMoney, sessionResult, type LeakRow } from 'poker-core';
+import { leakTable, sessionResult, type LeakRow } from 'poker-core';
 import { InstallHint } from '@/components/pwa/install-hint';
 import { loadUsage } from '@/lib/ai/quota';
 import { aiStatus } from '@/lib/ai/status';
-import { topLeaks } from '@/lib/home/home';
+import { handTotals, topLeaks } from '@/lib/home/home';
 import { ERROR_TAGS } from '@/lib/review/review';
 import { isOneOf } from '@/lib/sessions/form';
 import { formatMoney } from '@/lib/sessions/format';
@@ -89,18 +89,7 @@ export default async function Home() {
       n,
     );
 
-  let openResult: { money: number; bb: number } | null = null;
-  if (open && openHands) {
-    let money = 0;
-    let bb = 0;
-    for (const h of openHands) {
-      if (h.result == null) continue;
-      money += h.result;
-      const handBb = h.level_bb ?? open.bb;
-      if (handBb) bb += h.result / handBb;
-    }
-    openResult = { money: roundMoney(money), bb: roundMoney(bb) };
-  }
+  const openResult = open && openHands ? handTotals(openHands, open.bb) : null;
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 p-6">
@@ -143,6 +132,14 @@ export default async function Home() {
           >
             {open.start_at ? t('recordHand') : tSessions('goBefore')}
           </Link>
+          {open.start_at && (
+            <Link
+              href={`/sessions/${open.id}/end`}
+              className={buttonClass({ variant: 'secondary' })}
+            >
+              {tSessions('endSession')}
+            </Link>
+          )}
         </section>
       ) : (
         <Link href="/sessions/new" className={BIG}>

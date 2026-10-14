@@ -1,71 +1,116 @@
 import { getLocale, getTranslations } from 'next-intl/server';
 import Link from 'next/link';
-import { SyncStatus } from '@/components/hand/sync-status';
 import { notFound } from 'next/navigation';
+import { sessionResult } from 'poker-core';
+import { SyncStatus } from '@/components/hand/sync-status';
+import { buttonClass } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Result } from '@/components/ui/result';
+import { TopBar } from '@/components/ui/top-bar';
+import { handTotals } from '@/lib/home/home';
+import { formatMoney } from '@/lib/sessions/format';
+import { STATS_COLUMNS, toStatsSession } from '@/lib/sessions/summary';
 import { createClient } from '@/lib/supabase/server';
 
-// Temporary session screen until the real home (task 4.4).
+/** One session: where it stands and the next step (record, end, review, summary). */
 export default async function SessionPage({ params }: PageProps<'/sessions/[id]'>) {
   const { id } = await params;
   const supabase = await createClient();
-  const { data: session } = await supabase.from('sessions').select('*').eq('id', id).maybeSingle();
-  if (!session) notFound();
+  const { data: row } = await supabase
+    .from('sessions')
+    .select(STATS_COLUMNS)
+    .eq('id', id)
+    .maybeSingle();
+  if (!row) notFound();
 
-  const [t, tHand, locale] = await Promise.all([
+  const { data: hands } = await supabase
+    .from('hands')
+    .select('result, level_bb')
+    .eq('session_id', id);
+
+  const [t, tHand, tCommon, locale] = await Promise.all([
     getTranslations('sessions'),
     getTranslations('hand'),
+    getTranslations('common'),
     getLocale(),
   ]);
-  const kind = t(session.kind === 'mtt' ? 'mtt' : 'cash');
-  const startedAt = session.start_at
-    ? new Date(session.start_at).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
-    : null;
+  const session = toStatsSession(row);
+  const started = Boolean(session.startAt);
+  const ended = Boolean(session.endAt);
+  const time = (iso: string) =>
+    new Date(iso).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+
+  // Ended: the real result (cash-out or prize). Open: what the hands add up to so far.
+  const final = ended ? sessionResult(session) : null;
+  const sofar = handTotals(hands ?? [], session.bb || null);
+  const money = final?.money ?? sofar.money;
+  const bb = final ? final.bb : session.kind === 'mtt' ? null : sofar.bb;
+  const num = (n: number) =>
+    new Intl.NumberFormat(locale, { maximumFractionDigits: 2, signDisplay: 'exceptZero' }).format(
+      n,
+    );
 
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 p-6">
-      <header className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-semibold">{t('activeTitle')}</h1>
-        <Link href="/" className="text-sm underline underline-offset-4">
-          {(await getTranslations('common'))('back')}
-        </Link>
-      </header>
-      <section className="space-y-1 rounded-md border border-line bg-surface p-4">
-        <p className="font-medium">{t('title', { kind })}</p>
+    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-5 p-6">
+      <TopBar
+        title={t('title', { kind: t(session.kind) })}
+        subtitle={[session.venue, session.stakeLabel].filter(Boolean).join(' · ')}
+        back={{ href: '/', label: tCommon('back') }}
+      />
+
+      <Card>
         <p className="text-sm text-muted">
-          {[session.venue, session.stake_label].filter(Boolean).join(' · ')}
+          {ended && session.endAt
+            ? t('endedAt', { time: time(session.endAt) })
+            : session.startAt
+              ? t('startedAt', { time: time(session.startAt) })
+              : t('notStarted')}
+          {' · '}
+          {t('handsOnly', { count: hands?.length ?? 0 })}
         </p>
-        <p className="text-sm">
-          {startedAt ? t('startedAt', { time: startedAt }) : t('notStarted')}
-        </p>
-      </section>
+        {started && (
+          <p className="text-2xl font-semibold">
+            <Result value={money}>
+              {bb != null ? `${num(bb)} bb` : formatMoney(money, session.currency, locale)}
+            </Result>
+            {bb != null && (
+              <span className="ml-2 text-base font-normal text-muted">
+                {formatMoney(money, session.currency, locale)}
+              </span>
+            )}
+          </p>
+        )}
+      </Card>
+
       <SyncStatus />
-      {startedAt ? (
-        <Link
-          href={`/sessions/${id}/record`}
-          className="flex h-14 items-center justify-center rounded-md bg-accent text-lg font-medium text-accent-foreground"
-        >
+
+      {!started && (
+        <Link href={`/sessions/${id}/before`} className={buttonClass({ size: 'lg' })}>
+          {t('goBefore')}
+        </Link>
+      )}
+      {started && !ended && (
+        <Link href={`/sessions/${id}/record`} className={buttonClass({ size: 'lg' })}>
           {t('recordHand')}
         </Link>
-      ) : (
-        <Link
-          href={`/sessions/${id}/before`}
-          className="flex h-14 items-center justify-center rounded-md bg-accent text-lg font-medium text-accent-foreground"
-        >
-          {t('goBefore')}
+      )}
+      {ended && (
+        <Link href={`/sessions/${id}/summary`} className={buttonClass({ size: 'lg' })}>
+          {t('goSummary')}
         </Link>
       )}
       <Link
         href={`/sessions/${id}/hands`}
-        className="flex h-12 items-center justify-center rounded-md border border-line bg-surface"
+        className={buttonClass({ variant: 'secondary', size: 'md' })}
       >
-        {tHand('handsList')}
+        {ended ? t('reviewHands') : tHand('handsList')}
       </Link>
-      {startedAt && (
+      {started && !ended && (
         <Link
-          href={`/sessions/${id}/summary`}
-          className="flex h-12 items-center justify-center rounded-md border border-line bg-surface"
+          href={`/sessions/${id}/end`}
+          className={buttonClass({ variant: 'secondary', size: 'md' })}
         >
-          {session.end_at ? t('viewSummary') : t('endSession')}
+          {t('endSession')}
         </Link>
       )}
     </main>

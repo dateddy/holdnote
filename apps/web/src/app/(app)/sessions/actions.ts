@@ -47,5 +47,5 @@ export async function enterTable(sessionId: string) {
     .update({ start_at: new Date().toISOString() })
     .eq('id', sessionId)
     .is('start_at', null);
-  redirect(`/sessions/${sessionId}`);
+  redirect(`/sessions/${sessionId}/record`);
 }

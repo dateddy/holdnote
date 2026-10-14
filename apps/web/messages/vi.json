@@ -98,7 +98,16 @@
     "recordHand": "Ghi hand",
     "endSession": "Kết thúc phiên",
     "viewSummary": "Tổng kết phiên",
-    "addOpponent": "Thêm đối thủ"
+    "addOpponent": "Thêm đối thủ",
+    "endTitle": "Kết thúc phiên",
+    "endSave": "Kết thúc phiên",
+    "ending": "Đang lưu…",
+    "handsOnly": "{count} hand",
+    "goSummary": "Tổng kết phiên",
+    "reviewHands": "Review hand",
+    "resultLabel": "Kết quả",
+    "handsLabel": "Số hand",
+    "endedAt": "Đã kết thúc"
   },
   "hand": {
     "screenTitle": "Ghi hand",

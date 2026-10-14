@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   emptySummaryForm,
   mergeMtt,
+  parseEndForm,
   parseSummaryForm,
   readMttResult,
   readSummary,
@@ -202,5 +203,35 @@ describe('toStatsSession', () => {
       entries: null,
       bustStage: 'itm',
     });
+  });
+});
+
+describe('parseEndForm', () => {
+  it('cash needs a cash-out and ignores the debrief fields', () => {
+    expect(parseEndForm(form(), 'cash')).toEqual({ ok: false, errors: { cashout: 'required' } });
+    const r = parseEndForm(
+      form({ cashout: '1k5', selfState: 'tilt', grade: 'A', good: 'x', notes: 'y' }),
+      'cash',
+    );
+    expect(r).toEqual({
+      ok: true,
+      value: {
+        cashout: 1500,
+        self_state: 'tilt',
+        mttResult: expect.objectContaining({ prize: null }),
+      },
+    });
+  });
+
+  it('MTT needs a prize; the state is optional', () => {
+    expect(parseEndForm(form(), 'mtt')).toEqual({ ok: false, errors: { prize: 'required' } });
+    const r = parseEndForm(form({ prize: '0', place: '90', bustStage: 'bubble' }), 'mtt');
+    expect(r.ok && r.value.self_state).toBeNull();
+    expect(r.ok && r.value.mttResult).toMatchObject({ prize: 0, place: 90, bust_stage: 'bubble' });
+  });
+
+  it('a debrief-only error does not block ending the session', () => {
+    const r = parseEndForm(form({ cashout: '0', grade: 'Z' }), 'cash');
+    expect(r.ok).toBe(true);
   });
 });

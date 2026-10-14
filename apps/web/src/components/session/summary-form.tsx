@@ -5,21 +5,18 @@ import Link from 'next/link';
 import { useActionState, useMemo, useState } from 'react';
 import { bbPerHour, sessionResult, stopLossBreached, type StatsSession } from 'poker-core';
 import { saveSummary, type SaveSummaryState } from '@/app/(app)/sessions/[id]/summary/actions';
+import { chipClass as chip } from '@/components/ui/chip';
 import { aiErrorCode, ERROR_TAGS } from '@/lib/review/review';
 import { formatMoney } from '@/lib/sessions/format';
 import {
   applyFormToStats,
-  BUST_STAGES,
   GRADES,
-  SELF_STATES,
   SUMMARY_LIMITS,
   type SessionSummary,
   type SummaryFormValues,
 } from '@/lib/sessions/summary';
 
 const AREA = 'w-full rounded-md border border-line bg-surface p-3 text-base';
-import { INPUT_CLASS as INPUT } from '@/components/ui/input';
-import { chipClass as chip } from '@/components/ui/chip';
 
 const LEAK_TAGS = ERROR_TAGS.filter((t) => t !== 'none');
 
@@ -74,15 +71,7 @@ export function SummaryForm({
   const result = sessionResult(live);
   const rate = bbPerHour(live);
   const breached = stopLossBreached(live);
-  const isMtt = base.kind === 'mtt';
   const outOfTurns = ai.plan === 'free' && (ai.locked || remaining === 0);
-  const err = (field: keyof SummaryFormValues) =>
-    state.errors[field] ? (
-      <span role="alert" className="text-sm text-loss">
-        {t(`error_${state.errors[field]}`)}
-      </span>
-    ) : null;
-
   const aiMark = (same: boolean) =>
     draft && same ? (
       <span className="ml-2 rounded bg-accent/15 px-1.5 py-0.5 text-xs font-medium">
@@ -158,95 +147,6 @@ export function SummaryForm({
         )}
       </section>
 
-      {isMtt ? (
-        <fieldset className="grid grid-cols-2 gap-3">
-          <label className="flex flex-col gap-1 text-sm">
-            {t('prize')}
-            <input
-              name="prize"
-              inputMode="decimal"
-              value={v.prize}
-              onChange={(e) => set('prize', e.target.value)}
-              className={INPUT}
-            />
-            {err('prize')}
-          </label>
-          <label className="flex flex-col gap-1 text-sm">
-            {t('bounty')}
-            <input
-              name="bounty"
-              inputMode="decimal"
-              value={v.bounty}
-              onChange={(e) => set('bounty', e.target.value)}
-              className={INPUT}
-            />
-            {err('bounty')}
-          </label>
-          <label className="flex flex-col gap-1 text-sm">
-            {t('place')}
-            <input
-              name="place"
-              inputMode="numeric"
-              value={v.place}
-              onChange={(e) => set('place', e.target.value)}
-              className={INPUT}
-            />
-            {err('place')}
-          </label>
-          <label className="flex flex-col gap-1 text-sm">
-            {t('entries')}
-            <input
-              name="entries"
-              inputMode="numeric"
-              value={v.entries}
-              onChange={(e) => set('entries', e.target.value)}
-              className={INPUT}
-            />
-            {err('entries')}
-          </label>
-          <label className="flex flex-col gap-1 text-sm">
-            {t('reentries')}
-            <input
-              name="reentries"
-              inputMode="numeric"
-              value={v.reentries}
-              onChange={(e) => set('reentries', e.target.value)}
-              className={INPUT}
-            />
-            {err('reentries')}
-          </label>
-          <label className="flex flex-col gap-1 text-sm">
-            {t('bustStage')}
-            <select
-              name="bustStage"
-              value={v.bustStage}
-              onChange={(e) => set('bustStage', e.target.value)}
-              className={INPUT}
-            >
-              <option value="">–</option>
-              {BUST_STAGES.map((s) => (
-                <option key={s} value={s}>
-                  {t(`stage_${s}`)}
-                </option>
-              ))}
-            </select>
-            {err('bustStage')}
-          </label>
-        </fieldset>
-      ) : (
-        <label className="flex flex-col gap-1 text-sm">
-          {t('cashout', { currency: base.currency })}
-          <input
-            name="cashout"
-            inputMode="decimal"
-            value={v.cashout}
-            onChange={(e) => set('cashout', e.target.value)}
-            className={INPUT}
-          />
-          {err('cashout')}
-        </label>
-      )}
-
       <div className="flex flex-col gap-2 rounded-md border border-line bg-surface p-3">
         <button
           type="button"
@@ -299,24 +199,6 @@ export function SummaryForm({
           ))}
         </div>
         <input type="hidden" name="grade" value={v.grade} />
-      </div>
-
-      <div className="space-y-2">
-        <h3 className="text-sm">{t('state')}</h3>
-        <div className="grid grid-cols-3 gap-1.5">
-          {SELF_STATES.map((s) => (
-            <button
-              key={s}
-              type="button"
-              aria-pressed={v.selfState === s}
-              onClick={() => set('selfState', v.selfState === s ? '' : s)}
-              className={chip(v.selfState === s)}
-            >
-              {t(`state_${s}`)}
-            </button>
-          ))}
-        </div>
-        <input type="hidden" name="selfState" value={v.selfState} />
       </div>
 
       <label className="flex flex-col gap-1 text-sm">

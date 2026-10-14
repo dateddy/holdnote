@@ -3,9 +3,9 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import {
-  mergeMtt,
+  NOTE_FIELDS,
   parseSummaryForm,
-  SUMMARY_TEXT_FIELDS,
+  summaryFormFrom,
   type SummaryErrors,
   type SummaryFormValues,
 } from '@/lib/sessions/summary';
@@ -52,25 +52,32 @@ async function syncRules(supabase: Client, sessionId: string, rules: string[]) {
   );
 }
 
-/** Save the debrief: result, state, summary; end the session if it was still open. */
+/**
+ * Save the debrief (DEC-044): grade, good points, leaks, rules, notes. The result and state were
+ * saved when the session ended, so they are read back from the row, not from this form.
+ */
 export async function saveSummary(
   sessionId: string,
   prev: SaveSummaryState,
   formData: FormData,
 ): Promise<SaveSummaryState> {
-  const values: SummaryFormValues = { ...prev.values, leaks: formData.getAll('leaks').map(String) };
-  for (const field of SUMMARY_TEXT_FIELDS) {
-    const raw = formData.get(field);
-    values[field] = typeof raw === 'string' ? raw : '';
-  }
-
   const supabase = await createClient();
   const { data: session } = await supabase
     .from('sessions')
-    .select('id, kind, mtt, end_at')
+    .select('id, kind, cashout, self_state, summary, mtt, end_at')
     .eq('id', sessionId)
     .maybeSingle();
-  if (!session) return { values, errors: {}, failed: true };
+  if (!session) return { values: prev.values, errors: {}, failed: true };
+  if (!session.end_at) redirect(`/sessions/${sessionId}/end`);
+
+  const values: SummaryFormValues = {
+    ...summaryFormFrom(session),
+    leaks: formData.getAll('leaks').map(String),
+  };
+  for (const field of NOTE_FIELDS) {
+    const raw = formData.get(field);
+    values[field] = typeof raw === 'string' ? raw : '';
+  }
 
   const kind = session.kind === 'mtt' ? 'mtt' : 'cash';
   const parsed = parseSummaryForm(values, kind);
@@ -79,14 +86,7 @@ export async function saveSummary(
 
   const { error } = await supabase
     .from('sessions')
-    .update({
-      self_state: value.self_state,
-      summary: value.summary,
-      ...(kind === 'cash'
-        ? { cashout: value.cashout }
-        : { mtt: mergeMtt(session.mtt, value.mttResult) }),
-      ...(session.end_at ? {} : { end_at: new Date().toISOString() }),
-    })
+    .update({ summary: value.summary })
     .eq('id', sessionId);
   if (error) return { values, errors: {}, failed: true };
 

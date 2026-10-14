@@ -1,6 +1,6 @@
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { SummaryForm } from '@/components/session/summary-form';
 import { loadUsage } from '@/lib/ai/quota';
 import { aiStatus } from '@/lib/ai/status';
@@ -20,6 +20,8 @@ export default async function SessionSummaryPage({ params }: PageProps<'/session
     .eq('id', id)
     .maybeSingle();
   if (!row) notFound();
+  // The debrief comes after the session is ended (DEC-044).
+  if (!row.end_at) redirect(`/sessions/${id}/end`);
 
   const [{ data: hands }, { data: leaks }] = await Promise.all([
     supabase.from('hands').select('id').eq('session_id', id),
