@@ -202,7 +202,8 @@
     "heroCards": "Bài của mình",
     "board": "Board",
     "slotVill1": "Đối thủ 1",
-    "slotVill2": "Đối thủ 2"
+    "slotVill2": "Đối thủ 2",
+    "editHand": "Sửa hand"
   },
   "review": {
     "title": "Review hand",

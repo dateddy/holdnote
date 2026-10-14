@@ -150,7 +150,18 @@ export default async function Home() {
       <dl className="grid grid-cols-2 gap-2 text-center text-sm">
         <div className="rounded-md border border-line bg-surface p-3">
           <dt className="text-muted">{t('unreviewed')}</dt>
-          <dd className="text-xl font-medium">{unreviewed}</dd>
+          <dd className="text-xl font-medium">
+            {unreviewed > 0 && recentRows?.[0] ? (
+              <Link
+                href={`/sessions/${recentRows[0].id}/hands?f=unreviewed`}
+                className="underline underline-offset-4"
+              >
+                {unreviewed}
+              </Link>
+            ) : (
+              unreviewed
+            )}
+          </dd>
         </div>
         <div className="rounded-md border border-line bg-surface p-3">
           <dt className="text-muted">{t('aiLeft')}</dt>

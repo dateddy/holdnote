@@ -111,7 +111,10 @@ export default async function HandListPage({
             const res = resultBb(h.result, bb);
             return (
               <li key={h.id}>
-                <Link href={`/hands/${h.id}`} className="flex flex-col gap-1 p-3">
+                <Link
+                  href={`/hands/${h.id}${filter === 'all' ? '' : `?f=${filter}`}`}
+                  className="flex flex-col gap-1 p-3"
+                >
                   <span className="flex items-center justify-between gap-2">
                     <span className="flex items-center gap-2">
                       <span className="text-sm text-muted">#{h.num}</span>
