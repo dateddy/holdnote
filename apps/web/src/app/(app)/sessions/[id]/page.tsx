@@ -60,6 +60,14 @@ export default async function SessionPage({ params }: PageProps<'/sessions/[id]'
       >
         {tHand('handsList')}
       </Link>
+      {startedAt && (
+        <Link
+          href={`/sessions/${id}/summary`}
+          className="flex h-12 items-center justify-center rounded-md border border-current/20"
+        >
+          {session.end_at ? t('viewSummary') : t('endSession')}
+        </Link>
+      )}
     </main>
   );
 }

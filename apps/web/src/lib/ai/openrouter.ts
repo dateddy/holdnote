@@ -32,6 +32,8 @@ export async function chatJson(opts: {
   model: string;
   messages: ChatMessage[];
   schema: Record<string, unknown>;
+  /** Name of the JSON schema in the request. Default `hand_review`. */
+  schemaName?: string;
   reasoningEffort?: 'low' | 'medium' | 'high';
   timeoutMs?: number;
   fetchImpl?: typeof fetch;
@@ -56,7 +58,11 @@ export async function chatJson(opts: {
         usage: { include: true },
         response_format: {
           type: 'json_schema',
-          json_schema: { name: 'hand_review', strict: true, schema: opts.schema },
+          json_schema: {
+            name: opts.schemaName ?? 'hand_review',
+            strict: true,
+            schema: opts.schema,
+          },
         },
       }),
       signal: AbortSignal.timeout(opts.timeoutMs ?? 60_000),

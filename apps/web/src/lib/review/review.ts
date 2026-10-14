@@ -138,6 +138,7 @@ export const AI_ERRORS = [
   'key_rejected',
   'unauthorized',
   'not_found',
+  'nothing_to_summarize',
   'offline',
   'server_error',
 ] as const;

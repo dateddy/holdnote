@@ -78,7 +78,9 @@
     "goBefore": "Open pre-session",
     "recordSoon": "Hand entry comes in the next step.",
     "title": "{kind} session",
-    "recordHand": "Record hand"
+    "recordHand": "Record hand",
+    "endSession": "End session",
+    "viewSummary": "Session summary"
   },
   "hand": {
     "screenTitle": "Record hand",
@@ -228,7 +230,8 @@
     "rebutReason": "Why do you disagree with this review?",
     "rebutCost": "The AI re-checks its review using your reason. Uses 1 turn.",
     "rebutCancel": "Cancel",
-    "rebutSend": "Send rebuttal"
+    "rebutSend": "Send rebuttal",
+    "ai_nothing_to_summarize": "No hands recorded in this session yet."
   },
   "settings": {
     "title": "Settings",
@@ -253,7 +256,8 @@
     "error_bad_request": "Invalid key or model name.",
     "error_offline": "Cannot connect. Check your network and try again.",
     "error_unauthorized": "Your session expired. Sign in again.",
-    "error_server_error": "Server error. Try again later."
+    "error_server_error": "Server error. Try again later.",
+    "summaryRemaining": "{remaining}/{limit} session summaries left this month."
   },
   "sync": {
     "pending": "{count} hand(s) waiting to sync (saved on this device).",
@@ -262,5 +266,49 @@
   "pwa": {
     "install": "Install on home screen",
     "iosHint": "To install: tap Safari's Share button, then “Add to Home Screen”."
+  },
+  "summary": {
+    "title": "Session summary",
+    "back": "Back",
+    "resultTitle": "Result",
+    "resultNone": "Enter the result below",
+    "bbPerHour": "{n} bb per hour",
+    "handsLine": "{count} hands recorded · {reviewed} reviewed",
+    "stopLossBroken": "You went past your stop-loss of {amount}.",
+    "cashout": "Cash-out ({currency})",
+    "prize": "Prize",
+    "bounty": "Bounties won",
+    "place": "Finishing place",
+    "entries": "Entries in the field",
+    "reentries": "Re-entries you used",
+    "bustStage": "Knocked out in",
+    "stage_early": "Early",
+    "stage_mid": "Middle",
+    "stage_bubble": "Bubble",
+    "stage_itm": "In the money",
+    "stage_final_table": "Final table",
+    "aiLabel": "AI",
+    "aiButton": "AI summary",
+    "aiRunning": "AI is writing…",
+    "aiLeft": "{n} summaries left this month",
+    "aiOwnKey": "Using your own key",
+    "aiLocked": "Free-plan AI is paused until next month",
+    "aiFilled": "AI draft filled in. Edit what you disagree with, then save.",
+    "grade": "Your grade",
+    "state": "How did you feel?",
+    "state_clear": "Clear-headed",
+    "state_tired": "Tired",
+    "state_tilt": "Tilted",
+    "good": "What went well (one per line, up to {n})",
+    "leaks": "Leaks this session (up to {n})",
+    "leakHint": "The number is how many reviewed hands carry that mistake.",
+    "rules": "Rules for next session (one per line, up to {n})",
+    "rulesHint": "Saved to Your rules and shown before your next session.",
+    "notes": "Notes",
+    "save": "Save and end session",
+    "saving": "Saving…",
+    "saveFailed": "Could not save. Try again.",
+    "error_required": "Required",
+    "error_invalid": "Invalid value"
   }
 }

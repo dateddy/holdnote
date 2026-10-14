@@ -1,7 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
 import { languagePack, reviewInLanguage } from './languages';
 import { buildReviewContext, type ReviewHand, type ReviewSession } from './context';
-import { BYOK_HOURLY_LIMIT, decideAccess, FREE_MONTHLY_LIMIT, monthStart } from './quota';
+import {
+  BYOK_HOURLY_LIMIT,
+  decideAccess,
+  FREE_MONTHLY_LIMIT,
+  monthStart,
+  SUMMARY_MONTHLY_LIMIT,
+} from './quota';
 import { InvalidOutputError, runReview } from './run-review';
 import { aiStatus } from './status';
 import { aiReviewSchema, normalizeTags, toAiReviewRow } from './schema';
@@ -240,12 +246,21 @@ describe('runReview', () => {
 });
 
 describe('aiStatus', () => {
-  const u = { hasOwnKey: false, model: null, monthCalls: 12, appSpendUsd: 1, lastHourCalls: 0 };
+  const u = {
+    hasOwnKey: false,
+    model: null,
+    monthCalls: 12,
+    summaryCalls: 1,
+    appSpendUsd: 1,
+    lastHourCalls: 0,
+  };
   it('free plan shows reviews left, own key shows no limit', () => {
     expect(aiStatus(u)).toMatchObject({
       plan: 'free',
       remaining: 18,
       limit: 30,
+      summaryRemaining: 3,
+      summaryLimit: 4,
       budgetLocked: false,
     });
     expect(aiStatus({ ...u, appSpendUsd: 25 }).budgetLocked).toBe(true);
@@ -253,7 +268,28 @@ describe('aiStatus', () => {
       plan: 'byok',
       model: 'a/b',
       remaining: null,
+      summaryRemaining: null,
     });
+  });
+});
+
+describe('decideAccess for summaries', () => {
+  const base = { hasOwnKey: false, appSpendUsd: 0, budgetUsd: 20, lastHourCalls: 0 };
+  it('uses its own monthly limit', () => {
+    expect(
+      decideAccess({
+        ...base,
+        monthCalls: SUMMARY_MONTHLY_LIMIT - 1,
+        monthLimit: SUMMARY_MONTHLY_LIMIT,
+      }),
+    ).toMatchObject({ ok: true, remaining: 0 });
+    expect(
+      decideAccess({
+        ...base,
+        monthCalls: SUMMARY_MONTHLY_LIMIT,
+        monthLimit: SUMMARY_MONTHLY_LIMIT,
+      }),
+    ).toEqual({ ok: false, code: 'quota_exhausted' });
   });
 });
 

@@ -78,7 +78,9 @@
     "goBefore": "Mở Trước phiên",
     "recordSoon": "Ghi hand sẽ có ở bước tiếp theo.",
     "title": "Phiên {kind}",
-    "recordHand": "Ghi hand"
+    "recordHand": "Ghi hand",
+    "endSession": "Kết thúc phiên",
+    "viewSummary": "Tổng kết phiên"
   },
   "hand": {
     "screenTitle": "Ghi hand",
@@ -228,7 +230,8 @@
     "rebutReason": "Vì sao bạn không đồng ý với review này?",
     "rebutCost": "AI xem lại review theo lý do của bạn. Tính 1 lượt.",
     "rebutCancel": "Hủy",
-    "rebutSend": "Gửi phản biện"
+    "rebutSend": "Gửi phản biện",
+    "ai_nothing_to_summarize": "Phiên này chưa có hand nào."
   },
   "settings": {
     "title": "Cài đặt",
@@ -253,7 +256,8 @@
     "error_bad_request": "Key hoặc tên model không hợp lệ.",
     "error_offline": "Không kết nối được. Kiểm tra mạng rồi thử lại.",
     "error_unauthorized": "Phiên đăng nhập hết hạn. Đăng nhập lại.",
-    "error_server_error": "Lỗi server. Thử lại sau."
+    "error_server_error": "Lỗi server. Thử lại sau.",
+    "summaryRemaining": "Còn {remaining}/{limit} lượt AI tổng kết phiên tháng này."
   },
   "sync": {
     "pending": "{count} hand đang chờ đồng bộ (đã lưu trên máy).",
@@ -262,5 +266,49 @@
   "pwa": {
     "install": "Cài lên màn hình chính",
     "iosHint": "Để cài: bấm nút Chia sẻ của Safari, rồi chọn “Thêm vào MH chính”."
+  },
+  "summary": {
+    "title": "Tổng kết phiên",
+    "back": "Quay lại",
+    "resultTitle": "Kết quả",
+    "resultNone": "Nhập kết quả bên dưới",
+    "bbPerHour": "{n} bb mỗi giờ",
+    "handsLine": "Đã ghi {count} hand · {reviewed} hand đã review",
+    "stopLossBroken": "Bạn đã thua quá stop-loss {amount}.",
+    "cashout": "Cash-out ({currency})",
+    "prize": "Tiền thưởng",
+    "bounty": "Tiền bounty",
+    "place": "Hạng",
+    "entries": "Số người chơi",
+    "reentries": "Số lần re-entry đã dùng",
+    "bustStage": "Bị loại ở giai đoạn",
+    "stage_early": "Đầu giải",
+    "stage_mid": "Giữa giải",
+    "stage_bubble": "Bubble",
+    "stage_itm": "Đã vào tiền",
+    "stage_final_table": "Bàn chung kết",
+    "aiLabel": "AI",
+    "aiButton": "AI tổng kết",
+    "aiRunning": "AI đang viết…",
+    "aiLeft": "Còn {n} lượt tổng kết tháng này",
+    "aiOwnKey": "Đang dùng key riêng",
+    "aiLocked": "AI gói miễn phí tạm dừng đến đầu tháng sau",
+    "aiFilled": "AI đã điền bản nháp. Sửa chỗ bạn không đồng ý rồi lưu.",
+    "grade": "Bạn tự chấm",
+    "state": "Bạn thấy thế nào?",
+    "state_clear": "Tỉnh táo",
+    "state_tired": "Mệt",
+    "state_tilt": "Tilt",
+    "good": "Điểm tốt (mỗi dòng một ý, tối đa {n})",
+    "leaks": "Leak phiên này (tối đa {n})",
+    "leakHint": "Con số là số hand đã review dính lỗi đó.",
+    "rules": "Luật cho phiên sau (mỗi dòng một luật, tối đa {n})",
+    "rulesHint": "Được lưu vào Luật của bạn và hiện ở màn Trước phiên lần sau.",
+    "notes": "Ghi chú",
+    "save": "Lưu và kết thúc phiên",
+    "saving": "Đang lưu…",
+    "saveFailed": "Không lưu được. Thử lại.",
+    "error_required": "Bắt buộc",
+    "error_invalid": "Giá trị không hợp lệ"
   }
 }

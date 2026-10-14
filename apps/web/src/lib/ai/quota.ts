@@ -7,15 +7,21 @@ export const FREE_MONTHLY_LIMIT = 30;
 export const BYOK_HOURLY_LIMIT = 30;
 export const DEFAULT_FREE_BUDGET_USD = 20;
 
-/** Kinds that use up the monthly review allowance. Session summaries have their own (task 4.1). */
+/** Free plan: AI session summaries per calendar month (spec 5.2). Separate from the review allowance. */
+export const SUMMARY_MONTHLY_LIMIT = 4;
+
+/** Kinds that use up the monthly review allowance. Session summaries have their own. */
 export const REVIEW_KINDS = ['hand_review', 'rebuttal'] as const;
+export const SUMMARY_KINDS = ['session_summary'] as const;
 
 export type AccessDenied = 'quota_exhausted' | 'budget_locked' | 'rate_limited';
 
 export type AccessInput = {
   hasOwnKey: boolean;
-  /** Review calls this user made this month and was billed to the app. */
+  /** Calls of the kind being asked for that this user made this month and was billed to the app. */
   monthCalls: number;
+  /** The monthly allowance for that kind. Default: the review allowance. */
+  monthLimit?: number;
   /** Everything the app paid for this month, all users. */
   appSpendUsd: number;
   budgetUsd: number;
@@ -38,8 +44,9 @@ export function decideAccess(i: AccessInput): Access {
     return { ok: true, billedTo: 'user', remaining: null };
   }
   if (i.appSpendUsd >= i.budgetUsd) return { ok: false, code: 'budget_locked' };
-  if (i.monthCalls >= FREE_MONTHLY_LIMIT) return { ok: false, code: 'quota_exhausted' };
-  return { ok: true, billedTo: 'app', remaining: FREE_MONTHLY_LIMIT - i.monthCalls - 1 };
+  const limit = i.monthLimit ?? FREE_MONTHLY_LIMIT;
+  if (i.monthCalls >= limit) return { ok: false, code: 'quota_exhausted' };
+  return { ok: true, billedTo: 'app', remaining: limit - i.monthCalls - 1 };
 }
 
 /** First instant of the UTC month of `now`. */
@@ -57,7 +64,10 @@ type Admin = SupabaseClient<Database>;
 export type UsageSnapshot = {
   hasOwnKey: boolean;
   model: string | null;
+  /** Reviews and rebuttals this month, billed to the app. */
   monthCalls: number;
+  /** Session summaries this month, billed to the app. */
+  summaryCalls: number;
   appSpendUsd: number;
   lastHourCalls: number;
 };
@@ -71,15 +81,19 @@ export async function loadUsage(
   const since = monthStart(now).toISOString();
   const hourAgo = new Date(now.getTime() - 3_600_000).toISOString();
 
-  const [key, month, hour, spend] = await Promise.all([
-    admin.from('user_api_keys').select('model').eq('user_id', userId).maybeSingle(),
+  const monthCount = (kinds: readonly string[]) =>
     admin
       .from('ai_usage')
       .select('id', { count: 'exact', head: true })
       .eq('user_id', userId)
       .eq('billed_to', 'app')
-      .in('kind', [...REVIEW_KINDS])
-      .gte('created_at', since),
+      .in('kind', [...kinds])
+      .gte('created_at', since);
+
+  const [key, month, summary, hour, spend] = await Promise.all([
+    admin.from('user_api_keys').select('model').eq('user_id', userId).maybeSingle(),
+    monthCount(REVIEW_KINDS),
+    monthCount(SUMMARY_KINDS),
     admin
       .from('ai_usage')
       .select('id', { count: 'exact', head: true })
@@ -88,12 +102,13 @@ export async function loadUsage(
       .gte('created_at', hourAgo),
     admin.rpc('ai_app_spend_since', { p_since: since }),
   ]);
-  for (const r of [key, month, hour, spend]) if (r.error) throw r.error;
+  for (const r of [key, month, summary, hour, spend]) if (r.error) throw r.error;
 
   return {
     hasOwnKey: key.data != null,
     model: key.data?.model ?? null,
     monthCalls: month.count ?? 0,
+    summaryCalls: summary.count ?? 0,
     lastHourCalls: hour.count ?? 0,
     appSpendUsd: Number(spend.data ?? 0),
   };

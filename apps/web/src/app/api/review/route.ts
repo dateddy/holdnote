@@ -2,10 +2,10 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { buildReviewContext } from '@/lib/ai/context';
 import { languagePack, reviewInLanguage } from '@/lib/ai/languages';
-import { OpenRouterError } from '@/lib/ai/openrouter';
 import { budgetFromEnv, decideAccess, loadUsage } from '@/lib/ai/quota';
-import { InvalidOutputError, runReview } from '@/lib/ai/run-review';
+import { runReview } from '@/lib/ai/run-review';
 import { toAiReviewRow } from '@/lib/ai/schema';
+import { isFailure, modelFailure, resolveCredentials } from '@/lib/ai/server';
 import { HAND_EDIT_COLUMNS, HAND_SESSION_COLUMNS } from '@/lib/hands/build';
 import { REVIEW_COLUMNS } from '@/lib/review/review';
 import { createAdminClient } from '@/lib/supabase/admin';
@@ -80,16 +80,9 @@ export async function POST(request: Request) {
   const access = decideAccess({ ...usage, budgetUsd: budgetFromEnv() });
   if (!access.ok) return fail(access.code, access.code === 'rate_limited' ? 429 : 402);
 
-  let apiKey = process.env.OPENROUTER_API_KEY;
-  let model = process.env.OPENROUTER_MODEL;
-  if (usage.hasOwnKey) {
-    const { data } = await admin.rpc('get_user_api_key', { p_user: userId });
-    const own = data?.[0];
-    if (!own) return fail('server_error', 500);
-    apiKey = own.api_key;
-    model = own.model ?? model;
-  }
-  if (!apiKey || !model) return fail('not_configured', 503);
+  const creds = await resolveCredentials(admin, userId, usage);
+  if (isFailure(creds)) return fail(creds.code, creds.status);
+  const { apiKey, model } = creds;
 
   const counts = new Map<string, number>();
   for (const l of leaks ?? []) {
@@ -123,14 +116,8 @@ export async function POST(request: Request) {
   try {
     run = await runReview({ apiKey, model, userMessage, locale });
   } catch (e) {
-    if (e instanceof InvalidOutputError) return fail('invalid_output', 502);
-    if (e instanceof OpenRouterError) {
-      if (e.kind === 'auth') return fail(usage.hasOwnKey ? 'key_rejected' : 'server_error', 502);
-      if (e.kind === 'rate') return fail('provider_busy', 503);
-      if (e.kind === 'timeout') return fail('timeout', 504);
-      return fail('upstream_error', 502);
-    }
-    throw e;
+    const failure = modelFailure(e, usage.hasOwnKey);
+    return fail(failure.code, failure.status);
   }
 
   const row = toAiReviewRow(

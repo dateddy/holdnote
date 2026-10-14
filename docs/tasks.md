@@ -28,7 +28,7 @@ Mỗi task cỡ một phiên làm việc. Làm theo thứ tự trừ khi chủ d
 - [x] 3.4 Script benchmark model trên hand đã review trong `legacy/data`.
 
 ## Giai đoạn 4 — Thống kê
-- [ ] 4.1 Tổng kết phiên + AI tổng kết.
+- [x] 4.1 Tổng kết phiên + AI tổng kết.
 - [ ] 4.2 Bảng leak + xu hướng.
 - [ ] 4.3 Biểu đồ kết quả, thống kê MTT, kỷ luật.
 - [ ] 4.4 Đối thủ, luật của bạn, trang chủ.

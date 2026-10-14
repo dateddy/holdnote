@@ -29,6 +29,12 @@ export default async function SettingsPage() {
           <>
             <p>{t('planFree')}</p>
             <p>{t('remaining', { remaining: status.remaining ?? 0, limit: status.limit ?? 0 })}</p>
+            <p>
+              {t('summaryRemaining', {
+                remaining: status.summaryRemaining ?? 0,
+                limit: status.summaryLimit ?? 0,
+              })}
+            </p>
             {status.budgetLocked && (
               <p role="alert" className="text-sm text-red-700">
                 {t('budgetLocked')}
