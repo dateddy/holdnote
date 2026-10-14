@@ -189,7 +189,11 @@
     "undoFailed": "Không hoàn tác được. Thử lại.",
     "needNetwork": "Cần có mạng để sửa hand. Thử lại khi có mạng.",
     "levelAnte": "Ante của level",
-    "anteIsBb": "Ante theo BB: ante bằng BB của level."
+    "anteIsBb": "Ante theo BB: ante bằng BB của level.",
+    "heroCards": "Bài của mình",
+    "board": "Board",
+    "slotVill1": "Đối thủ 1",
+    "slotVill2": "Đối thủ 2"
   },
   "review": {
     "title": "Review hand",

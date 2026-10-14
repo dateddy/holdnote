@@ -189,7 +189,11 @@
     "undoFailed": "Could not undo. Try again.",
     "needNetwork": "You need a connection to edit a hand. Try again when online.",
     "levelAnte": "Level ante",
-    "anteIsBb": "BB ante: the ante equals the level BB."
+    "anteIsBb": "BB ante: the ante equals the level BB.",
+    "heroCards": "Your cards",
+    "board": "Board",
+    "slotVill1": "Opp. 1",
+    "slotVill2": "Opp. 2"
   },
   "review": {
     "title": "Hand review",

@@ -17,6 +17,7 @@ import {
 } from 'poker-core';
 import { defaultActor, removeLastOnStreet } from '@/lib/hands/actions';
 import { isOneOf } from '@/lib/sessions/form';
+import { CardGrid } from './card-grid';
 
 const FRACTIONS = [
   ['1/3', 1 / 3],
@@ -41,6 +42,18 @@ type Props = {
   /** Number of board cards entered (0, 3, 4, 5), to open the matching street. */
   boardCount: number;
   money: (n: number) => string;
+  /** The seven card slots (hero 2 + board 5) and a way to change them; each street edits its own cards. */
+  slots: string[];
+  onSlots: (slots: string[]) => void;
+  /** Cards used outside the slots (opponent hand), which cannot be picked again. */
+  blocked: string[];
+};
+
+/** Board slots each street owns: flop 2-4, turn 5, river 6. */
+const BOARD_RANGE: Partial<Record<Street, [number, number]>> = {
+  flop: [2, 5],
+  turn: [5, 6],
+  river: [6, 7],
 };
 
 /** Button entry mode: one row per street (spec 3.5). */
@@ -52,6 +65,9 @@ export function ActionRows({
   villPos,
   boardCount,
   money,
+  slots,
+  onSlots,
+  blocked,
 }: Props) {
   const t = useTranslations('hand');
   const [picked, setPicked] = useState<Partial<Record<Street, Who>>>({});
@@ -106,6 +122,7 @@ export function ActionRows({
               ...(who.pos && { pos: who.pos }),
             })
           : null;
+        const range = BOARD_RANGE[street];
         const sized: 'bet' | 'raise' = spot && spot.level > 0 ? 'raise' : 'bet';
         const rows = actions.map((a, index) => ({ a, index })).filter((x) => x.a.street === street);
 
@@ -117,6 +134,20 @@ export function ActionRows({
                 <span className="text-sm text-muted">{t('potNow', { pot: money(spot.pot) })}</span>
               )}
             </div>
+
+            {range && (
+              <CardGrid
+                ariaLabel={t(`street_${street}`)}
+                labels={Array<string>(range[1] - range[0]).fill(
+                  street === 'turn' ? t('turn') : street === 'river' ? t('river') : t('flop'),
+                )}
+                slots={slots.slice(range[0], range[1])}
+                blocked={[...slots.slice(0, range[0]), ...slots.slice(range[1]), ...blocked]}
+                onChange={(part) =>
+                  onSlots([...slots.slice(0, range[0]), ...part, ...slots.slice(range[1])])
+                }
+              />
+            )}
 
             {rows.length > 0 && (
               <ol className="space-y-1 text-sm">

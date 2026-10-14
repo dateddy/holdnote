@@ -215,11 +215,31 @@ export function HandForm({
         </p>
       )}
 
-      <h2 className="text-lg font-semibold">{t('title', { num })}</h2>
+      <div className="sticky top-0 z-10 -mx-6 flex items-center justify-between gap-3 border-b border-line bg-background/95 px-6 py-2 backdrop-blur">
+        <h2 className="text-lg font-semibold">{t('title', { num })}</h2>
+        <p className="flex gap-3 text-sm tabular-nums text-muted">
+          {draft.heroStack && (
+            <span>
+              {t('heroStack')}: <b className="text-foreground">{draft.heroStack}</b>
+            </span>
+          )}
+          {derived.potFinal != null && (
+            <span>
+              {t('pot')}: <b className="text-foreground">{money(derived.potFinal)}</b>
+            </span>
+          )}
+        </p>
+      </div>
 
       <section className="space-y-2">
-        <h3 className="font-medium">{t('cards')}</h3>
-        <CardGrid slots={draft.slots} onChange={(slots) => set('slots', slots)} />
+        <h3 className="font-medium">{t('heroCards')}</h3>
+        <CardGrid
+          ariaLabel={t('heroCards')}
+          labels={[t('slotHero1'), t('slotHero2')]}
+          slots={draft.slots.slice(0, 2)}
+          blocked={[...draft.slots.slice(2), ...draft.villCards]}
+          onChange={(hero) => set('slots', [...hero, ...draft.slots.slice(2)])}
+        />
       </section>
 
       <section className="space-y-2">
@@ -263,6 +283,16 @@ export function HandForm({
         </div>
         {mode === 'shorthand' ? (
           <>
+            <div className="space-y-2">
+              <h4 className="text-sm text-muted">{t('board')}</h4>
+              <CardGrid
+                ariaLabel={t('board')}
+                labels={[t('flop'), t('flop'), t('flop'), t('turn'), t('river')]}
+                slots={draft.slots.slice(2)}
+                blocked={[...draft.slots.slice(0, 2), ...draft.villCards]}
+                onChange={(board) => set('slots', [...draft.slots.slice(0, 2), ...board])}
+              />
+            </div>
             <ShorthandInput
               value={raw.rawLine}
               onChange={(rawLine) => set('rawLine', rawLine)}
@@ -283,6 +313,9 @@ export function HandForm({
             villPos={draft.villPos}
             boardCount={boardCards(draft).length}
             money={money}
+            slots={draft.slots}
+            onSlots={(slots) => set('slots', slots)}
+            blocked={draft.villCards}
           />
         )}
       </section>
@@ -317,8 +350,11 @@ export function HandForm({
           <div className="space-y-1">
             <p className="text-sm">{t('villCards')}</p>
             <CardGrid
-              slots={[...draft.villCards, '', '', '', '', '']}
-              onChange={(slots) => set('villCards', slots.slice(0, 2))}
+              ariaLabel={t('villCards')}
+              labels={[t('slotVill1'), t('slotVill2')]}
+              slots={[draft.villCards[0] ?? '', draft.villCards[1] ?? '']}
+              blocked={draft.slots}
+              onChange={(cards) => set('villCards', cards)}
             />
           </div>
         )}
@@ -387,7 +423,7 @@ export function HandForm({
             </label>
           )}
         </div>
-        <dl className="grid grid-cols-2 gap-1 text-sm">
+        <dl className="grid grid-cols-2 gap-1 rounded-md border border-line bg-surface p-3 text-sm">
           <dt className="text-muted">{t('eff')}</dt>
           <dd>{derived.eff ? `${money(derived.eff.amount)} (${derived.eff.bb} bb)` : '–'}</dd>
           {derived.spr.map((s) => (
@@ -431,7 +467,9 @@ export function HandForm({
         type="button"
         onClick={save}
         disabled={!canSave(draft) || lineErrors.length > 0 || status === 'saving'}
-        className="h-14 rounded-md bg-accent text-lg font-medium text-accent-foreground disabled:opacity-40"
+        className={`sticky z-10 h-14 rounded-md bg-accent text-lg font-medium text-accent-foreground shadow-lg disabled:opacity-40 ${
+          practice ? 'bottom-4' : 'bottom-[5.5rem]'
+        }`}
       >
         {practice
           ? practice.label
