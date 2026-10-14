@@ -88,7 +88,7 @@ Bộ lọc: tất cả, ⚑, thiếu dữ liệu, chưa review, đã review. M�
 Sửa mọi trường. Khối review: range đối thủ, toán, line đề xuất, loại lỗi (nhãn), EV, ICM (MTT), bài học, đã review. Nút **AI review** (ô AI điền có nhãn "AI" tới khi người dùng sửa/chấp nhận; hiện số lượt còn lại). Nút **Phản biện** (người dùng viết lý do, AI xem lại; tính 1 lượt).
 
 ### 3.8 Tổng kết phiên
-Buy-in, cash-out, kết quả (tiền và bb), bb/giờ, cảnh báo stop-loss. Tự chấm A/B/C/D, điểm tốt, leak (nhãn), luật phiên sau, trạng thái (tỉnh táo/mệt/tilt). Nút **AI tổng kết**.
+Hai bước (DEC-044). **Kết thúc phiên** (lúc rời bàn): cash-out (MTT: hạng, tiền thưởng, bounty, giai đoạn bị loại), trạng thái (tỉnh táo/mệt/tilt), hiện kết quả (tiền và bb), bb/giờ, cảnh báo stop-loss; đặt `end_at`. **Tổng kết** (làm sau review hand): tự chấm A/B/C/D, điểm tốt, leak (nhãn), luật phiên sau, ghi chú. Nút **AI tổng kết**.
 
 ### 3.9 Đối thủ
 Tên/đặc điểm, loại người chơi, địa điểm hay gặp, ghi chú, danh sách hand đã gặp.

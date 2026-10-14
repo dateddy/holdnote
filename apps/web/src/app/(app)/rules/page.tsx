@@ -1,6 +1,7 @@
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { RULE_MAX } from '@/lib/rules/rules';
+import { TopBar } from '@/components/ui/top-bar';
 import { createClient } from '@/lib/supabase/server';
 import { addRule, deleteRule, moveRule, setRuleActive, updateRule } from './actions';
 
@@ -19,12 +20,7 @@ export default async function RulesPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-5 p-6">
-      <header className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-semibold">{t('title')}</h1>
-        <Link href="/" className="text-sm underline underline-offset-4">
-          {t('home')}
-        </Link>
-      </header>
+      <TopBar title={t('title')} back={{ href: '/', label: t('home') }} />
       <p className="text-sm text-muted">{t('intro')}</p>
 
       <form action={addRule} className="flex gap-2">

@@ -1,5 +1,4 @@
 import { getLocale, getTranslations } from 'next-intl/server';
-import Link from 'next/link';
 import { cumulativeSeries, disciplineStats, leakTable, mttStats, type LeakRow } from 'poker-core';
 import { ResultsChart } from '@/components/stats/results-chart';
 import { ERROR_TAGS } from '@/lib/review/review';
@@ -14,6 +13,7 @@ import {
   parseFilters,
   resolveView,
 } from '@/lib/stats/filters';
+import { TopBar } from '@/components/ui/top-bar';
 import { createClient } from '@/lib/supabase/server';
 
 const SELECT = 'h-10 w-full rounded-md border border-line bg-surface px-2 text-sm';
@@ -62,12 +62,7 @@ export default async function StatsPage({ searchParams }: PageProps<'/stats'>) {
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-8 p-6">
-      <header className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-semibold">{t('title')}</h1>
-        <Link href="/" className="text-sm underline underline-offset-4">
-          {t('home')}
-        </Link>
-      </header>
+      <TopBar title={t('title')} back={{ href: '/', label: t('home') }} />
 
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">{t('leaksTitle')}</h2>
@@ -86,7 +81,7 @@ export default async function StatsPage({ searchParams }: PageProps<'/stats'>) {
               </thead>
               <tbody>
                 {leakLines.map((l) => (
-                  <tr key={l.tag} className="border-b border-current/10 align-top">
+                  <tr key={l.tag} className="border-b border-line align-top">
                     <td className="py-2 pr-2">
                       {tReview(`tag_${l.tag}` as 'tag_tilt')}
                       {l.repeated && (

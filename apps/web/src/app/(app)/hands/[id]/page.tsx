@@ -1,5 +1,4 @@
 import { getLocale, getTranslations } from 'next-intl/server';
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { computePot, potOddsAtDecisions } from 'poker-core';
 import { HandForm } from '@/components/hand/hand-form';
@@ -20,6 +19,7 @@ import { aiStatus } from '@/lib/ai/status';
 import { fromReviewRow, REVIEW_COLUMNS } from '@/lib/review/review';
 import { formatMoney } from '@/lib/sessions/format';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { TopBar } from '@/components/ui/top-bar';
 import { createClient } from '@/lib/supabase/server';
 
 export default async function HandDetailPage({ params, searchParams }: PageProps<'/hands/[id]'>) {
@@ -84,15 +84,13 @@ export default async function HandDetailPage({ params, searchParams }: PageProps
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-8 p-6">
-      <header className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-semibold">{t('detailTitle', { num: hand.num })}</h1>
-        <Link
-          href={`/sessions/${hand.session_id}/hands${filter ? `?f=${filter}` : ''}`}
-          className="text-sm underline underline-offset-4"
-        >
-          {t('handsList')}
-        </Link>
-      </header>
+      <TopBar
+        title={t('detailTitle', { num: hand.num })}
+        back={{
+          href: `/sessions/${hand.session_id}/hands${filter ? `?f=${filter}` : ''}`,
+          label: t('handsList'),
+        }}
+      />
 
       <HandSummary
         heroCards={heroCards(draft)}

@@ -1,7 +1,7 @@
 import { getLocale, getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { cardLabel } from '@/components/hand/card-label';
+import { CardRow } from '@/components/ui/playing-card';
 import { SyncStatus } from '@/components/hand/sync-status';
 import {
   filterHands,
@@ -14,6 +14,7 @@ import {
   type ListHand,
 } from '@/lib/hands/list';
 import { isOneOf } from '@/lib/sessions/form';
+import { TopBar } from '@/components/ui/top-bar';
 import { createClient } from '@/lib/supabase/server';
 
 export default async function HandListPage({
@@ -55,12 +56,10 @@ export default async function HandListPage({
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-4 p-6">
-      <header className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-semibold">{t('handsList')}</h1>
-        <Link href={`/sessions/${id}`} className="text-sm underline underline-offset-4">
-          {t('backToSession')}
-        </Link>
-      </header>
+      <TopBar
+        title={t('handsList')}
+        back={{ href: `/sessions/${id}`, label: t('backToSession') }}
+      />
 
       <SyncStatus />
 
@@ -118,12 +117,7 @@ export default async function HandListPage({
                   <span className="flex items-center justify-between gap-2">
                     <span className="flex items-center gap-2">
                       <span className="text-sm text-muted">#{h.num}</span>
-                      <b className="text-lg">
-                        {(h.hero_cards ?? []).map((c, i) => (
-                          <span key={i}>{cardLabel(c)}</span>
-                        ))}
-                        {!h.hero_cards?.length && '–'}
-                      </b>
+                      {h.hero_cards?.length ? <CardRow cards={h.hero_cards} /> : <span>–</span>}
                       {h.flagged && <span aria-label={t('flag')}>⚑</span>}
                     </span>
                     <span
@@ -132,14 +126,8 @@ export default async function HandListPage({
                       {res == null ? '–' : `${res > 0 ? '+' : ''}${num(res)} bb`}
                     </span>
                   </span>
-                  <span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm opacity-80">
-                    {h.board?.length ? (
-                      <span>
-                        {h.board.map((c, i) => (
-                          <span key={i}>{cardLabel(c)}</span>
-                        ))}
-                      </span>
-                    ) : null}
+                  <span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
+                    {h.board?.length ? <CardRow cards={h.board} size="sm" /> : null}
                     <span>{[h.hero_pos, h.villain_pos].filter(Boolean).join(' vs ')}</span>
                     {effBb != null && <span>{t('effShort', { bb: num(effBb) })}</span>}
                     {h.missing_data && (

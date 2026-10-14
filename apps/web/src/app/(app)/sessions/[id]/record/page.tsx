@@ -1,9 +1,9 @@
 import { getLocale, getTranslations } from 'next-intl/server';
-import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { HandForm } from '@/components/hand/hand-form';
 import { SyncStatus } from '@/components/hand/sync-status';
 import { HAND_SESSION_COLUMNS } from '@/lib/hands/build';
+import { TopBar } from '@/components/ui/top-bar';
 import { createClient } from '@/lib/supabase/server';
 
 export default async function RecordPage({ params }: PageProps<'/sessions/[id]/record'>) {
@@ -41,12 +41,10 @@ export default async function RecordPage({ params }: PageProps<'/sessions/[id]/r
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 p-6">
-      <header className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-semibold">{t('screenTitle')}</h1>
-        <Link href={`/sessions/${id}`} className="text-sm underline underline-offset-4">
-          {t('backToSession')}
-        </Link>
-      </header>
+      <TopBar
+        title={t('screenTitle')}
+        back={{ href: `/sessions/${id}`, label: t('backToSession') }}
+      />
       <SyncStatus />
       <HandForm
         sessionId={id}

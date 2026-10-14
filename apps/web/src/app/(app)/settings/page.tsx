@@ -6,6 +6,7 @@ import { AiKeyForm } from '@/components/settings/ai-key-form';
 import { loadUsage } from '@/lib/ai/quota';
 import { aiStatus } from '@/lib/ai/status';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { TopBar } from '@/components/ui/top-bar';
 import { createClient } from '@/lib/supabase/server';
 
 // Only the AI section for now; the rest of Settings comes with task 5.3.
@@ -18,12 +19,7 @@ export default async function SettingsPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 p-6">
-      <header className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-semibold">{t('title')}</h1>
-        <Link href="/" className="text-sm underline underline-offset-4">
-          {t('home')}
-        </Link>
-      </header>
+      <TopBar title={t('title')} back={{ href: '/', label: t('home') }} />
 
       <nav className="flex gap-4 text-sm">
         <Link href="/rules" className="underline underline-offset-4">

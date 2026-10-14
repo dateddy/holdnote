@@ -5,6 +5,7 @@ import { cardLabel } from '@/components/hand/card-label';
 import { OpponentForm } from '@/components/opponents/opponent-form';
 import { resultBb } from '@/lib/hands/list';
 import { opponentFormFrom } from '@/lib/opponents/form';
+import { TopBar } from '@/components/ui/top-bar';
 import { createClient } from '@/lib/supabase/server';
 import { deleteOpponent } from '../actions';
 
@@ -38,12 +39,7 @@ export default async function OpponentPage({ params }: PageProps<'/opponents/[id
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 p-6">
-      <header className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-semibold">{opponent.name}</h1>
-        <Link href="/opponents" className="text-sm underline underline-offset-4">
-          {t('back')}
-        </Link>
-      </header>
+      <TopBar title={opponent.name} back={{ href: '/opponents', label: t('back') }} />
 
       <OpponentForm id={id} initial={opponentFormFrom(opponent)} />
 

@@ -1,6 +1,6 @@
 import { getTranslations } from 'next-intl/server';
-import Link from 'next/link';
 import { isOneOf, KINDS, MODES, PREFILL_COLUMNS, prefillFrom } from '@/lib/sessions/form';
+import { TopBar } from '@/components/ui/top-bar';
 import { createClient } from '@/lib/supabase/server';
 import { SessionForm } from './session-form';
 
@@ -38,12 +38,10 @@ export default async function NewSessionPage({ searchParams }: PageProps<'/sessi
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 p-6">
-      <header className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-semibold">{t('newTitle')}</h1>
-        <Link href="/" className="text-sm underline underline-offset-4">
-          {(await getTranslations('common'))('back')}
-        </Link>
-      </header>
+      <TopBar
+        title={t('newTitle')}
+        back={{ href: '/', label: (await getTranslations('common'))('back') }}
+      />
       {previous && <p className="text-sm text-muted">{t('prefilled')}</p>}
       <SessionForm key={kind} initial={initial} />
     </main>
