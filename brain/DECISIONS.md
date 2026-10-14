@@ -296,3 +296,10 @@ Append-only. Không sửa, không xóa mục cũ. Muốn đảo một quyết đ
 - Quyết định: (1) Thêm `profiles.onboarded_at` (timestamptz, null = chưa xong), `profiles.play_mode` (`live|online`), `profiles.play_kind` (`cash|mtt`), cấp quyền select/update theo cột cho `authenticated`. Migration `20261014120000_profiles_onboarding.sql`. Không điền sẵn cho tài khoản cũ: họ thấy onboarding một lần và bỏ qua được. (2) Trang chủ chuyển sang `/onboarding` khi `onboarded_at` null; bỏ qua hay hoàn tất đều đặt `onboarded_at`. (3) Bước 2 điền sẵn loại phiên (cash/MTT) và live/online cho phiên đầu tiên; có phiên trước thì vẫn lấy theo phiên trước. (4) Bước 3: hand mẫu cố định (cash live 25/50, A♠Q♠ BTN vs BB, thua −11bb, lỗi `call_too_loose`); lời review nằm trong file ngôn ngữ. Ghi lại hand mẫu dùng màn Ghi nhanh ở chế độ luyện tập, không lưu gì, so từng phần (bài, board, vị trí, hành động, kết quả).
 - Lý do: Spec 3.2 cần nhớ trạng thái onboarding qua nhiều máy; hand ghi thử không nên thành dữ liệu rác.
 - Ai quyết: Đạt (thêm cột, không lưu hand thử); chi tiết còn lại Claude Code (chờ Đạt xác nhận)
+
+## DEC-043 — Xác nhận DEC-042
+
+- Ngày: 2026-10-14
+- Quyết định: Đạt xác nhận toàn bộ DEC-042 (cột onboarding trong `profiles`, chuyển hướng tới `/onboarding`, điền sẵn phiên đầu, hand mẫu luyện tập không lưu). Từ nay coi như đã chốt.
+- Lý do: Đạt duyệt sau khi xong task 4.4 và 5.1.
+- Ai quyết: Đạt
