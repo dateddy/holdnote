@@ -277,7 +277,9 @@
     "error_server_error": "Lỗi server. Thử lại sau.",
     "summaryRemaining": "Còn {remaining}/{limit} lượt AI tổng kết phiên tháng này.",
     "rulesLink": "Luật của bạn",
-    "opponentsLink": "Đối thủ"
+    "opponentsLink": "Đối thủ",
+    "accountTitle": "Tài khoản",
+    "languageTitle": "Ngôn ngữ"
   },
   "sync": {
     "pending": "{count} hand đang chờ đồng bộ (đã lưu trên máy).",
@@ -480,5 +482,12 @@
     "hint_positions": "Mình BTN, đối thủ BB",
     "hint_actions": "Open 150 · bet 100 · check · call 300",
     "hint_outcome": "Thua"
+  },
+  "nav": {
+    "label": "Điều hướng chính",
+    "home": "Trang chủ",
+    "record": "Ghi hand",
+    "stats": "Thống kê",
+    "settings": "Cài đặt"
   }
 }

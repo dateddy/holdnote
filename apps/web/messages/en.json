@@ -277,7 +277,9 @@
     "error_server_error": "Server error. Try again later.",
     "summaryRemaining": "{remaining}/{limit} session summaries left this month.",
     "rulesLink": "Your rules",
-    "opponentsLink": "Opponents"
+    "opponentsLink": "Opponents",
+    "accountTitle": "Account",
+    "languageTitle": "Language"
   },
   "sync": {
     "pending": "{count} hand(s) waiting to sync (saved on this device).",
@@ -480,5 +482,12 @@
     "hint_positions": "You BTN, opponent BB",
     "hint_actions": "Open 150 · bet 100 · check · call 300",
     "hint_outcome": "Lose"
+  },
+  "nav": {
+    "label": "Main navigation",
+    "home": "Home",
+    "record": "Record",
+    "stats": "Stats",
+    "settings": "Settings"
   }
 }

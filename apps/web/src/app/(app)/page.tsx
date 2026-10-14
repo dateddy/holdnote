@@ -3,7 +3,6 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { leakTable, roundMoney, sessionResult, type LeakRow } from 'poker-core';
 import { InstallHint } from '@/components/pwa/install-hint';
-import { LocaleSwitcher } from '@/i18n/locale-switcher';
 import { loadUsage } from '@/lib/ai/quota';
 import { aiStatus } from '@/lib/ai/status';
 import { topLeaks } from '@/lib/home/home';
@@ -107,11 +106,6 @@ export default async function Home() {
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 p-6">
       <header className="flex items-center justify-between gap-4">
         <h1 className="text-2xl font-semibold">{tCommon('appName')}</h1>
-        <form action="/auth/signout" method="post">
-          <button type="submit" className="text-sm underline underline-offset-4">
-            {tCommon('signOut')}
-          </button>
-        </form>
       </header>
       <p>{t('greeting', { name: profile?.display_name ?? '' })}</p>
 
@@ -252,22 +246,7 @@ export default async function Home() {
         )}
       </section>
 
-      <nav className="flex flex-wrap gap-x-4 gap-y-2 text-sm">
-        <Link href="/stats" className="underline underline-offset-4">
-          {t('stats')}
-        </Link>
-        <Link href="/opponents" className="underline underline-offset-4">
-          {t('opponents')}
-        </Link>
-        <Link href="/rules" className="underline underline-offset-4">
-          {t('rulesTitle')}
-        </Link>
-        <Link href="/settings" className="underline underline-offset-4">
-          {t('settings')}
-        </Link>
-      </nav>
       <InstallHint />
-      <LocaleSwitcher />
     </main>
   );
 }

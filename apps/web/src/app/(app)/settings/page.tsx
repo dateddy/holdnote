@@ -1,5 +1,7 @@
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
+import { buttonClass } from '@/components/ui/button';
+import { LocaleSwitcher } from '@/i18n/locale-switcher';
 import { AiKeyForm } from '@/components/settings/ai-key-form';
 import { loadUsage } from '@/lib/ai/quota';
 import { aiStatus } from '@/lib/ai/status';
@@ -11,7 +13,7 @@ export default async function SettingsPage() {
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
   const userId = data?.claims.sub;
-  const t = await getTranslations('settings');
+  const [t, tCommon] = await Promise.all([getTranslations('settings'), getTranslations('common')]);
   const status = userId ? aiStatus(await loadUsage(createAdminClient(), userId)) : null;
 
   return (
@@ -31,6 +33,11 @@ export default async function SettingsPage() {
           {t('opponentsLink')}
         </Link>
       </nav>
+
+      <section className="flex flex-col gap-3">
+        <h2 className="text-lg font-semibold">{t('languageTitle')}</h2>
+        <LocaleSwitcher />
+      </section>
 
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-semibold">{t('aiTitle')}</h2>
@@ -59,6 +66,14 @@ export default async function SettingsPage() {
         )}
         <p className="text-sm">{t('keyHelp')}</p>
         <AiKeyForm hasKey={status?.plan === 'byok'} model={status?.model ?? null} />
+      </section>
+      <section className="flex flex-col gap-3">
+        <h2 className="text-lg font-semibold">{t('accountTitle')}</h2>
+        <form action="/auth/signout" method="post">
+          <button type="submit" className={buttonClass({ variant: 'secondary' })}>
+            {tCommon('signOut')}
+          </button>
+        </form>
       </section>
     </main>
   );
