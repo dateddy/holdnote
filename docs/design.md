@@ -68,6 +68,8 @@ Bậc dùng được: 1 (4px), 2 (8px), 3 (12px), 4 (16px), 6 (24px).
 
 Không dùng `gap-5`, margin lẻ (`mt-*`, `mb-*`) để căn; dùng gap của cha.
 
+**Ngoại lệ — màn Ghi nhanh:** giữa các mục dùng `gap-3` (thay `gap-6`) và `Card tight`, để thẻ Board và thẻ Action vừa 375×667 khi đang nhập.
+
 ## 5. Kích thước control
 
 | Cỡ   | Chiều cao     | Chữ         | Dùng cho                                                                          |
@@ -99,6 +101,9 @@ Không dùng `gap-5`, margin lẻ (`mt-*`, `mb-*`) để căn; dùng gap của c
 | `NumPad`                   | Phím số 0–9, `.`, `k`, xóa                                                                                                |
 | `Toggle`                   | Công tắc bật/tắt                                                                                                          |
 | `StickyBar`                | Thanh dính đáy duy nhất của màn làm việc (Ghi nhanh): nền đặc, viền trên, safe-area                                       |
+| `Tab` / `IconButton`       | Hàng tab street (xanh = xong hoặc đang tới lượt, đỏ nét đứt = có action không hợp lệ, mờ = chưa tới; tab đang chọn tô đặc) và nút vuông 44px một ký tự (`<>`, `‹`, `›`) |
+| `CardSlot` (trạng thái)    | `missing` (nhấp nháy viền `warn`), `extra` (viền `warn` nét đứt), `highlight` (viền `accent`); ô khóa dùng `disabled`      |
+| `Card tight`               | Card `p-3` cho màn làm việc phải vừa một màn hình điện thoại (Ghi nhanh)                                                  |
 
 Sẽ thêm trong các task 5.1b-x: `Icon` (lucide), `TopBar` variant tab/con, `Textarea`, `Field` (nhãn + ô + gợi ý), `Screen` (khung trang).
 

@@ -327,3 +327,11 @@ Append-only. Không sửa, không xóa mục cũ. Muốn đảo một quyết đ
 - Lý do: Spec ghi hand theo action; một thanh dính tránh hai thanh chồng nhau ở đáy màn hình điện thoại.
 - Supersedes: spec 3.5 mục 3 (chế độ Nút).
 - Ai quyết: Đạt (duyệt kế hoạch ngày 2026-10-19)
+
+## DEC-047 — Board không chặn action; màn Ghi nhanh gồm thẻ Board và một thẻ Action (task 5.1c-4)
+
+- Ngày: 2026-10-20
+- Quyết định: (1) Board nhập lúc nào cũng được, không chặn action: state machine bỏ phase `board`, `BoardInput.skipped`, cảnh báo `board_skipped`. `boardCheck` cho biết từng ô `locked` / `open` / `missing` / `extra` theo street cuối mà action đã tới (all-in được theo thì mở cả 5 ô); `streetTabs` cho trạng thái tab Preflop/Flop/Turn/River (`current`, `done`, `invalid`, `locked`). Lưu với board thiếu → nhãn Thiếu dữ liệu; board thừa → cảnh báo, vẫn lưu. (2) Màn Ghi nhanh: thanh ngữ cảnh → thẻ Board (5 ô liền) → một thẻ Action (tab street, chế độ mở rộng, khu nhập trong thẻ) → kết quả (chỉ khi hand xong) → thanh Lưu dính. Bàn mini chỉ ở bước thiết lập và trong sheet "Thêm người". (3) Chọn board qua sheet bộ chọn bài, tự sang ô trống kế tiếp. (4) Ô sửa tay số tiền giấu sau link "Sửa tay". (5) Màn Ghi dùng `gap-3` và `Card tight` (ngoại lệ trong design.md).
+- Lý do: Thẻ riêng cho từng street đẩy nút bấm xuống dưới, phải cuộn khi đang nhập; chặn action chờ board làm chậm ghi hand tại bàn.
+- Supersedes: một phần DEC-046 (board theo street trong hàng action, bàn mini ở bước action); spec mục 10.4 và ca test 23.
+- Ai quyết: Đạt (duyệt kế hoạch ngày 2026-10-20)
