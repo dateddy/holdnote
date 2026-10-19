@@ -6,6 +6,7 @@ import {
   forcedBets,
   isCard,
   isPostAct,
+  legacySeat,
   boardCheck,
   replay,
   tableOrder,
@@ -141,7 +142,7 @@ export function emptyDraft(session: HandSession, prev: PreviousHand | null): Han
 /** The seat the same player takes on the next hand: the button moves one place, names move forward. */
 export function rotatePos(seats: number, pos: string | null | undefined): string {
   const order = tableOrder(seats);
-  const i = order.findIndex((p) => p === pos);
+  const i = order.findIndex((p) => p === legacySeat(seats, pos ?? ''));
   return i < 0 ? '' : (order[(i + 1) % order.length] ?? '');
 }
 
@@ -409,15 +410,20 @@ export function fromHandRow(session: HandSession, row: HandRowIn): HandDraft {
   (row.hero_cards ?? []).slice(0, 2).forEach((c, i) => (slots[i] = c));
   (row.board ?? []).slice(0, 5).forEach((c, i) => (slots[2 + i] = c));
   const str = (n: number | null) => (n == null ? '' : String(n));
-  const saved = Array.isArray(row.actions) ? row.actions.filter(isAction) : [];
+  // Hands saved under the old position names are read on today's table (5.1c-5).
+  const seats = row.players_dealt ?? session.seats ?? 9;
+  const rename = (pos: string): string => legacySeat(seats, pos);
+  const saved = (Array.isArray(row.actions) ? row.actions.filter(isAction) : []).map((a) =>
+    a.pos ? { ...a, pos: rename(a.pos) as Position } : a,
+  );
   const posts = saved.filter((a) => isPostAct(a.act));
   const amounts = (act: Action['act']) =>
     posts.filter((a) => a.act === act && a.amount !== undefined).map((a) => String(a.amount));
   const draft: HandDraft = {
     slots,
     villCards: [row.villain_cards?.[0] ?? '', row.villain_cards?.[1] ?? ''],
-    heroPos: row.hero_pos ?? '',
-    villPos: row.villain_pos ?? '',
+    heroPos: rename(row.hero_pos ?? ''),
+    villPos: rename(row.villain_pos ?? ''),
     opponentId: row.opponent_id ?? '',
     actions: stripForced(saved),
     rawLine: row.raw_line ?? '',

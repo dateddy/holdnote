@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isCard, parseCards } from '../src/index';
+import { duplicateCards, isCard, parseCards, takenSuits } from '../src/index';
 
 describe('parseCards', () => {
   it('parses suited cards', () => {
@@ -41,5 +41,21 @@ describe('isCard', () => {
     expect(isCard('1h')).toBe(false);
     expect(isCard('Ahh')).toBe(false);
     expect(isCard('ah')).toBe(false);
+  });
+});
+
+describe('duplicate cards and taken suits (5.1c-5)', () => {
+  it('flags every copy of a repeated card', () => {
+    expect(duplicateCards(['Ah', 'Kd', 'Ah', '7c'])).toEqual([0, 2]);
+    expect(duplicateCards(['Ah', 'Kd'])).toEqual([]);
+  });
+
+  it('ignores unknown-suit cards and empty slots', () => {
+    expect(duplicateCards(['K?', 'K?', '', ''])).toEqual([]);
+  });
+
+  it('lists the suits already used for a rank', () => {
+    expect(takenSuits('A', ['Ah', 'As', 'Kd', 'A?', ''])).toEqual(['s', 'h']);
+    expect(takenSuits('2', ['Ah'])).toEqual([]);
   });
 });

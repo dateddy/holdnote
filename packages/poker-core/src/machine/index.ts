@@ -5,7 +5,7 @@ import { run, ensureForced } from './run';
 import { actorAt, canonPos, tableOrder } from './seats';
 import type { ActInput, BoardInput, HandSetup, HandState, Notice, Settlement } from './types';
 
-export { canonPos, forcedBets, tableOrder, maxStraddles } from './seats';
+export { canonPos, forcedBets, legacySeat, maxStraddles, remapSeats, tableOrder } from './seats';
 export type * from './types';
 export { boardCheck, boardNeeded, reachedStreet, streetTabs } from './board';
 export type { BoardCheck, SlotState, TabState } from './board';
@@ -38,6 +38,15 @@ export function replay(
     .map((p) => p.pos)
     .filter((pos) => run(setup, actions, board, [...extra, pos]).invalid.every((i) => base.has(i)));
   return { ...state, addable };
+}
+
+/**
+ * The opponent the hand is about: the first one picked who has not folded; when all of them have
+ * folded, the first one picked. Null when nobody was picked.
+ */
+export function primaryOpponent(state: HandState, picked: readonly Position[]): Position | null {
+  const live = picked.find((p) => !state.players.find((x) => x.pos === p)?.folded);
+  return live ?? picked[0] ?? null;
 }
 
 export interface ActResult {

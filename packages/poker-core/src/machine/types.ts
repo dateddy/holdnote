@@ -2,7 +2,7 @@ import type { Actor, Action, Ante, Card, Position, Street } from '../types';
 
 /** Everything the table looks like before the first action (spec step ①). */
 export interface HandSetup {
-  /** Players dealt in, 2..9. Larger tables are treated as 9. */
+  /** Players dealt in, 2..10. Larger tables are treated as 10. */
   seats: number;
   sb: number;
   bb: number;
@@ -13,6 +13,12 @@ export interface HandSetup {
   villPos: Position;
   /** Seats followed in this hand besides hero and villain. */
   tracked?: Position[];
+  /**
+   * Only hero, villain and `tracked` are followed (the entry screen picks them). An action by any
+   * other seat is `not_in_hand` and the replay stops there, so it and everything after it stay in
+   * the array but are listed in `invalid`. Without it a stray seat is followed automatically.
+   */
+  listedOnly?: boolean;
   /** Stacks at the start of the hand, by seat. Missing = unknown. */
   stacks?: Partial<Record<Position, number>>;
 }
@@ -34,7 +40,13 @@ export interface BoardInput {
 }
 
 export type WarningCode =
-  'below_min_raise' | 'auto_all_in' | 'out_of_turn' | 'illegal_act' | 'stack_unknown' | 'side_pot';
+  | 'below_min_raise'
+  | 'auto_all_in'
+  | 'out_of_turn'
+  | 'illegal_act'
+  | 'stack_unknown'
+  | 'side_pot'
+  | 'not_in_hand';
 
 export interface Notice {
   code: WarningCode;

@@ -21,7 +21,7 @@ describe('normalizePosition', () => {
 
   it('rejects non-positions', () => {
     expect(normalizePosition('H')).toBeNull();
-    expect(normalizePosition('UTG+2')).toBeNull();
+    expect(normalizePosition('UTG+3')).toBeNull();
     expect(normalizePosition('')).toBeNull();
   });
 });

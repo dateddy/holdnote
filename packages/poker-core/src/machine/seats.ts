@@ -2,30 +2,60 @@ import type { Action, Actor, Position } from '../types';
 import type { HandSetup } from './types';
 
 const ORDERS: Record<number, readonly Position[]> = {
-  2: ['SB', 'BB'],
+  2: ['BTN', 'BB'],
   3: ['BTN', 'SB', 'BB'],
   4: ['CO', 'BTN', 'SB', 'BB'],
-  5: ['UTG', 'CO', 'BTN', 'SB', 'BB'],
-  6: ['UTG', 'MP', 'CO', 'BTN', 'SB', 'BB'],
-  7: ['UTG', 'MP', 'HJ', 'CO', 'BTN', 'SB', 'BB'],
-  8: ['UTG', 'UTG+1', 'MP', 'HJ', 'CO', 'BTN', 'SB', 'BB'],
+  5: ['HJ', 'CO', 'BTN', 'SB', 'BB'],
+  6: ['LJ', 'HJ', 'CO', 'BTN', 'SB', 'BB'],
+  7: ['UTG', 'LJ', 'HJ', 'CO', 'BTN', 'SB', 'BB'],
+  8: ['UTG', 'UTG+1', 'LJ', 'HJ', 'CO', 'BTN', 'SB', 'BB'],
   9: ['UTG', 'UTG+1', 'MP', 'LJ', 'HJ', 'CO', 'BTN', 'SB', 'BB'],
+  10: ['UTG', 'UTG+1', 'UTG+2', 'MP', 'LJ', 'HJ', 'CO', 'BTN', 'SB', 'BB'],
 };
 
-/** Seats in preflop acting order for a table of `seats` players (heads-up: SB is the button). */
+const clampSeats = (seats: number) => Math.min(10, Math.max(2, Math.round(seats)));
+
+/** Seats in preflop acting order for a table of `seats` players (heads-up: the button is the small blind). */
 export function tableOrder(seats: number): Position[] {
-  const n = Math.min(9, Math.max(2, Math.round(seats)));
-  return [...(ORDERS[n] ?? ORDERS[9] ?? [])];
+  return [...(ORDERS[clampSeats(seats)] ?? [])];
 }
 
-/** Heads-up the button is the small blind. */
+/** Heads-up the button posts the small blind, so the old name `SB` means `BTN` there. */
 export function canonPos(seats: number, pos: Position): Position {
-  return Math.round(seats) <= 2 && pos === 'BTN' ? 'SB' : pos;
+  return Math.round(seats) <= 2 && pos === 'SB' ? 'BTN' : pos;
 }
 
 /** How many straddles the table allows: from the seat left of the BB, never reaching the button. */
 export function maxStraddles(seats: number): number {
-  return Math.max(0, Math.min(3, Math.min(9, Math.round(seats)) - 3));
+  return Math.max(0, Math.min(3, clampSeats(seats) - 3));
+}
+
+/** Names used before 5.1c-5 that the table no longer has, by table size. */
+const LEGACY: Record<number, Record<string, Position>> = {
+  2: { SB: 'BTN' },
+  5: { UTG: 'HJ' },
+  6: { UTG: 'LJ', MP: 'HJ' },
+  7: { MP: 'LJ' },
+  8: { MP: 'LJ' },
+};
+
+/** Read a position saved under the old names on today's table of `seats`; anything else is unchanged. */
+export function legacySeat(seats: number, pos: string): string {
+  const n = clampSeats(seats);
+  if ((tableOrder(n) as string[]).includes(pos)) return pos;
+  return LEGACY[n]?.[pos] ?? pos;
+}
+
+/** Which of `picks` still sit at a table of `seats` players. No renaming: a seat that is gone is dropped. */
+export function remapSeats(
+  seats: number,
+  picks: readonly Position[],
+): { kept: Position[]; dropped: Position[] } {
+  const order = tableOrder(seats);
+  return {
+    kept: picks.filter((p) => order.includes(p)),
+    dropped: picks.filter((p) => !order.includes(p)),
+  };
 }
 
 export function actorAt(setup: HandSetup, pos: Position): Actor {
@@ -41,7 +71,7 @@ export function forcedBets(setup: HandSetup): Action[] {
   const make = (pos: Position, act: Action['act'], amount: number): Action => ({
     street: 'preflop',
     actor: actorAt(setup, pos),
-    pos,
+    pos: canonPos(setup.seats, pos),
     act,
     amount,
   });

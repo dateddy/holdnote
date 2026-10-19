@@ -71,13 +71,13 @@ export function run(
     ...extra.map(cp),
   ]);
   for (const a of full) {
-    if (isPostAct(a.act) || a.act === 'dead') continue;
+    if (setup.listedOnly || isPostAct(a.act) || a.act === 'dead') continue;
     const p = posOf(a);
     if (p) trackedSet.add(p);
   }
 
   const stackOf = (p: Position): number | undefined =>
-    setup.stacks?.[p] ?? (n <= 2 && p === 'SB' ? setup.stacks?.BTN : undefined);
+    setup.stacks?.[p] ?? (n <= 2 && p === 'BTN' ? setup.stacks?.SB : undefined);
 
   const seatList: Seat[] = order.map((pos) => ({
     pos,
@@ -96,7 +96,7 @@ export function run(
   const k = Math.min(full.filter((a) => a.act === 'post_straddle').length, maxStraddles(n));
   const preOrder = [...order.slice(k), ...order.slice(0, k)];
   const postOrder: Position[] =
-    n <= 2 ? ['BB', 'SB'] : ['SB', 'BB', ...order.slice(0, order.indexOf('BTN')), 'BTN'];
+    n <= 2 ? ['BB', 'BTN'] : ['SB', 'BB', ...order.slice(0, order.indexOf('BTN')), 'BTN'];
 
   // Cast so TypeScript does not narrow these to their first value; the closures below reassign them.
   let street = 'preflop' as Street;
@@ -109,6 +109,7 @@ export function run(
   let ptr = -1;
   let started = false;
   let playerActed = false;
+  let halted = false;
   const invalid = new Set<number>();
   const warnings: Notice[] = [];
   const resolved: Action[] = full.map((a) => ({ ...a }));
@@ -117,7 +118,10 @@ export function run(
   const cap = (s: Seat) =>
     s.stack === undefined ? Infinity : Math.max(0, roundMoney(s.stack - s.committed));
   const alive = () => seatList.filter((s) => s.tracked && !s.folded);
-  const bad = (i: number, code: 'illegal_act' | 'out_of_turn' | 'stack_unknown') => {
+  const bad = (
+    i: number,
+    code: 'illegal_act' | 'out_of_turn' | 'stack_unknown' | 'not_in_hand',
+  ) => {
     invalid.add(i);
     warnings.push({ code, index: i });
   };
@@ -244,6 +248,17 @@ export function run(
     }
 
     ensureStarted();
+
+    // A seat that is not listed stops the replay: this action and all after it turn red.
+    if (halted) return bad(i, 'illegal_act');
+    if (setup.listedOnly) {
+      const p = posOf(a);
+      const s = p ? seatMap.get(p) : undefined;
+      if (!s || (a.act !== 'dead' && !s.tracked)) {
+        halted = true;
+        return bad(i, 'not_in_hand');
+      }
+    }
 
     // Dead money ("+ other"): in the pot, never part of the bet level.
     if (a.act === 'dead') {

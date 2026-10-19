@@ -27,9 +27,9 @@ const BLINDS = { sb: 25, bb: 50, ante: NO_ANTE };
 describe('tableOrder and forcedBets', () => {
   it('lists seats in preflop order for every table size', () => {
     expect(tableOrder(9)).toEqual(['UTG', 'UTG+1', 'MP', 'LJ', 'HJ', 'CO', 'BTN', 'SB', 'BB']);
-    expect(tableOrder(6)).toEqual(['UTG', 'MP', 'CO', 'BTN', 'SB', 'BB']);
+    expect(tableOrder(6)).toEqual(['LJ', 'HJ', 'CO', 'BTN', 'SB', 'BB']);
     expect(tableOrder(3)).toEqual(['BTN', 'SB', 'BB']);
-    expect(tableOrder(2)).toEqual(['SB', 'BB']);
+    expect(tableOrder(2)).toEqual(['BTN', 'BB']);
   });
 
   it('posts ante first, then SB, BB, straddles', () => {
@@ -188,11 +188,11 @@ describe('spec 15: 24 required cases', () => {
 
   it('9. no straddle reaches the button', () => {
     const six = forcedBets(
-      setup({ seats: 6, straddles: [100, 200, 400, 800], heroPos: 'UTG', villPos: 'BB' }),
+      setup({ seats: 6, straddles: [100, 200, 400, 800], heroPos: 'LJ', villPos: 'BB' }),
     );
     expect(six.filter((a) => a.act === 'post_straddle').map((a) => a.pos)).toEqual([
-      'UTG',
-      'MP',
+      'LJ',
+      'HJ',
       'CO',
     ]);
     const four = forcedBets(

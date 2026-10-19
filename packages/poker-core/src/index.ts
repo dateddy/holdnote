@@ -1,6 +1,6 @@
 export * from './types';
 export { parseAmount, roundMoney, toBb } from './amount';
-export { isCard, parseCards } from './cards';
+export { duplicateCards, isCard, parseCards, takenSuits } from './cards';
 export { normalizePosition } from './positions';
 export {
   parseShorthand,
@@ -30,10 +30,13 @@ export {
   canonPos,
   edit,
   forcedBets,
+  legacySeat,
   maxStraddles,
   previewAmount,
+  primaryOpponent,
   quickSizes,
   reachedStreet,
+  remapSeats,
   replay,
   settle,
   streetTabs,

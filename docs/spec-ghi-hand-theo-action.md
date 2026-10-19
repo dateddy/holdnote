@@ -5,8 +5,8 @@ Chốt ngày 19/10/2026. Áp dụng chung cho Cash và MTT live. Chế độ ghi
 ## 1. Phạm vi
 
 **Có trong v1**
-- Engine N người trong `poker-core`; UI mặc định 2 người (mình + đối thủ chính), thêm người khi cần.
-- Straddle (chuỗi tối đa 3, chỉ từ ghế sát bên trái BB), bật/tắt theo hand.
+- Engine N người (2–10) trong `poker-core`. Người dùng chọn mình và một hoặc nhiều đối thủ (multiway) trên bàn mini; ghế được chọn là người được theo dõi, ghế khác tự fold.
+- Straddle (chuỗi tối đa min(3, N−3), chỉ từ ghế sát bên trái BB), bật/tắt theo hand; công tắc tự khóa khi N không cho phép.
 - MTT: level, SB/BB, ante (mỗi người hoặc BB ante), cấu trúc blind tùy chọn, nhãn giai đoạn giải.
 - Cảnh báo (không chặn) khi raise dưới mức tối thiểu.
 
@@ -34,11 +34,31 @@ Chốt ngày 19/10/2026. Áp dụng chung cho Cash và MTT live. Chế độ ghi
 | Level, SB/BB, ante (chỉ MTT) | Theo hand trước | Nút "Lên level" |
 | Giai đoạn giải (chỉ MTT) | Theo hand trước | Tùy chọn |
 
-Số ghế (6-max / 9-max) lấy từ phiên.
+**Số người chơi N (2–10)** = số người được chia bài (người sit out không tính). Mặc định theo phiên, sau đó nhớ theo hand trước; lưu theo từng hand (`players_dealt`). Tên vị trí theo N (bỏ dần ghế đầu, BTN/SB/BB luôn có):
+
+| N | Vị trí theo thứ tự hành động preflop |
+|---|---|
+| 10 | UTG, UTG+1, UTG+2, MP, LJ, HJ, CO, BTN, SB, BB |
+| 9 | UTG, UTG+1, MP, LJ, HJ, CO, BTN, SB, BB |
+| 8 | UTG, UTG+1, LJ, HJ, CO, BTN, SB, BB |
+| 7 | UTG, LJ, HJ, CO, BTN, SB, BB |
+| 6 | LJ, HJ, CO, BTN, SB, BB |
+| 5 | HJ, CO, BTN, SB, BB |
+| 4 | CO, BTN, SB, BB |
+| 3 | BTN, SB, BB |
+| 2 | BTN (đóng SB), BB |
+
+**Heads-up (N = 2):** BTN đóng SB, đi trước preflop, đi sau cùng postflop; BB đi trước postflop. Tên cũ `SB` trong hand heads-up đã lưu đọc là `BTN`.
+
+**Hand lưu trước 5.1c-5** dùng tên vị trí cũ (6 người: UTG, MP…). Khi đọc, `legacySeat(N, pos)` đổi sang tên mới (N=6: UTG→LJ, MP→HJ; N=5: UTG→HJ; N=7/8: MP→LJ). Không sửa dữ liệu đã lưu.
+
+**Chọn ghế:** Mình chọn đúng 1 ghế (chạm ghế khác để chuyển). Đối thủ chọn nhiều ghế, chạm lại để bỏ; không chọn được ghế của mình. **Đối thủ chính** = người được chọn đầu tiên; nếu người đó fold thì chuyển sang người còn lại tới showdown (`primaryOpponent`). Hand lưu `villain_pos`, `villain_stack`, `opponent_id` của đối thủ chính và `opponents` cho tất cả.
+
+**Đổi lựa chọn khi đã có action:** bỏ chọn một đối thủ, đổi vị trí mình, hoặc giảm N làm mất ghế → replay dừng ở action đầu tiên của ghế không còn được theo dõi; action đó và mọi action sau tô đỏ (`invalid`, cảnh báo `not_in_hand`), không xóa. Chọn lại ghế thì hết đỏ.
 
 ## 4. Straddle
 
-- Chuỗi bắt đầu từ ghế sát bên trái BB, đi tiếp theo chiều kim đồng hồ, tối đa **3 nhà**. Không bao giờ tới BTN, SB, BB. Bàn 6-max: tối đa 3 (không chạm BTN).
+- Chuỗi bắt đầu từ ghế sát bên trái BB, đi tiếp theo chiều kim đồng hồ, tối đa **min(3, N−3) nhà** (N=4: 1; N=5: 2; N≥6: 3; N≤3: không có). Không bao giờ tới BTN, SB, BB.
 - Mức: straddle đầu = 2×BB, mỗi re-straddle = 2× mức trước. Cho sửa từng mức.
 - Người straddle cuối hành động sau cùng preflop và có quyền check (X) hoặc raise, giống BB.
 - Mức cược hiện tại ban đầu = straddle cuối. Bước raise tối thiểu ban đầu = mức straddle cuối.
@@ -62,7 +82,8 @@ Số ghế (6-max / 9-max) lấy từ phiên.
   - Ví dụ 9-max, 25/50, UTG straddle 100, UTG+1 re-straddle 200: UTG+2 → … → BTN → SB → BB → UTG → UTG+1.
 - **Postflop**: ghế còn chơi đầu tiên bên trái BTN (SB trước), theo chiều kim đồng hồ, BTN cuối.
 - Bỏ qua ghế đã fold hoặc all-in.
-- Ghế không theo dõi (không phải mình, đối thủ chính, hay người đã thêm) tự coi là fold khi tới lượt. Chạm vào ghế đó để thêm vào hand.
+- Ghế không được chọn (không phải mình hay đối thủ đã chọn) tự coi là fold khi tới lượt. Muốn đưa ghế đó vào hand thì chọn nó làm đối thủ.
+- Heads-up: BTN trước preflop, BB trước postflop (xem mục 3).
 
 ## 7. Nút hiện theo tình huống
 
@@ -147,10 +168,17 @@ Số ghế (6-max / 9-max) lấy từ phiên.
 15. All-in thiếu: người đã hành động chỉ có F/C.
 16. Raise dưới mức tối thiểu → có cảnh báo, vẫn lưu được.
 17. Bet vượt stack → tự thành all-in.
-18. Ghế không theo dõi tự fold; thêm người thứ ba giữa preflop → thứ tự đúng.
+18. Ghế không được chọn tự fold; chọn thêm đối thủ thứ ba giữa preflop → thứ tự đúng.
 19. 3 người, có all-in stack lệch → có cảnh báo side pot.
 20. "+ tiền khác" (limper fold sau đó) → pot đúng.
 21. Chia pot: kết quả đúng cho mình.
 22. Sửa action cũ → action phía sau không hợp lệ bị đánh dấu.
 23. Chưa nhập board: action vẫn đi tiếp; `boardCheck` báo ô thiếu (nhãn "Thiếu dữ liệu" khi lưu); board thừa sau khi sửa action thì báo ô `extra`.
 24. Ghi tắt H/V và chế độ mới cho cùng một hand → mảng `actions` giống hệt.
+25. Số người N = 2, 3, 4, 6, 9, 10: tên vị trí và thứ tự hành động preflop/postflop đúng bảng mục 3.
+26. Heads-up: BTN đóng SB, đi trước preflop, đi sau cùng postflop; BB có option check sau limp.
+27. Straddle tối đa min(3, N−3) ở N = 3, 4, 5, 6, 9, 10; không tới BTN/SB/BB.
+28. Bỏ chọn đối thủ đã có action / đổi vị trí mình / giảm N → action của ghế đó và phía sau `invalid`, không xóa; chọn lại thì hết đỏ.
+29. Đối thủ chính: người đầu fold → người kế; tất cả fold → người đầu.
+30. `legacySeat` đổi tên vị trí cũ theo N; `remapSeats` giữ ghế còn tồn tại, bỏ ghế mất.
+31. Chặn trùng lá: `duplicateCards`, `takenSuits` (lá `?` không tính trùng).

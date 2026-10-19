@@ -166,6 +166,20 @@ describe('fromHandRow', () => {
     expect(fromHandRow(cash, row as never).resultText).toBe('-17500');
   });
 
+  it('reads old position names on the table of the hand (6 players: UTG -> LJ, MP -> HJ)', () => {
+    const base = toHandRow(cash, golden(), 1);
+    const row = {
+      ...base,
+      players_dealt: 6,
+      hero_pos: 'UTG',
+      villain_pos: 'MP',
+      actions: [{ street: 'preflop', actor: 'hero', pos: 'UTG', act: 'fold' }],
+    };
+    const back = fromHandRow(cash, row as never);
+    expect([back.heroPos, back.villPos]).toEqual(['LJ', 'HJ']);
+    expect(back.actions[0]?.pos).toBe('LJ');
+  });
+
   it('drops malformed actions', () => {
     const row = { ...toHandRow(cash, golden(), 1), actions: [{ foo: 1 }, null] };
     expect(fromHandRow(cash, row as never).actions).toEqual([]);

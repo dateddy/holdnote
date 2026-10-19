@@ -61,6 +61,7 @@ export type Database = {
           missing_data: boolean;
           num: number;
           opponent_id: string | null;
+          opponents: Json;
           outcome: string | null;
           players_dealt: number | null;
           players_left: number | null;
@@ -94,6 +95,7 @@ export type Database = {
           missing_data?: boolean;
           num: number;
           opponent_id?: string | null;
+          opponents?: Json;
           outcome?: string | null;
           players_dealt?: number | null;
           players_left?: number | null;
@@ -127,6 +129,7 @@ export type Database = {
           missing_data?: boolean;
           num?: number;
           opponent_id?: string | null;
+          opponents?: Json;
           outcome?: string | null;
           players_dealt?: number | null;
           players_left?: number | null;

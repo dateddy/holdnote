@@ -335,3 +335,11 @@ Append-only. Không sửa, không xóa mục cũ. Muốn đảo một quyết đ
 - Lý do: Thẻ riêng cho từng street đẩy nút bấm xuống dưới, phải cuộn khi đang nhập; chặn action chờ board làm chậm ghi hand tại bàn.
 - Supersedes: một phần DEC-046 (board theo street trong hàng action, bàn mini ở bước action); spec mục 10.4 và ca test 23.
 - Ai quyết: Đạt (duyệt kế hoạch ngày 2026-10-20)
+
+## DEC-048 — Số người 2–10, tên vị trí theo N, đối thủ multiway (task 5.1c-5a)
+
+- Ngày: 2026-10-20
+- Quyết định: (1) Số người N từ 2 tới 10; tên vị trí theo N (bỏ dần ghế đầu, BTN/SB/BB luôn có), thêm vị trí `UTG+2`; heads-up: BTN đóng SB, đi trước preflop, đi sau cùng postflop. Straddle tối đa min(3, N−3). (2) Migration `20261020120000`: thêm `hands.opponents jsonb` (mọi đối thủ được chọn, theo thứ tự chọn; `villain_*` giữ đối thủ chính) và mở CHECK `hero_pos`/`villain_pos` cho `UTG+2`; N lưu ở `players_dealt` có sẵn. (3) Hand đã lưu theo tên vị trí cũ **không sửa dữ liệu**: `legacySeat(N, pos)` đổi tên lúc đọc. (4) State machine có `listedOnly`: chỉ ghế được chọn được theo dõi; action của ghế không còn được chọn (bỏ chọn, đổi vị trí mình, giảm N) và mọi action sau đó thành `invalid` (tô đỏ, không xóa). (5) Đối thủ chính = người chọn đầu tiên chưa fold (`primaryOpponent`).
+- Lý do: Hand tại bàn nhiều hơn 2 người và không phải lúc nào cũng 6/9 người; lưu một bộ villain_* làm mất dữ liệu multiway.
+- Supersedes: spec ghi hand theo action mục 1, 3, 4, 6 (đã sửa); spec 4 (thêm cột `opponents`).
+- Ai quyết: Đạt (duyệt kế hoạch ngày 2026-10-20)

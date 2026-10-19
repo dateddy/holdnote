@@ -40,7 +40,7 @@ function draft(over: Partial<ReturnType<typeof emptyDraft>> = {}) {
 describe('draftToSetup', () => {
   it('needs both positions at the table', () => {
     expect(draftToSetup(cash, draft({ heroPos: '' }), 50)).toBeNull();
-    expect(draftToSetup(cash, draft({ heroPos: 'LJ', playersDealt: '6' }), 50)).toBeNull();
+    expect(draftToSetup(cash, draft({ heroPos: 'UTG', playersDealt: '6' }), 50)).toBeNull();
     expect(draftToSetup(cash, draft({ villPos: 'BTN' }), 50)).toBeNull();
   });
 
@@ -71,7 +71,8 @@ describe('next hand defaults', () => {
   it('moves both positions one seat forward', () => {
     expect(rotatePos(9, 'MP')).toBe('LJ');
     expect(rotatePos(9, 'BB')).toBe('UTG');
-    expect(rotatePos(2, 'SB')).toBe('BB');
+    expect(rotatePos(2, 'BTN')).toBe('BB');
+    expect(rotatePos(6, 'MP')).toBe('CO'); // saved under the old 6-max names: MP = HJ
     expect(rotatePos(9, '')).toBe('');
   });
 

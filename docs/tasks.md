@@ -32,6 +32,7 @@ Mỗi task cỡ một phiên làm việc. Làm theo thứ tự trừ khi chủ d
 - [x] 4.2 Bảng leak + xu hướng.
 - [x] 4.3 Biểu đồ kết quả, thống kê MTT, kỷ luật.
 - [x] 4.4 Đối thủ, luật của bạn, trang chủ.
+- [ ] 4.5 Thống kê vị trí gom nhóm sớm / giữa / muộn / blind để cộng được các hand khác số người (hand lưu `players_dealt` từ 5.1c-5).
 
 ## Giai đoạn 5 — Beta
 - [x] 5.1 Onboarding 3 bước + hand mẫu.
@@ -48,6 +49,8 @@ Mỗi task cỡ một phiên làm việc. Làm theo thứ tự trừ khi chủ d
   - [x] **5.1c-2 UI:** bước ① thiết lập hand (bàn mini, straddle, level/ante/giai đoạn MTT), nút theo tình huống, bàn phím "Lên tới", timeline chip, hoàn tác/sửa; ảnh 375px bằng `pnpm screens` (Playwright). Cấu trúc blind MTT và nút Lên level tách sang 5.1c-3; mọi màn đọc `actions` bỏ qua `post_*`/`dead`. Cập nhật spec 3.5.
   - [ ] **5.1c-3 Cấu trúc blind MTT:** nhập danh sách level (SB, BB, ante) khi tạo phiên MTT, lưu `sessions.mtt.blind_levels`; nút "Lên level" ở bước Thiết lập tự điền SB/BB/ante (spec mục 5).
   - [x] **5.1c-4 Bố cục màn Ghi nhanh:** luật board mới (nhập lúc nào cũng được, không chặn action; hàm `boardCheck`, `streetTabs` trong poker-core; sửa spec mục 10.4 và ca test 23). Bố cục: thanh ngữ cảnh → thẻ Board (5 ô liền) → một thẻ Action (tab Preflop/Flop/Turn/River, mở rộng dọc, khu nhập trong thẻ) → kết quả → thanh Lưu dính. Thẻ Board và thẻ Action vừa 375×667 khi đang nhập. Ảnh chụp lại bằng `pnpm screens`.
+  - [x] **5.1c-5a Số người 2–10 + multiway (core, schema):** `poker-core`: `tableOrder` 2–10 (tên vị trí theo N, `UTG+2`), heads-up (BTN đóng SB, đi trước preflop, đi sau cùng postflop), straddle tối đa min(3, N−3), `legacySeat` (đổi tên vị trí cũ lúc đọc), `remapSeats`, `listedOnly` (chỉ ghế được chọn được theo dõi; action ghế bỏ chọn và phía sau tô đỏ, không xóa), `primaryOpponent`, `duplicateCards`/`takenSuits`. Migration: `hands.opponents jsonb`, CHECK `UTG+2`. Test viết trước cho N = 2, 3, 4, 6, 9, 10. Cập nhật spec.
+  - [ ] **5.1c-5b Gộp thiết lập vào màn Ghi hand (UI):** bỏ bước thiết lập; thanh ngữ cảnh + bàn mini trượt (Mình / Đối thủ multiway, bộ đếm N người); thẻ bài 7 ô + CardPicker trượt trong thẻ (khóa lá đã dùng); NumPad trong thẻ Action; danh sách đối thủ hiện tất cả (sửa bug chỉ hiện trùng địa điểm); `Stepper`, `Collapse`; cập nhật `docs/design.md` (pixel mục 4–5); ảnh 375×550 và 375×667 bằng `pnpm screens`.
 - [ ] 5.2 Script migrate `legacy/data` → tài khoản chủ dự án.
 - [ ] 5.3 Hoàn thiện bản tiếng Anh, cài đặt, xuất/xóa dữ liệu.
 - [ ] 5.4 Deploy Vercel + domain holdnote.app.

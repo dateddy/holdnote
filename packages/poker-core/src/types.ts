@@ -11,8 +11,19 @@ export type Card = `${Rank}${Suit}`;
 export const STREETS = ['preflop', 'flop', 'turn', 'river'] as const;
 export type Street = (typeof STREETS)[number];
 
-/** 9-max seat names, first to act preflop first. */
-export const POSITIONS = ['UTG', 'UTG+1', 'MP', 'LJ', 'HJ', 'CO', 'BTN', 'SB', 'BB'] as const;
+/** Every seat name (10-max), first to act preflop first. Smaller tables drop the early seats. */
+export const POSITIONS = [
+  'UTG',
+  'UTG+1',
+  'UTG+2',
+  'MP',
+  'LJ',
+  'HJ',
+  'CO',
+  'BTN',
+  'SB',
+  'BB',
+] as const;
 export type Position = (typeof POSITIONS)[number];
 
 export type Actor = 'hero' | 'villain' | 'other';
