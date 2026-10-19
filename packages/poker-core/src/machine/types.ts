@@ -29,19 +29,12 @@ export interface ActInput {
 }
 
 export interface BoardInput {
+  /** Cards entered so far, in board order. Only the run-out reads them; they never gate the betting. */
   cards: readonly Card[];
-  /** Streets whose cards the player chose not to enter. */
-  skipped?: readonly Street[];
 }
 
 export type WarningCode =
-  | 'below_min_raise'
-  | 'auto_all_in'
-  | 'out_of_turn'
-  | 'illegal_act'
-  | 'stack_unknown'
-  | 'side_pot'
-  | 'board_skipped';
+  'below_min_raise' | 'auto_all_in' | 'out_of_turn' | 'illegal_act' | 'stack_unknown' | 'side_pot';
 
 export interface Notice {
   code: WarningCode;
@@ -51,8 +44,6 @@ export interface Notice {
 
 export type Phase =
   | { kind: 'act'; street: Street; toAct: Position }
-  /** Betting is closed; the cards of this street are needed before the next action. */
-  | { kind: 'board'; street: Exclude<Street, 'preflop'>; count: 3 | 1 }
   /** Nobody can bet any more: enter the missing board cards, then showdown. */
   | { kind: 'runout'; missing: number }
   | { kind: 'showdown' }
@@ -101,7 +92,6 @@ export interface HandState {
   warnings: Notice[];
   /** Actions that no longer fit the betting. They stay in the array and are ignored. */
   invalid: number[];
-  missingData: boolean;
 }
 
 export interface Settlement {

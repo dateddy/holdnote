@@ -7,6 +7,8 @@ import type { ActInput, BoardInput, HandSetup, HandState, Notice, Settlement } f
 
 export { canonPos, forcedBets, tableOrder, maxStraddles } from './seats';
 export type * from './types';
+export { boardCheck, boardNeeded, reachedStreet, streetTabs } from './board';
+export type { BoardCheck, SlotState, TabState } from './board';
 export { previewAmount, quickSizes } from './sizes';
 export type { AmountPreview, QuickSize, SizeKind } from './sizes';
 

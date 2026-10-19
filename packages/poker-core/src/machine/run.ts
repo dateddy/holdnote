@@ -11,7 +11,6 @@ import type {
   SeatState,
 } from './types';
 
-const NEEDED = { flop: 3, turn: 4, river: 5 } as const;
 const NEXT_STREET: Record<Street, Exclude<Street, 'preflop'> | null> = {
   preflop: 'flop',
   flop: 'turn',
@@ -181,8 +180,7 @@ export function run(
     }
     if (live.filter((s) => !s.allIn).length <= 1) {
       const missing = 5 - (board?.cards.length ?? 0);
-      const skipped = (board?.skipped?.length ?? 0) > 0;
-      ended = skipped || missing <= 0 ? { kind: 'showdown' } : { kind: 'runout', missing };
+      ended = missing <= 0 ? { kind: 'showdown' } : { kind: 'runout', missing };
       return;
     }
     pending = NEXT_STREET[street];
@@ -333,16 +331,8 @@ export function run(
 
   // Where the hand stands now.
   let phase: Phase | null = ended;
-  if (!phase && pending) {
-    // Cards of a skipped street count as present, so a later street's cards still add up.
-    const target = pending;
-    const skippedBefore = (['flop', 'turn', 'river'] as const)
-      .filter((st) => NEEDED[st] < NEEDED[target] && board?.skipped?.includes(st))
-      .reduce((sum, st) => sum + (st === 'flop' ? 3 : 1), 0);
-    const have = (board?.cards.length ?? 0) + skippedBefore;
-    if (board?.skipped?.includes(pending) || have >= NEEDED[pending]) startStreet(pending);
-    else phase = { kind: 'board', street: pending, count: pending === 'flop' ? 3 : 1 };
-  }
+  // The betting never waits for board cards: the next street starts as soon as one closes.
+  if (!phase && pending) startStreet(pending);
   const toActSeat = phase ? null : nextToAct();
   if (!phase)
     phase = toActSeat ? { kind: 'act', street, toAct: toActSeat.pos } : { kind: 'showdown' };
@@ -353,7 +343,6 @@ export function run(
     const most = Math.max(...live.map(total));
     if (live.some((s) => s.allIn && total(s) < most)) warnings.push({ code: 'side_pot' });
   }
-  board?.skipped?.forEach(() => warnings.push({ code: 'board_skipped' }));
 
   const players: SeatState[] = seatList.map((s) => ({
     pos: s.pos,
@@ -382,6 +371,5 @@ export function run(
     addable: [],
     warnings,
     invalid: [...invalid].sort((x, y) => x - y),
-    missingData: (board?.skipped?.length ?? 0) > 0,
   };
 }

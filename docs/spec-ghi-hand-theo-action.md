@@ -99,8 +99,9 @@ Số ghế (6-max / 9-max) lấy từ phiên.
 1. Vòng cược khép lại khi mọi người còn chơi và chưa all-in đã hành động sau lần raise đủ cuối cùng và đã theo bằng mức cược.
 2. Còn 1 người chưa fold → hết hand, người đó thắng.
 3. Tất cả còn lại đã all-in (hoặc chỉ 1 người chưa all-in và đã theo) → chọn nốt các lá board còn thiếu, bỏ qua action, sang showdown.
-4. Còn lại → sang street sau: chọn lá board trước (flop 3, turn 1, river 1), rồi tới action.
-5. Không nhớ board → cho bỏ qua, hand gắn nhãn "Thiếu dữ liệu".
+4. Còn lại → sang street sau, action tiếp tục ngay. **Board không chặn action**: nhập board lúc nào cũng được, chạm ô nào mở bộ chọn bài cho ô đó, chọn xong tự sang ô kế.
+5. Ô board mở theo street cuối mà action đã tới (flop 3 ô, turn 4, river 5); all-in được theo thì mở cả 5 ô để chọn nốt. Ô trong phần đã tới mà còn trống thì nhấp nháy để nhắc, không chặn. Sửa action làm một street không còn tồn tại: ô board của street đó tô cảnh báo (`extra`), không tự xóa lá bài.
+6. Lúc lưu: board thiếu → nhãn "Thiếu dữ liệu"; board thừa → cảnh báo, vẫn lưu được.
 
 ## 11. Showdown và kết quả
 
@@ -151,5 +152,5 @@ Số ghế (6-max / 9-max) lấy từ phiên.
 20. "+ tiền khác" (limper fold sau đó) → pot đúng.
 21. Chia pot: kết quả đúng cho mình.
 22. Sửa action cũ → action phía sau không hợp lệ bị đánh dấu.
-23. Bỏ qua board → nhãn "Thiếu dữ liệu".
+23. Chưa nhập board: action vẫn đi tiếp; `boardCheck` báo ô thiếu (nhãn "Thiếu dữ liệu" khi lưu); board thừa sau khi sửa action thì báo ô `extra`.
 24. Ghi tắt H/V và chế độ mới cho cùng một hand → mảng `actions` giống hệt.

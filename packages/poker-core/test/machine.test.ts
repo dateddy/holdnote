@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   act,
+  boardCheck,
   computeEff,
   computePot,
   computeResult,
@@ -129,7 +130,7 @@ describe('spec 15: 24 required cases', () => {
     expect(toAct(a.state)).toBe('BB');
     expect(a.state.buttons).toEqual(['check', 'open', 'all-in']);
     const b = play(s, [{ act: 'call' }, { act: 'check' }]);
-    expect(b.state.phase).toEqual({ kind: 'board', street: 'flop', count: 3 });
+    expect(b.state.phase).toMatchObject({ kind: 'act', street: 'flop' });
   });
 
   it('5. limp, BB raises: limper gets fold / call / raise / all-in', () => {
@@ -314,7 +315,7 @@ describe('spec 15: 24 required cases', () => {
     expect(added.actions.at(-1)).toMatchObject({ actor: 'other', pos: 'CO' });
 
     const done = act(s, added.actions, { act: 'call' });
-    expect(done.state.phase).toEqual({ kind: 'board', street: 'flop', count: 3 });
+    expect(done.state.phase).toMatchObject({ kind: 'act', street: 'flop' });
     expect(done.state.addable).not.toContain('LJ');
   });
 
@@ -382,29 +383,12 @@ describe('spec 15: 24 required cases', () => {
     expect(e.state.invalid).toEqual([first + 1, first + 2, first + 3]);
   });
 
-  it('23. skipping the board moves on and marks the hand as missing data', () => {
+  it('23. no board entered: the hand goes on and the board is reported as missing', () => {
     const s = setup({ heroPos: 'BTN', villPos: 'BB' });
-    const pre = [{ act: 'open', to: 150 }, { act: 'call' }] as const;
-    const wait = play(s, [...pre]);
-    expect(wait.state.phase).toEqual({ kind: 'board', street: 'flop', count: 3 });
-    const skip = play(s, [...pre], { cards: [], skipped: ['flop'] });
-    expect(skip.state.phase).toMatchObject({ kind: 'act', street: 'flop', toAct: 'BB' });
-    expect(skip.state.missingData).toBe(true);
-    expect(skip.state.warnings.map((n) => n.code)).toContain('board_skipped');
-  });
-
-  it('23b. a skipped flop still lets the turn card count', () => {
-    const s = setup({ heroPos: 'BTN', villPos: 'BB' });
-    const flop = [
-      { act: 'open', to: 150 },
-      { act: 'call' },
-      { act: 'check' },
-      { act: 'check' },
-    ] as const;
-    const r = play(s, [...flop], { cards: ['9h'], skipped: ['flop'] });
-    expect(r.state.phase).toMatchObject({ kind: 'act', street: 'turn' });
-    const none = play(s, [...flop], { cards: [], skipped: ['flop'] });
-    expect(none.state.phase).toEqual({ kind: 'board', street: 'turn', count: 1 });
+    const r = play(s, [{ act: 'open', to: 150 }, { act: 'call' }, { act: 'check' }]);
+    expect(r.state.phase).toMatchObject({ kind: 'act', street: 'flop', toAct: 'BTN' });
+    const c = boardCheck(r.state, ['', '', '', '', '']);
+    expect(c).toMatchObject({ needed: 3, missing: 3 });
   });
 
   it('24. shorthand and button entry give the identical actions array', () => {
