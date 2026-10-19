@@ -35,7 +35,17 @@ Mỗi task cỡ một phiên làm việc. Làm theo thứ tự trừ khi chủ d
 
 ## Giai đoạn 5 — Beta
 - [x] 5.1 Onboarding 3 bước + hand mẫu.
-- [ ] 5.1b Thiết kế lại UI + tối ưu flow (DEC-044): hệ thiết kế, thanh điều hướng dưới, Ghi nhanh theo street, tách Kết thúc phiên khỏi Tổng kết, chi tiết hand dạng đọc.
+- [ ] **5.1b** Thiết kế lại UI + tối ưu flow (DEC-044). Đã xong: token, thanh dưới, Ghi nhanh theo street, tách Kết thúc phiên/Tổng kết, chi tiết hand dạng đọc. Phần còn lại chia nhỏ (thứ tự: 1 → 2 → 3 → 4 → 5 → 7 → 6):
+  - [x] **5.1b-1 Tài liệu thiết kế:** `docs/design.md` (token, thang chữ, spacing, cỡ nút sm/md/lg, luật chỉ dùng `components/ui`) + quy tắc 10 trong CLAUDE.md.
+  - [ ] **5.1b-2 Điều hướng:** tab gốc không có back; màn con back về tab cha; `BottomNav` sáng đúng tab cha. Đề xuất: Đối thủ và Luật chuyển thành con của Trang chủ (trang chủ đã có thẻ Luật; thêm thẻ Đối thủ), bỏ khỏi Cài đặt — dùng lúc chuẩn bị/ghi phiên, không phải cấu hình; sửa `active` trong `bottom-nav.tsx`. Tab Ghi hand: gốc = Ghi nhanh của phiên đang mở (hoặc Tạo phiên); con = trang phiên, danh sách hand, chi tiết hand, Trước phiên, Kết thúc, Tổng kết. Ghi DEC mới.
+  - [ ] **5.1b-3 Icon + TopBar:** thêm `lucide-react` (dependency mới — hỏi Đạt trước, ghi DEC thay phần "không thêm dependency" của DEC-044); component `Icon` (cỡ 20/24, `currentColor`); icon cho 4 tab; `TopBar` variant `tab` (không back, có action phải) và `child` (back dạng icon + nhãn); `Button` thêm size `sm`, đổi `md` h-12→h-11, `INPUT_CLASS` h-12→h-11 theo design.md; thêm `Textarea`, `Field`, `Screen`; TopBar cho trang chủ, Trước phiên, Tổng kết.
+  - [ ] **5.1b-4 hand-form:** tách `hand-form.tsx` (~490 dòng) thành các khối (thanh ngữ cảnh, bài + vị trí, action theo street, kết quả, stack, suy nghĩ + ⚑, thanh Lưu); thay control style tay trong `hand-form`, `action-rows`, `card-grid`, `shorthand-input` bằng `components/ui`. Không đổi hành vi; luyện tập onboarding vẫn chạy; test xanh.
+  - [ ] **5.1b-5 review-form + summary-form:** như 5.1b-4 cho `review-form.tsx`, `summary-form.tsx`, `end-form.tsx`.
+  - [ ] **5.1b-6 Thiết bị thật:** `themeColor` theo tối/sáng (khớp `background`), `theme_color`/`background_color` trong manifest, `statusBarStyle`; `viewport-fit=cover` + `safe-area-inset-top` cho thanh ngữ cảnh dính; bàn phím ảo không che nút Lưu. Thử tay iOS Safari + Android Chrome (đã cài PWA); xong thì đóng 5.1b.
+  - [ ] **5.1b-7 Quét phần còn lại** (thêm ngoài danh sách ban đầu): `rules`, `stats`, `session-form`, `opponent-form`, `onboarding`, `ai-key-form`, `login` và lẻ tẻ; bỏ `border-red-700` ở chi tiết đối thủ. Xong khi grep `<button|<input|<textarea|<select` ngoài `components/ui` = 0.
+- [ ] **5.1c** Ghi hand theo action (spec `docs/spec-ghi-hand-theo-action.md`, thay spec 3.5 chế độ Nút; DEC-045):
+  - [ ] **5.1c-1 State machine:** `packages/poker-core/src/machine/` (spec mục 4–12, 14): thứ tự hành động, nút hợp lệ, mức phải theo, raise tối thiểu, straddle tới 3 nhà, ante MTT, đóng vòng cược/chuyển street, cảnh báo, hoàn tác/sửa action. Thêm `post_ante/post_sb/post_bb/post_straddle` + `dead` vào `ActKind`; hand cũ không có post vẫn tính theo `Blinds`. 24 ca test mục 15 viết trước; ca vàng −360bb và test cũ giữ xanh. Không đụng UI, không đổi schema.
+  - [ ] **5.1c-2 UI:** bước ① thiết lập hand (bàn mini, straddle, level/ante/giai đoạn MTT), nút theo tình huống, bàn phím "Lên tới", timeline chip, hoàn tác/sửa; form phiên MTT thêm cấu trúc blind (`sessions.mtt.blind_levels`); mọi màn đọc `actions` bỏ qua `post_*`/`dead`. Cập nhật spec 3.5.
 - [ ] 5.2 Script migrate `legacy/data` → tài khoản chủ dự án.
 - [ ] 5.3 Hoàn thiện bản tiếng Anh, cài đặt, xuất/xóa dữ liệu.
 - [ ] 5.4 Deploy Vercel + domain holdnote.app.

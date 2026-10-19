@@ -311,3 +311,12 @@ Append-only. Không sửa, không xóa mục cũ. Muốn đảo một quyết đ
 - Lý do: Audit flow ngày 2026-10-14: Ghi nhanh phải kéo lên xuống, điều hướng thiếu, Kết thúc phiên gộp với Tổng kết nên rời bàn chậm.
 - Supersedes: DEC-039 mục (5) (lưu tổng kết đặt `end_at`); nay `end_at` đặt ở bước Kết thúc phiên. Spec 3.8 cần cập nhật theo.
 - Ai quyết: Đạt
+
+## DEC-045 — Forced bet nằm trong `actions`
+
+- Ngày: 2026-10-19
+- Quyết định: Ante, SB, BB, straddle đi vào chính mảng `hands.actions` dưới dạng `post_ante`, `post_sb`, `post_bb`, `post_straddle` (street `preflop`, đứng đầu mảng); khoản tiền lạ ("+ tiền khác") là `dead`. Không thêm cột straddle. Nút O = `raise` + `verb: open`, A = `all-in` (giữ nguyên giá trị cũ, không migrate). `computePot` chỉ tự đặt blind/ante từ `Blinds` khi preflop không có action `post_*`, nên hand cũ và ghi tắt giữ nguyên kết quả. Nhãn giai đoạn giải dùng `hands.stage`, loại ante dùng `ante_mode`, cấu trúc blind đặt trong `sessions.mtt` (jsonb): chưa cần cột mới.
+- Lý do: Spec ghi hand theo action (19/10/2026) cần mọi khoản bắt buộc có mặt trong một dãy để replay/sửa action cũ; hai chế độ nhập vẫn ra cùng một mảng (CLAUDE.md luật 4).
+- Supersedes: một phần spec 4.2 (thêm kiểu `act`) và spec 3.5 mục 3.
+- Ai quyết: Đạt
+

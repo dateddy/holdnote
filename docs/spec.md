@@ -72,7 +72,7 @@ Có phiên đang mở: thẻ phiên (stake, thời gian, số hand, kết quả 
 ### 3.5 Ghi nhanh (màn lõi)
 1. **Bài và board:** 7 ô (2 lá mình, flop, turn, river) dùng chung lưới số + chất; tự nhảy ô; nút "không nhớ chất" (`?`); lá đã chọn bị mờ.
 2. **Vị trí:** của mình, đối thủ chính; nút tên đối thủ đã có ghi chú.
-3. **Hành động – chế độ nút (mặc định):** mỗi street một hàng. Chạm người hành động (Mình/Đối thủ/vị trí khác), chạm hành động (check, bet, call, raise, fold, all-in). Bet/raise chọn nhanh 1/3, 1/2, 2/3, pot hoặc gõ số. Pot hiện sau mỗi bước.
+3. **Hành động – chế độ nút (mặc định):** *đã được thay bằng `docs/spec-ghi-hand-theo-action.md` (DEC-045); mô tả dưới đây chỉ còn là bản cũ.*  mỗi street một hàng. Chạm người hành động (Mình/Đối thủ/vị trí khác), chạm hành động (check, bet, call, raise, fold, all-in). Bet/raise chọn nhanh 1/3, 1/2, 2/3, pot hoặc gõ số. Pot hiện sau mỗi bước.
 4. **Hành động – chế độ ghi tắt:** ô `H o600 V c / ...` có hàng phím nhanh `H V x c b r f ai / ⌫`. Hai chế độ chuyển qua lại, cùng ra một dạng dữ liệu.
 5. **Kết quả:** Thắng/Thua/Fold/Chia, số tiền tự tính, sửa tay được. Có showdown thì hiện ô bài đối thủ.
 6. **Stack:** stack mình tự cộng trừ sau mỗi hand (hand đầu lấy buy-in); stack đối thủ gõ khi cần; eff stack và SPR tự hiện.
@@ -126,6 +126,7 @@ Quan hệ: user → nhiều phiên → nhiều hand → nhiều review (chỉ m�
   {"street": "flop", "actor": "hero", "pos": "BTN", "act": "bet", "amount": 800}
 ]
 ```
+`act`: `check | bet | call | raise | fold | all-in`, cộng forced bet `post_ante | post_sb | post_bb | post_straddle` (street `preflop`, đứng đầu mảng, `amount` = số đã đóng) và `dead` (tiền chết "+ tiền khác"). Preflop không có `post_*` (hand cũ, ghi tắt) thì blind/ante tính từ `blinds` của phiên. DEC-045.
 `actor`: `hero` | `villain` | `other`. `amount` = tổng tiền người đó đã bỏ vào street đó sau hành động (kiểu "raise to").
 
 ### 4.3 Bảng leak
