@@ -37,6 +37,14 @@ type Props = {
   canStart: boolean;
   onStart: () => void;
   startLabel: string;
+  /** Hand number for the title. */
+  num: number;
+  mode: 'buttons' | 'shorthand';
+  onMode: (mode: 'buttons' | 'shorthand') => void;
+  /** Hands saved before forced bets were actions can only be edited as a shorthand line. */
+  modeLocked: boolean;
+  /** Switching back to actions was refused: the line has errors or actions that do not fit. */
+  switchBlocked: boolean;
 };
 
 /** Step 1 (spec section 3): positions on the mini table, cards, stacks, straddle or level. */
@@ -51,6 +59,11 @@ export function HandSetupCard({
   canStart,
   onStart,
   startLabel,
+  num,
+  mode,
+  onMode,
+  modeLocked,
+  switchBlocked,
 }: Props) {
   const t = useTranslations('record');
   const th = useTranslations('hand');
@@ -87,7 +100,24 @@ export function HandSetupCard({
 
   return (
     <Card className="space-y-4">
-      <h2 className="text-lg font-semibold">{t('setupTitle')}</h2>
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-lg font-semibold">{th('title', { num })}</h2>
+        {!modeLocked && (
+          <div className="flex gap-1.5" role="group" aria-label={th('actions')}>
+            {(['buttons', 'shorthand'] as const).map((m) => (
+              <Chip key={m} on={mode === m} onClick={() => onMode(m)}>
+                {t(m === 'buttons' ? 'modeActions' : 'modeShorthand')}
+              </Chip>
+            ))}
+          </div>
+        )}
+      </div>
+      <p className="text-sm text-muted">{t('setupTitle')}</p>
+      {switchBlocked && (
+        <p role="alert" className="text-sm text-loss">
+          {th('fixLineFirst')}
+        </p>
+      )}
 
       <div className="space-y-2">
         <div className="grid grid-cols-2 gap-1.5" role="group" aria-label={t('tableHint')}>

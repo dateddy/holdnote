@@ -31,17 +31,44 @@ export function CardKey({
   );
 }
 
-type SlotProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'aria-pressed'> & { on?: boolean };
+type SlotProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'aria-pressed'> & {
+  /** The picker is open on this slot. */
+  on?: boolean;
+  /** `missing`: still empty at a street the betting reached (pulses, never blocks). `extra`: a card the hand does not need. */
+  state?: 'missing' | 'extra';
+  /** Slot belongs to the street tab that is selected. */
+  highlight?: boolean;
+  /** Smaller slot for the board row. */
+  compact?: boolean;
+};
 
-/** One card slot (hole card or board card) that opens the picker. */
-export function CardSlot({ on = false, className, type = 'button', ...rest }: SlotProps) {
+/** One card slot (hole card or board card) that opens the picker. Pass `disabled` for a locked slot. */
+export function CardSlot({
+  on = false,
+  state,
+  highlight = false,
+  compact = false,
+  className,
+  type = 'button',
+  ...rest
+}: SlotProps) {
+  const border =
+    state === 'missing'
+      ? 'animate-pulse border-warn bg-warn/10'
+      : state === 'extra'
+        ? 'border-dashed border-warn bg-surface'
+        : on
+          ? 'border-accent bg-accent/15'
+          : highlight
+            ? 'border-accent bg-surface'
+            : 'border-line bg-surface';
   return (
     <button
       type={type}
       aria-pressed={on}
-      className={`flex h-14 flex-col items-center justify-center rounded-md border text-lg ${
-        on ? 'border-accent bg-accent/15' : 'border-line bg-surface'
-      } ${className ?? ''}`.trim()}
+      className={`flex flex-col items-center justify-center rounded-md border text-lg disabled:opacity-40 ${
+        compact ? 'h-12' : 'h-14'
+      } ${border} ${className ?? ''}`.trim()}
       {...rest}
     />
   );

@@ -47,8 +47,5 @@ export function draftToSetup(session: HandSession, draft: HandDraft, bb: number)
 
 /** The board as the machine reads it. */
 export function boardInput(draft: HandDraft): BoardInput {
-  return {
-    cards: boardCards(draft) as BoardInput['cards'],
-    skipped: draft.boardSkipped,
-  };
+  return { cards: boardCards(draft) as BoardInput['cards'] };
 }

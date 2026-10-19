@@ -15,6 +15,8 @@ loadEnvConfig(
 const nextConfig: NextConfig = {
   // poker-core ships TypeScript source; let Next compile it.
   transpilePackages: ['poker-core'],
+  // The dev badge would sit in the screenshots of `pnpm screens`.
+  ...(process.env.HOLDNOTE_SCREENS ? { devIndicators: false as const } : {}),
 };
 
 // Uses src/i18n/request.ts.

@@ -1,6 +1,8 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
 import { Input } from '@/components/ui/input';
 import { Result } from '@/components/ui/result';
@@ -19,6 +21,8 @@ type Props = {
   result: number | null;
   resultBb: number | null;
   money: (n: number) => string;
+  /** "Mình thắng (đối thủ fold)" and the like, when the betting decided the hand. */
+  wonText?: string;
 };
 
 /** Who won, the opponent's cards, and the result with its manual override. */
@@ -31,9 +35,11 @@ export function ShowdownBlock({
   result,
   resultBb,
   money,
+  wonText,
 }: Props) {
   const t = useTranslations('record');
   const th = useTranslations('hand');
+  const [editing, setEditing] = useState(false);
   const choices = mode === 'actions' ? (['win', 'lose', 'split'] as const) : OUTCOMES;
   const label = (o: string) =>
     mode === 'actions'
@@ -42,7 +48,9 @@ export function ShowdownBlock({
 
   return (
     <section className="space-y-3 rounded-md border border-line bg-surface p-3">
-      <h3 className="text-base font-medium">{decided ? t('resultLabel') : t('winnerTitle')}</h3>
+      <h3 className="text-base font-medium">
+        {decided ? (wonText ?? t('resultLabel')) : t('winnerTitle')}
+      </h3>
       {!decided && (
         <div className={`grid gap-1.5 ${mode === 'actions' ? 'grid-cols-3' : 'grid-cols-4'}`}>
           {choices.map((o) => (
@@ -81,17 +89,23 @@ export function ShowdownBlock({
           )}
         </Result>
       </div>
-      <label className="flex flex-col gap-1 text-sm">
-        {t('manualResult')}
-        <Input
-          inputMode="decimal"
-          autoComplete="off"
-          value={draft.resultText}
-          placeholder={result == null ? '' : String(result)}
-          onChange={(e) => set('resultText', e.target.value)}
-        />
-      </label>
-      {draft.resultText.trim() && <p className="text-xs text-muted">{t('manualFlag')}</p>}
+      {editing || draft.resultText.trim() ? (
+        <label className="flex flex-col gap-1 text-sm">
+          {t('manualResult')}
+          <Input
+            inputMode="decimal"
+            autoComplete="off"
+            value={draft.resultText}
+            placeholder={result == null ? '' : String(result)}
+            onChange={(e) => set('resultText', e.target.value)}
+          />
+          {draft.resultText.trim() && <span className="text-xs text-muted">{t('manualFlag')}</span>}
+        </label>
+      ) : (
+        <Button variant="ghost" full={false} onClick={() => setEditing(true)}>
+          {t('manualLink')}
+        </Button>
+      )}
     </section>
   );
 }

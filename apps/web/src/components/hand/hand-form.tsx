@@ -12,8 +12,9 @@ import {
   parseAmount,
   parseShorthand,
   POSITIONS,
+  reachedStreet,
   replay,
-  STREETS,
+  streetTabs,
   toBb,
   undo as undoAction,
   type Action,
@@ -23,9 +24,9 @@ import {
   type Position,
   type Street,
 } from 'poker-core';
-import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
 import { Input } from '@/components/ui/input';
+import { Sheet } from '@/components/ui/sheet';
 import type { SeatTone } from '@/components/ui/seat';
 import {
   boardCards,
@@ -44,22 +45,20 @@ import { isOneOf } from '@/lib/sessions/form';
 import { formatMoney } from '@/lib/sessions/format';
 import { createClient } from '@/lib/supabase/client';
 import { saveHand, undoHand } from '@/lib/offline/sync';
-import { ActionPanel } from './action-panel';
+import { ActionCard } from './action-card';
 import { AmountSheet, type AmountKind } from './amount-sheet';
-import { CardGrid } from './card-grid';
+import { BoardCard } from './board-card';
+import { ContextBar } from './context-bar';
 import { EditActionSheet } from './edit-action-sheet';
 import { HandSetupCard, type OpponentOption } from './hand-setup-card';
 import { MiniTable } from './mini-table';
 import { SaveBar } from './save-bar';
 import { ShorthandInput } from './shorthand-input';
 import { ShowdownBlock } from './showdown-block';
-import { StreetBlock, type BoardPicker, type PillData } from './street-block';
+import type { PillData } from './pill-data';
 import { UndoToast } from './undo-toast';
 
 export type { OpponentOption };
-
-/** Slots of the card grid that hold each street's cards. */
-const BOARD_RANGE = { flop: [2, 5], turn: [5, 6], river: [6, 7] } as const;
 
 type Props = {
   sessionId: string;
@@ -116,6 +115,10 @@ export function HandForm({
   const [editing, setEditing] = useState<number | null>(null);
   const [seatPick, setSeatPick] = useState<Position | null>(null);
   const [notes, setNotes] = useState<string[]>([]);
+  const [expanded, setExpanded] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
+  // The tab the player chose, valid only while the hand stays on the street it was chosen on.
+  const [chosen, setChosen] = useState<{ street: Street; from: Street } | null>(null);
   const locked = useRef(false);
 
   const set = <K extends keyof HandDraft>(key: K, value: HandDraft[K]) =>
@@ -181,7 +184,7 @@ export function HandForm({
   }
 
   function setPositions(heroPos: string, villPos: string) {
-    setDraft((d) => ({ ...d, heroPos, villPos, actions: [], boardSkipped: [] }));
+    setDraft((d) => ({ ...d, heroPos, villPos, actions: [] }));
     setSeatPick(null);
   }
 
@@ -240,11 +243,6 @@ export function HandForm({
     setEditing(null);
   }
 
-  function setBoard(street: 'flop' | 'turn' | 'river', next: string[]) {
-    const [a, b] = BOARD_RANGE[street];
-    set('slots', [...draft.slots.slice(0, a), ...next, ...draft.slots.slice(b)]);
-  }
-
   const toneOf = (a: Action['actor']): SeatTone => a;
   const whoOf = (a: Action) =>
     a.actor === 'hero'
@@ -277,37 +275,14 @@ export function HandForm({
     });
   }
 
-  function boardPicker(street: 'flop' | 'turn' | 'river'): BoardPicker {
-    const [a, b] = BOARD_RANGE[street];
-    return {
-      slots: draft.slots.slice(a, b),
-      labels: Array.from({ length: b - a }, () => t(street)),
-      blocked: [...draft.slots.slice(0, a), ...draft.slots.slice(b), ...draft.villCards],
-      onChange: (next) => setBoard(street, next),
-      skipped: draft.boardSkipped.includes(street),
-      onToggleSkip: () =>
-        set(
-          'boardSkipped',
-          draft.boardSkipped.includes(street)
-            ? draft.boardSkipped.filter((s) => s !== street)
-            : [...draft.boardSkipped, street],
-        ),
-    };
-  }
-
-  // Streets shown: up to the last one with actions, or the one the hand has reached.
-  const reached = useMemo(() => {
-    if (!view) return 0;
-    const lastAction = Math.max(0, ...draft.actions.map((a) => STREETS.indexOf(a.street)));
-    const p = view.phase;
-    const now =
-      p.kind === 'act' || p.kind === 'board'
-        ? STREETS.indexOf(p.street)
-        : p.kind === 'runout' || p.kind === 'showdown'
-          ? 3
-          : 0;
-    return Math.max(lastAction, now);
-  }, [view, draft.actions]);
+  // Street tabs follow the betting; the tab the player picked holds until the hand moves on.
+  const tabs = machine ? streetTabs(machine) : null;
+  const current: Street = machine ? reachedStreet(machine) : 'preflop';
+  const selected: Street =
+    chosen && chosen.from === current && tabs && tabs[chosen.street] !== 'locked'
+      ? chosen.street
+      : current;
+  const selectStreet = (street: Street) => setChosen({ street, from: current });
 
   // ---- saving ----
   const heroBehind = view?.players.find((p) => p.actor === 'hero')?.behind;
@@ -317,9 +292,11 @@ export function HandForm({
     ? t('needCards')
     : lineErrors.length > 0
       ? t('fixLineToSave')
-      : derived.missing
-        ? t('willBeMissing')
-        : undefined;
+      : derived.board && derived.board.missing > 0
+        ? tr('boardMissing', { n: derived.board.missing })
+        : derived.missing
+          ? t('willBeMissing')
+          : undefined;
 
   async function save() {
     if (locked.current || !canSave(draft) || lineErrors.length > 0) return;
@@ -401,7 +378,7 @@ export function HandForm({
     ...notes,
     ...(view?.warnings.some((w) => w.code === 'below_min_raise') ? [tr('warnBelowMin')] : []),
     ...(view?.warnings.some((w) => w.code === 'side_pot') ? [tr('warnSidePot')] : []),
-    ...(draft.boardSkipped.length > 0 ? [tr('warnBoardSkipped')] : []),
+    ...(derived.board && derived.board.extra > 0 ? [tr('warnBoardExtra')] : []),
   ].filter((w, i, all) => all.indexOf(w) === i);
 
   const showSetup = step === 'setup' || (mode === 'buttons' && !setup);
@@ -410,13 +387,30 @@ export function HandForm({
   const toActWho =
     toActActor === 'hero' ? tr('roleHero') : toActActor === 'villain' ? tr('roleVillain') : '';
   const callText = view ? both(view.toCall) : '';
+  const heroSeat = machine?.players.find((p) => p.actor === 'hero')?.pos;
+  const wonText =
+    machine?.phase.kind === 'won'
+      ? machine.phase.winner === heroSeat
+        ? tr('wonHeroFold')
+        : machine.players.find((p) => p.pos === (machine.phase as { winner: string }).winner)
+              ?.actor === 'villain'
+          ? tr('wonVillFold')
+          : tr('wonOther', { pos: machine.phase.winner })
+      : undefined;
+  const summary = [
+    draft.heroPos && `${draft.heroPos} ${tr('roleHero')}`,
+    draft.villPos && `${draft.villPos} ${tr('roleVillain')}`,
+    draft.heroStack,
+  ]
+    .filter(Boolean)
+    .join(' · ');
   const deadSeats = (view?.players ?? []).filter((p) => !p.tracked).map((p) => p.pos);
   const showShowdown =
     mode === 'shorthand' ||
     (view !== null && (['runout', 'showdown', 'won'].includes(view.phase.kind) || decided));
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       {status === 'saved' && edit && (
         <p role="status" className="rounded-md bg-accent/15 p-3 text-sm">
           {t('savedChanges')}
@@ -437,24 +431,7 @@ export function HandForm({
         </p>
       )}
 
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold">{t('title', { num })}</h2>
-        {!(edit && edit.initial.legacy) && (
-          <div className="flex gap-1.5" role="group" aria-label={t('actions')}>
-            {(['buttons', 'shorthand'] as const).map((m) => (
-              <Chip key={m} on={mode === m} onClick={() => switchMode(m)}>
-                {tr(m === 'buttons' ? 'modeActions' : 'modeShorthand')}
-              </Chip>
-            ))}
-          </div>
-        )}
-      </div>
       {edit?.initial.legacy && <p className="text-sm text-muted">{tr('oldHand')}</p>}
-      {switchBlocked && (
-        <p role="alert" className="text-sm text-loss">
-          {t('fixLineFirst')}
-        </p>
-      )}
 
       {showSetup ? (
         <HandSetupCard
@@ -468,121 +445,90 @@ export function HandForm({
           canStart={mode === 'shorthand' || setup !== null}
           onStart={() => setStep('play')}
           startLabel={tr('start')}
+          num={num}
+          mode={mode}
+          onMode={switchMode}
+          modeLocked={Boolean(edit?.initial.legacy)}
+          switchBlocked={switchBlocked}
         />
       ) : (
         <>
-          <Button
-            variant="secondary"
-            className="h-auto min-h-11 justify-between gap-3 py-2 text-left text-sm"
-            onClick={() => setStep('setup')}
-          >
-            <span className="tabular-nums">
-              {draft.heroPos && `${draft.heroPos} ${tr('roleHero')}`}
-              {draft.villPos && ` · ${draft.villPos} ${tr('roleVillain')}`}
-              {draft.heroStack && ` · ${draft.heroStack}`}
-              {draft.straddles.length > 0 && ` · ${tr('straddle')} ${draft.straddles.join('/')}`}
-            </span>
-            <span className="text-muted underline underline-offset-4">{tr('editSetup')}</span>
-          </Button>
+          <ContextBar num={num} summary={summary} onEditSetup={() => setStep('setup')} />
+          <BoardCard
+            slots={draft.slots.slice(2)}
+            check={buttonsMode ? (derived.board ?? null) : null}
+            blocked={[...draft.slots.slice(0, 2), ...draft.villCards]}
+            highlight={buttonsMode ? selected : null}
+            onChange={(next) => set('slots', [...draft.slots.slice(0, 2), ...next])}
+          />
 
-          {buttonsMode && view ? (
-            <>
-              <MiniTable
-                compact
-                seats={seatCount}
-                onSeat={(pos) => {
-                  if (view.addable.includes(pos)) setSeatPick(seatPick === pos ? null : pos);
-                }}
-                view={(pos) => {
-                  const p = view.players.find((x) => x.pos === pos);
-                  const addable = view.addable.includes(pos);
-                  return {
-                    tone: p ? toneOf(p.actor) : 'other',
-                    ...(p?.actor === 'hero' && { caption: tr('roleHero') }),
-                    ...(p?.actor === 'villain' && { caption: tr('roleVillain') }),
-                    toAct: toActPos === pos,
-                    folded: Boolean(p?.folded) || (p ? !p.tracked && !addable : false),
-                    addable,
-                    disabled: !addable,
-                  };
-                }}
-              />
-              {STREETS.slice(0, reached + 1).map((street) => (
-                <StreetBlock
-                  key={street}
-                  street={street}
-                  pills={pillsOf(street)}
-                  needsBoard={view.phase.kind === 'board' && view.phase.street === street}
-                  {...(street !== 'preflop' && { board: boardPicker(street) })}
-                  onPill={setEditing}
-                />
-              ))}
-              {warnings.length > 0 && (
-                <ul role="status" className="space-y-1 rounded-md bg-warn/10 p-3 text-sm">
-                  {warnings.map((w) => (
-                    <li key={w}>{w}</li>
-                  ))}
-                </ul>
-              )}
-              <ActionPanel
-                state={view}
-                who={seatPick ? tr('addSeat') : toActWho}
-                toCallText={callText}
-                canUndo={draft.actions.length > 0}
-                onButton={onButton}
-                onDead={() => setSheet('dead')}
-                onUndo={() => {
-                  if (!setup) return;
-                  set('actions', stripForced(undoAction(full)));
-                  setSeatPick(null);
-                  setNotes([]);
-                }}
-              />
-            </>
+          {buttonsMode && view && tabs ? (
+            <ActionCard
+              state={view}
+              tabs={tabs}
+              selected={selected}
+              onSelect={selectStreet}
+              expanded={expanded}
+              onToggleExpanded={() => setExpanded((e) => !e)}
+              pillsOf={pillsOf}
+              onPill={setEditing}
+              who={seatPick ? tr('addSeat') : toActWho}
+              toCallText={callText}
+              canUndo={draft.actions.length > 0}
+              onButton={onButton}
+              onDead={() => setSheet('dead')}
+              onAddPlayer={() => setAddOpen(true)}
+              onUndo={() => {
+                if (!setup) return;
+                set('actions', stripForced(undoAction(full)));
+                setSeatPick(null);
+                setNotes([]);
+              }}
+            />
           ) : (
-            <section className="space-y-3">
-              <h3 className="text-base font-medium">{t('board')}</h3>
-              <CardGrid
-                ariaLabel={t('board')}
-                labels={[t('flop'), t('flop'), t('flop'), t('turn'), t('river')]}
-                slots={draft.slots.slice(2)}
-                blocked={[...draft.slots.slice(0, 2), ...draft.villCards]}
-                onChange={(next) => set('slots', [...draft.slots.slice(0, 2), ...next])}
-              />
-              <ShorthandInput
-                value={raw.rawLine}
-                onChange={(rawLine) => set('rawLine', rawLine)}
-                errors={lineErrors}
-              />
-            </section>
-          )}
-
-          {showShowdown && (
-            <ShowdownBlock
-              draft={draft}
-              set={set}
-              outcome={derived.outcome}
-              decided={decided}
-              mode={buttonsMode ? 'actions' : 'shorthand'}
-              result={derived.result}
-              resultBb={derived.resultBb}
-              money={money}
+            <ShorthandInput
+              value={raw.rawLine}
+              onChange={(rawLine) => set('rawLine', rawLine)}
+              errors={lineErrors}
             />
           )}
 
-          <section className="space-y-2">
-            <label className="flex flex-col gap-1 text-sm">
-              {t('thought')}
-              <Input
-                autoComplete="off"
-                value={draft.thought}
-                onChange={(e) => set('thought', e.target.value)}
+          {warnings.length > 0 && (
+            <ul role="status" className="space-y-1 rounded-md bg-warn/10 p-3 text-sm">
+              {warnings.map((w) => (
+                <li key={w}>{w}</li>
+              ))}
+            </ul>
+          )}
+
+          {showShowdown && (
+            <>
+              <ShowdownBlock
+                draft={draft}
+                set={set}
+                outcome={derived.outcome}
+                decided={decided}
+                mode={buttonsMode ? 'actions' : 'shorthand'}
+                result={derived.result}
+                resultBb={derived.resultBb}
+                money={money}
+                {...(wonText && { wonText })}
               />
-            </label>
-            <Chip on={draft.flagged} onClick={() => set('flagged', !draft.flagged)}>
-              ⚑ {t('flag')}
-            </Chip>
-          </section>
+              <section className="space-y-2">
+                <label className="flex flex-col gap-1 text-sm">
+                  {t('thought')}
+                  <Input
+                    autoComplete="off"
+                    value={draft.thought}
+                    onChange={(e) => set('thought', e.target.value)}
+                  />
+                </label>
+                <Chip on={draft.flagged} onClick={() => set('flagged', !draft.flagged)}>
+                  ⚑ {t('flag')}
+                </Chip>
+              </section>
+            </>
+          )}
         </>
       )}
 
@@ -615,6 +561,36 @@ export function HandForm({
           onClose={() => setSheet(null)}
         />
       )}
+      <Sheet
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        title={tr('addPlayerTitle')}
+        closeLabel={tr('close')}
+      >
+        {view && (
+          <MiniTable
+            compact
+            seats={seatCount}
+            onSeat={(pos) => {
+              if (!view.addable.includes(pos)) return;
+              setSeatPick(pos);
+              setAddOpen(false);
+            }}
+            view={(pos) => {
+              const p = view.players.find((x) => x.pos === pos);
+              const addable = view.addable.includes(pos);
+              return {
+                tone: p ? toneOf(p.actor) : 'other',
+                ...(p?.actor === 'hero' && { caption: tr('roleHero') }),
+                ...(p?.actor === 'villain' && { caption: tr('roleVillain') }),
+                folded: Boolean(p?.folded) || (p ? !p.tracked && !addable : false),
+                addable,
+                disabled: !addable,
+              };
+            }}
+          />
+        )}
+      </Sheet>
       <EditActionSheet
         action={editing !== null ? (view?.actions[editing] ?? null) : null}
         before={editState}

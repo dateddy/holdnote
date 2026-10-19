@@ -1,10 +1,9 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
 import { useState } from 'react';
-import { RANKS, SUITS } from 'poker-core';
-import { CardKey, CardSlot } from '@/components/ui/card-key';
-import { cardLabel, SUIT_SYMBOL } from './card-label';
+import { CardSlot } from '@/components/ui/card-key';
+import { CardPicker } from './card-picker';
+import { cardLabel } from './card-label';
 
 type Props = {
   slots: string[];
@@ -16,11 +15,9 @@ type Props = {
   ariaLabel: string;
 };
 
-/** A row of card slots sharing one rank + suit picker; the picker shows while a slot is empty. */
+/** A row of card slots sharing one picker; the picker shows while a slot is empty. */
 export function CardGrid({ slots, onChange, labels, blocked = [], ariaLabel }: Props) {
-  const t = useTranslations('hand');
   const [active, setActive] = useState(0);
-  const [rank, setRank] = useState<string | null>(null);
   // Tapping a filled slot reopens the picker; it closes again after the next card is placed.
   const [reopened, setReopened] = useState(false);
   const showPicker = reopened || slots.some((c) => !c);
@@ -29,24 +26,21 @@ export function CardGrid({ slots, onChange, labels, blocked = [], ariaLabel }: P
     ...blocked.filter((c) => c && !c.endsWith('?')),
     ...slots.filter((c, i) => c && i !== active && !c.endsWith('?')),
   ]);
-  const rankFull = (r: string) => SUITS.every((s) => used.has(`${r}${s}`));
-
-  const clear = () => {
-    const next = [...slots];
-    next[active] = '';
-    onChange(next);
-    setRank(null);
-  };
 
   const place = (card: string) => {
     const next = [...slots];
     next[active] = card;
     onChange(next);
-    setRank(null);
     setReopened(false);
     // Jump to the next empty slot after this one.
     const following = next.findIndex((c, i) => i > active && !c);
     if (following >= 0) setActive(following);
+  };
+
+  const clear = () => {
+    const next = [...slots];
+    next[active] = '';
+    onChange(next);
   };
 
   return (
@@ -64,7 +58,6 @@ export function CardGrid({ slots, onChange, labels, blocked = [], ariaLabel }: P
             aria-label={labels[i]}
             onClick={() => {
               setActive(i);
-              setRank(null);
               setReopened(true);
             }}
           >
@@ -74,41 +67,13 @@ export function CardGrid({ slots, onChange, labels, blocked = [], ariaLabel }: P
       </div>
 
       {showPicker && (
-        <>
-          <div className="flex flex-wrap gap-1.5">
-            {RANKS.slice()
-              .reverse()
-              .map((r) => (
-                <CardKey
-                  key={r}
-                  on={rank === r}
-                  disabled={rankFull(r)}
-                  onClick={() => setRank(r)}
-                  className="flex-none basis-[13%]"
-                >
-                  {r}
-                </CardKey>
-              ))}
-          </div>
-
-          <div className="flex gap-1.5">
-            {[...SUITS, '?'].map((s) => (
-              <CardKey
-                key={s}
-                tall
-                suit={s}
-                disabled={!rank || used.has(`${rank}${s}`)}
-                onClick={() => rank && place(`${rank}${s}`)}
-                aria-label={s === '?' ? t('unknownSuit') : s}
-              >
-                {SUIT_SYMBOL[s]}
-              </CardKey>
-            ))}
-            <CardKey disabled={!slots[active]} onClick={clear} aria-label={t('clearCard')}>
-              ⌫
-            </CardKey>
-          </div>
-        </>
+        <CardPicker
+          key={active}
+          used={used}
+          canClear={Boolean(slots[active])}
+          onPick={place}
+          onClear={clear}
+        />
       )}
     </div>
   );

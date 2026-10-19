@@ -6,6 +6,7 @@ import {
   forcedBets,
   isCard,
   isPostAct,
+  boardCheck,
   replay,
   tableOrder,
   nextStack,
@@ -19,10 +20,10 @@ import {
   type Blinds,
   type EffStack,
   type HandInput,
+  type BoardCheck,
   type HandState,
   type Outcome,
   type Position,
-  type Street,
   type StreetSpr,
 } from 'poker-core';
 import { isOneOf } from '@/lib/sessions/form';
@@ -93,8 +94,6 @@ export type HandDraft = {
   levelSb: string;
   /** MTT stage label (`hands.stage`). */
   stage: string;
-  /** Streets whose board cards were skipped ("Không nhớ board"). */
-  boardSkipped: Street[];
   /**
    * Hand saved before forced bets became actions (DEC-045): `actions` has no `post_*` and the blinds
    * come from the session. New hands add `forcedBets(setup)` in front of `actions` when deriving.
@@ -115,6 +114,8 @@ export type HandDerived = {
   missing: boolean;
   /** Where the betting stands (turn, buttons, warnings). Null for legacy hands or missing setup. */
   machine: HandState | null;
+  /** Board slots against the betting (missing, extra). Null without a state machine. */
+  board: BoardCheck | null;
   /** Outcome the betting decides by itself (hero folded, or everyone else did); else the draft's. */
   outcome: string;
 };
@@ -131,7 +132,6 @@ export function emptyDraft(session: HandSession, prev: PreviousHand | null): Han
     villStack: '',
     thought: '',
     flagged: false,
-    boardSkipped: [],
     legacy: false,
     levelSb: '',
     ...nextHandDefaults(session, prev),
@@ -255,6 +255,7 @@ export function deriveHand(session: HandSession, draft: HandDraft): HandDerived 
     spr: [],
     missing: true,
     machine: null,
+    board: null,
     outcome: draft.outcome,
   };
   if (bb == null) return blank;
@@ -267,6 +268,7 @@ export function deriveHand(session: HandSession, draft: HandDraft): HandDerived 
   const invalid = new Set(draft.rawLine.trim() ? [] : (machine?.invalid ?? []));
   const actions = withForced.filter((_, i) => !invalid.has(i));
   const outcome = (machine && autoOutcome(machine)) || draft.outcome;
+  const board = machine ? boardCheck(machine, draft.slots.slice(2)) : null;
 
   const input: HandInput = {
     blinds: blindsFor(session, bb, draft.ante),
@@ -293,8 +295,9 @@ export function deriveHand(session: HandSession, draft: HandDraft): HandDerived 
     resultBb: result == null ? null : toBb(result, bb),
     eff,
     spr: computeSpr(input),
-    missing: result == null || eff == null || draft.boardSkipped.length > 0,
+    missing: result == null || eff == null || (board?.missing ?? 0) > 0,
     machine,
+    board,
     outcome,
   };
 }
@@ -430,7 +433,6 @@ export function fromHandRow(session: HandSession, row: HandRowIn): HandDraft {
     straddles: session.kind === 'cash' ? amounts('post_straddle') : [],
     levelSb: session.kind === 'mtt' ? (amounts('post_sb')[0] ?? '') : '',
     stage: row.stage ?? '',
-    boardSkipped: [],
     // No forced bets saved: the hand predates DEC-045 and is read with the session blinds.
     legacy: posts.length === 0,
   };

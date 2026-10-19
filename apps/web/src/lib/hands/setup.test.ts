@@ -61,9 +61,9 @@ describe('draftToSetup', () => {
     expect(draftToSetup(mtt, draft({ straddles: ['100'] }), 100)?.straddles).toBeUndefined();
   });
 
-  it('boardInput lists picked cards and skipped streets', () => {
-    const d = draft({ slots: ['Ah', 'Kd', '7c', '8d', '2s', '', ''], boardSkipped: ['river'] });
-    expect(boardInput(d)).toEqual({ cards: ['7c', '8d', '2s'], skipped: ['river'] });
+  it('boardInput lists the picked board cards', () => {
+    const d = draft({ slots: ['Ah', 'Kd', '7c', '8d', '2s', '', ''] });
+    expect(boardInput(d)).toEqual({ cards: ['7c', '8d', '2s'] });
   });
 });
 
@@ -160,6 +160,20 @@ describe('hands recorded by action', () => {
     });
     expect(back.legacy).toBe(true);
     expect(deriveHand(cash, back).machine).toBeNull();
+  });
+
+  it('a board missing for the street reached marks the hand as missing data', () => {
+    const { d } = played();
+    const base = { ...d, outcome: 'lose', heroStack: '5000', villStack: '5000' };
+    // nothing entered yet: preflop needs no board
+    expect(deriveHand(cash, { ...base, actions: [] }).board).toMatchObject({ needed: 0 });
+    // open and call: the hand is on the flop and no board is entered
+    const derived = deriveHand(cash, base);
+    expect(derived.board).toMatchObject({ needed: 3, missing: 3 });
+    expect(derived.missing).toBe(true);
+    // the flop is entered, plus a turn card the hand has not reached
+    const full = { ...base, slots: ['Ah', 'Kd', '7c', '8d', '2s', '9h', ''] };
+    expect(deriveHand(cash, full).board).toMatchObject({ missing: 0, extra: 1 });
   });
 
   it('hero folding settles the hand without an outcome button', () => {

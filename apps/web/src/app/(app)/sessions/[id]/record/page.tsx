@@ -63,7 +63,7 @@ export default async function RecordPage({ params }: PageProps<'/sessions/[id]/r
   });
 
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 p-6">
+    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-3 p-6">
       <TopBar
         title={t('screenTitle')}
         back={{ href: `/sessions/${id}`, label: t('backToSession') }}

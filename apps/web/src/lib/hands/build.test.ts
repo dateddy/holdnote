@@ -29,7 +29,8 @@ const GOLD = 'H lp V o500 H c / H x V b500 H c / H x V b1k H c / H b5000 V ai H 
 
 function golden() {
   const draft = emptyDraft(cash, null);
-  draft.slots = ['Ah', 'Kd', '', '', '', '', ''];
+  // The hand ran to the river, so the board is part of what the hand needs.
+  draft.slots = ['Ah', 'Kd', '7c', '8d', '2s', 'Jh', '3c'];
   draft.heroPos = 'MP';
   draft.villPos = 'BTN';
   draft.outcome = 'lose';
@@ -123,7 +124,7 @@ describe('toHandRow', () => {
     expect(row).toMatchObject({
       num: 3,
       hero_cards: ['Ah', 'Kd'],
-      board: [],
+      board: ['7c', '8d', '2s', 'Jh', '3c'],
       hero_pos: 'MP',
       villain_pos: 'BTN',
       outcome: 'lose',
