@@ -1,0 +1,41 @@
+import type { ButtonHTMLAttributes } from 'react';
+import { TONE_CLASS, type SeatTone } from './seat';
+
+type Props = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'> & {
+  tone: SeatTone;
+  /** Who: "Mình", "Đối thủ" or the position. */
+  who: string;
+  /** What: "Raise", "Call"... */
+  what: string;
+  /** Amount text such as "10bb", already formatted. */
+  amount?: string;
+  /** The action no longer fits the betting (after an edit). */
+  invalid?: boolean;
+};
+
+/** One chip of the street timeline. Tap to edit. */
+export function ActionPill({
+  tone,
+  who,
+  what,
+  amount,
+  invalid = false,
+  className,
+  type = 'button',
+  ...rest
+}: Props) {
+  return (
+    <button
+      type={type}
+      className={`flex h-9 items-center gap-1 rounded-md border px-2 text-sm tabular-nums ${
+        invalid ? 'border-warn bg-warn/10' : TONE_CLASS[tone]
+      } ${className ?? ''}`.trim()}
+      {...rest}
+    >
+      {invalid && <span aria-hidden>⚠</span>}
+      <span className="font-medium">{who}</span>
+      <span>{what}</span>
+      {amount && <span className="text-muted">{amount}</span>}
+    </button>
+  );
+}

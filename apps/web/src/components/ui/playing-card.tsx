@@ -1,7 +1,15 @@
 const SUIT_SYMBOL: Record<string, string> = { s: '♠', h: '♥', d: '♦', c: '♣', '?': '?' };
-const RED = new Set(['h', 'd']);
 
-/** One card as a small tile: rank + suit, red for hearts and diamonds. */
+/** Four-colour deck: spades plain, hearts red, diamonds blue, clubs green. */
+export const SUIT_TEXT: Record<string, string> = {
+  s: 'text-foreground',
+  h: 'text-suit-heart',
+  d: 'text-suit-diamond',
+  c: 'text-suit-club',
+  '?': 'text-muted',
+};
+
+/** One card as a small tile: rank + suit, suit colour from the four-colour deck. */
 export function PlayingCard({ card, size = 'md' }: { card: string; size?: 'sm' | 'md' }) {
   const rank = card.slice(0, 1);
   const suit = card.slice(1);
@@ -9,7 +17,7 @@ export function PlayingCard({ card, size = 'md' }: { card: string; size?: 'sm' |
   return (
     <span
       className={`inline-flex items-center justify-center rounded border border-line bg-surface font-semibold tabular-nums ${dims} ${
-        RED.has(suit) ? 'text-loss' : ''
+        SUIT_TEXT[suit] ?? ''
       }`}
     >
       {rank}

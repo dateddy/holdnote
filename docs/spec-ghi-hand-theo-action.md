@@ -117,7 +117,7 @@ Số ghế (6-max / 9-max) lấy từ phiên.
 
 ## 13. Hiển thị
 
-- Mình: màu `accent` + chữ "Mình". Đối thủ chính: cam + chữ "Đ.thủ". Người khác: màu trung tính. Không để màu một mình mang nghĩa.
+- Mình: màu `accent` + chữ "Mình". Đối thủ chính: cam + chữ "Đối thủ". Người khác: màu trung tính. Không để màu một mình mang nghĩa.
 - Bộ bài 4 màu: ♠ trắng/đen, ♥ đỏ, ♦ xanh dương, ♣ xanh lục.
 - Timeline chip theo street cập nhật ngay khi nhập (ví dụ "UTG O 2.5bb", "BTN C").
 
