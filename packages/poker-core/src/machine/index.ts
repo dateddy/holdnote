@@ -7,6 +7,8 @@ import type { ActInput, BoardInput, HandSetup, HandState, Notice, Settlement } f
 
 export { forcedBets, tableOrder, maxStraddles } from './seats';
 export type * from './types';
+export { previewAmount, quickSizes } from './sizes';
+export type { AmountPreview, QuickSize, SizeKind } from './sizes';
 
 /**
  * Where the hand stands after `actions`. Replays from the first forced bet every time, so editing
