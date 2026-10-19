@@ -14,6 +14,7 @@ import {
 import { createSession, type CreateSessionState } from '../actions';
 
 import { INPUT_CLASS as INPUT } from '@/components/ui/input';
+import { Stepper } from '@/components/ui/stepper';
 
 export function SessionForm({ initial }: { initial: SessionFormValues }) {
   const t = useTranslations('sessions');
@@ -25,6 +26,11 @@ export function SessionForm({ initial }: { initial: SessionFormValues }) {
   const v = state.values;
   const [anteMode, setAnteMode] = useState(v.anteMode);
   const isMtt = v.kind === 'mtt';
+  // Players dealt in at the table, 2-10 (5.1c-5); each hand starts from it and then remembers its own.
+  const [seats, setSeats] = useState(() => {
+    const n = Number(v.seats);
+    return Number.isInteger(n) && n >= 2 && n <= 10 ? n : 9;
+  });
 
   const error = (field: SessionField) => {
     const code = state.errors[field];
@@ -127,7 +133,21 @@ export function SessionForm({ initial }: { initial: SessionFormValues }) {
       </Segment>
       {anteMode !== 'none' && text('ante', t('anteAmount'), { numeric: true })}
 
-      {!isMtt && text('seats', t('seats'), { numeric: true })}
+      {!isMtt && (
+        <div className="flex items-center justify-between gap-3 text-sm">
+          <span>{t('seats')}</span>
+          <input type="hidden" name="seats" value={seats} />
+          <Stepper
+            value={seats}
+            min={2}
+            max={10}
+            onChange={setSeats}
+            text={t('seatsCount', { n: seats })}
+            minusLabel={t('seatsLess')}
+            plusLabel={t('seatsMore')}
+          />
+        </div>
+      )}
       {text('buyin', t('buyin'), { numeric: true })}
       {!isMtt && text('stopLoss', t('stopLoss'), { numeric: true })}
 

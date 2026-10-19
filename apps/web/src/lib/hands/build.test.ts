@@ -171,6 +171,7 @@ describe('fromHandRow', () => {
     const row = {
       ...base,
       players_dealt: 6,
+      opponents: [],
       hero_pos: 'UTG',
       villain_pos: 'MP',
       actions: [{ street: 'preflop', actor: 'hero', pos: 'UTG', act: 'fold' }],

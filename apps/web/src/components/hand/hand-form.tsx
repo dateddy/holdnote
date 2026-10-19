@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
-import { useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import {
   act,
   edit as editAction,
@@ -24,15 +24,16 @@ import {
   type Position,
   type Street,
 } from 'poker-core';
+import { Card as Panel } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
 import { Input } from '@/components/ui/input';
-import { Sheet } from '@/components/ui/sheet';
 import type { SeatTone } from '@/components/ui/seat';
 import {
   boardCards,
   canSave,
   deriveHand,
   emptyDraft,
+  pickedOpponents,
   stripForced,
   toHandRow,
   type HandDraft,
@@ -41,20 +42,29 @@ import {
 } from '@/lib/hands/build';
 import { boardInput, draftToSetup } from '@/lib/hands/setup';
 import { applyShorthand } from '@/lib/hands/shorthand';
+import {
+  nameOpponent,
+  pickHero,
+  playersOf,
+  setOpponentStack,
+  setPlayers,
+  setStraddleCount,
+  toggleOpponent,
+  type OpponentOption,
+} from '@/lib/hands/table';
 import { isOneOf } from '@/lib/sessions/form';
 import { formatMoney } from '@/lib/sessions/format';
 import { createClient } from '@/lib/supabase/client';
 import { saveHand, undoHand } from '@/lib/offline/sync';
 import { ActionCard } from './action-card';
-import { AmountSheet, type AmountKind } from './amount-sheet';
-import { BoardCard } from './board-card';
+import { AmountPad, type AmountKind } from './amount-pad';
+import { CardsCard } from './cards-card';
 import { ContextBar } from './context-bar';
 import { EditActionSheet } from './edit-action-sheet';
-import { HandSetupCard, type OpponentOption } from './hand-setup-card';
-import { MiniTable } from './mini-table';
 import { SaveBar } from './save-bar';
 import { ShorthandInput } from './shorthand-input';
 import { ShowdownBlock } from './showdown-block';
+import { TablePanel, type PanelRole } from './table-panel';
 import type { PillData } from './pill-data';
 import { UndoToast } from './undo-toast';
 
@@ -66,6 +76,7 @@ type Props = {
   locale: string;
   lastNum: number;
   previous: PreviousHand | null;
+  /** Every saved opponent, same venue first. */
   opponents: OpponentOption[];
   /** Last villain stack seen against each opponent. */
   opponentStacks?: Record<string, number>;
@@ -103,7 +114,12 @@ export function HandForm({
   const [mode, setMode] = useState<'buttons' | 'shorthand'>(
     edit ? (edit.initial.legacy || edit.initial.rawLine ? 'shorthand' : 'buttons') : entryMode,
   );
-  const [step, setStep] = useState<'setup' | 'play'>(edit ? 'play' : 'setup');
+  // The table panel starts open on a new hand: on the opponents once hero has a seat.
+  const [panel, setPanel] = useState<PanelRole | null>(() =>
+    edit ? null : raw.heroPos ? 'villain' : 'hero',
+  );
+  const [dropped, setDropped] = useState<Position[]>([]);
+  const [picking, setPicking] = useState(false);
   const [switchBlocked, setSwitchBlocked] = useState(false);
   const [num, setNum] = useState(edit?.num ?? lastNum + 1);
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'failed'>('idle');
@@ -113,13 +129,12 @@ export function HandForm({
   const [undoFailed, setUndoFailed] = useState(false);
   const [sheet, setSheet] = useState<AmountKind | null>(null);
   const [editing, setEditing] = useState<number | null>(null);
-  const [seatPick, setSeatPick] = useState<Position | null>(null);
   const [notes, setNotes] = useState<string[]>([]);
   const [expanded, setExpanded] = useState(false);
-  const [addOpen, setAddOpen] = useState(false);
   // The tab the player chose, valid only while the hand stays on the street it was chosen on.
   const [chosen, setChosen] = useState<{ street: Street; from: Street } | null>(null);
   const locked = useRef(false);
+  const closePanel = useCallback(() => setPanel(null), []);
 
   const set = <K extends keyof HandDraft>(key: K, value: HandDraft[K]) =>
     setDraft((d) => ({ ...d, [key]: value }));
@@ -155,15 +170,11 @@ export function HandForm({
   );
   const board = useMemo(() => boardInput(draft), [draft]);
   const machine = derived.machine;
-  const view = useMemo(
-    () => (seatPick && setup ? replay(setup, full, board, [seatPick]) : machine),
-    [seatPick, setup, full, board, machine],
-  );
-  const dealt = Number(draft.playersDealt.trim());
-  const seatCount =
-    setup?.seats ?? (Number.isInteger(dealt) && dealt >= 2 ? dealt : (session.seats ?? 9));
+  const players = playersOf(session, draft);
+  const picked = pickedOpponents(draft);
   const buttonsMode = mode === 'buttons' && setup !== null;
   const decided = Boolean(machine) && derived.outcome !== '' && derived.outcome !== draft.outcome;
+  const bbForStraddle = bb ?? toNumber(draft.levelBb) ?? 0;
 
   function switchMode(next: 'buttons' | 'shorthand') {
     if (next === mode) return;
@@ -183,15 +194,28 @@ export function HandForm({
     setMode(next);
   }
 
-  function setPositions(heroPos: string, villPos: string) {
-    setDraft((d) => ({ ...d, heroPos, villPos, actions: [] }));
-    setSeatPick(null);
+  // ---- the table panel: seats, head count, stacks, names (actions are kept, never cleared) ----
+  function onHeroSeat(pos: Position) {
+    setDraft((d) => pickHero(d, pos));
+    setDropped([]);
+    setPanel('villain');
+  }
+
+  function onPlayers(n: number) {
+    const r = setPlayers(session, raw, n);
+    setDraft(r.draft);
+    setDropped(r.dropped);
+    if (r.dropped.length > 0) setPanel(r.draft.heroPos ? 'villain' : 'hero');
+  }
+
+  function togglePanel() {
+    setPanel((p) => (p ? null : raw.heroPos ? 'villain' : 'hero'));
   }
 
   // ---- entering actions (the state machine decides everything) ----
   function apply(input: ActInput): boolean {
     if (!setup) return false;
-    const r = act(setup, full, seatPick ? { seat: seatPick, ...input } : input, board);
+    const r = act(setup, full, input, board);
     if (!r.accepted) {
       const stackUnknown = r.notices.some((n) => n.code === 'stack_unknown');
       setNotes([stackUnknown ? tr('stackUnknown') : tr('refused')]);
@@ -207,15 +231,14 @@ export function HandForm({
             : [],
       ),
     );
-    setSeatPick(null);
     return true;
   }
 
   function onButton(kind: ButtonKind) {
     if (kind === 'open' || kind === 'bet' || kind === 'raise') return setSheet(kind);
     if (kind === 'all-in') {
-      const toAct = view?.phase.kind === 'act' ? view.phase.toAct : null;
-      const stack = view?.players.find((p) => p.pos === toAct)?.stack;
+      const toAct = machine?.phase.kind === 'act' ? machine.phase.toAct : null;
+      const stack = machine?.players.find((p) => p.pos === toAct)?.stack;
       return stack === undefined ? setSheet('all-in') : void apply({ act: 'all-in' });
     }
     apply({ act: kind });
@@ -254,10 +277,10 @@ export function HandForm({
     a.act === 'raise' && a.verb === 'open' ? tr('act_open') : t(`act_${a.act}`);
 
   function pillsOf(street: Street): PillData[] {
-    if (!view) return [];
+    if (!machine) return [];
     return full.flatMap((a, index) => {
       if (a.street !== street || isPostAct(a.act)) return [];
-      const shown = view.actions[index] ?? a;
+      const shown = machine.actions[index] ?? a;
       const amountBb =
         shown.amount !== undefined && shown.act !== 'fold' && shown.act !== 'check' && bb
           ? `${toBb(shown.amount, bb)}bb`
@@ -269,7 +292,7 @@ export function HandForm({
           who: whoOf(a),
           what: whatOf(shown),
           ...(amountBb && { amount: amountBb }),
-          invalid: view.invalid.includes(index),
+          invalid: machine.invalid.includes(index),
         },
       ];
     });
@@ -284,13 +307,30 @@ export function HandForm({
       : current;
   const selectStreet = (street: Street) => setChosen({ street, from: current });
 
+  // A seat that is no longer picked stops the replay at its first action.
+  const stopAt = machine?.warnings.find((w) => w.code === 'not_in_hand')?.index;
+  const halted =
+    stopAt !== undefined
+      ? {
+          text: tr('removedSeat'),
+          deleteLabel: tr('deleteFrom'),
+          onDelete: () => {
+            set('actions', stripForced(full.slice(0, stopAt)));
+            setNotes([]);
+          },
+        }
+      : null;
+
   // ---- saving ----
-  const heroBehind = view?.players.find((p) => p.actor === 'hero')?.behind;
+  const heroBehind = machine?.players.find((p) => p.actor === 'hero')?.behind;
   const stackNow = heroBehind ?? toNumber(draft.heroStack);
-  const potNow = buttonsMode ? (view?.pot ?? null) : mode === 'shorthand' ? derived.potFinal : null;
-  const hint = !canSave(draft)
-    ? t('needCards')
-    : lineErrors.length > 0
+  const potNow = buttonsMode
+    ? (machine?.pot ?? null)
+    : mode === 'shorthand'
+      ? derived.potFinal
+      : null;
+  const hint =
+    lineErrors.length > 0
       ? t('fixLineToSave')
       : derived.board && derived.board.missing > 0
         ? tr('boardMissing', { n: derived.board.missing })
@@ -347,8 +387,11 @@ export function HandForm({
         .map((s) => toNumber(s))
         .filter((n): n is number => n != null && n > 0),
     };
-    setDraft(emptyDraft(session, prev));
-    setStep('setup');
+    const fresh = emptyDraft(session, prev);
+    setDraft(fresh);
+    setPanel(fresh.heroPos ? 'villain' : 'hero');
+    setDropped([]);
+    setSheet(null);
     setNotes([]);
     setNum(num + 1);
     setStatus('idle');
@@ -376,17 +419,20 @@ export function HandForm({
   // ---- screens ----
   const warnings: string[] = [
     ...notes,
-    ...(view?.warnings.some((w) => w.code === 'below_min_raise') ? [tr('warnBelowMin')] : []),
-    ...(view?.warnings.some((w) => w.code === 'side_pot') ? [tr('warnSidePot')] : []),
+    ...(machine?.warnings.some((w) => w.code === 'below_min_raise') ? [tr('warnBelowMin')] : []),
+    ...(machine?.warnings.some((w) => w.code === 'side_pot') ? [tr('warnSidePot')] : []),
     ...(derived.board && derived.board.extra > 0 ? [tr('warnBoardExtra')] : []),
   ].filter((w, i, all) => all.indexOf(w) === i);
 
-  const showSetup = step === 'setup' || (mode === 'buttons' && !setup);
-  const toActPos = view?.phase.kind === 'act' ? view.phase.toAct : null;
-  const toActActor = view?.players.find((p) => p.pos === toActPos)?.actor;
+  const toActPos = machine?.phase.kind === 'act' ? machine.phase.toAct : null;
+  const toActActor = machine?.players.find((p) => p.pos === toActPos)?.actor;
   const toActWho =
-    toActActor === 'hero' ? tr('roleHero') : toActActor === 'villain' ? tr('roleVillain') : '';
-  const callText = view ? both(view.toCall) : '';
+    toActActor === 'hero'
+      ? tr('roleHero')
+      : toActActor === 'villain'
+        ? tr('roleVillain')
+        : tr('roleOther');
+  const callText = machine ? both(machine.toCall) : '';
   const heroSeat = machine?.players.find((p) => p.actor === 'hero')?.pos;
   const wonText =
     machine?.phase.kind === 'won'
@@ -397,17 +443,21 @@ export function HandForm({
           ? tr('wonVillFold')
           : tr('wonOther', { pos: machine.phase.winner })
       : undefined;
-  const summary = [
-    draft.heroPos && `${draft.heroPos} ${tr('roleHero')}`,
-    draft.villPos && `${draft.villPos} ${tr('roleVillain')}`,
-    draft.heroStack,
-  ]
-    .filter(Boolean)
-    .join(' · ');
-  const deadSeats = (view?.players ?? []).filter((p) => !p.tracked).map((p) => p.pos);
+  const deadSeats = (machine?.players ?? []).filter((p) => !p.tracked).map((p) => p.pos);
   const showShowdown =
     mode === 'shorthand' ||
-    (view !== null && (['runout', 'showdown', 'won'].includes(view.phase.kind) || decided));
+    (machine !== null && (['runout', 'showdown', 'won'].includes(machine.phase.kind) || decided));
+  const extra =
+    session.kind === 'mtt'
+      ? [
+          draft.levelBb && tr('levelChip', { bb: draft.levelBb }),
+          draft.stage && tr(`stage_${draft.stage as 'early'}`),
+        ]
+          .filter(Boolean)
+          .join(' · ')
+      : draft.straddles.length > 0
+        ? `${tr('straddle')} ${draft.straddles.join('/')}`
+        : '';
 
   return (
     <div className="flex flex-col gap-3">
@@ -433,102 +483,142 @@ export function HandForm({
 
       {edit?.initial.legacy && <p className="text-sm text-muted">{tr('oldHand')}</p>}
 
-      {showSetup ? (
-        <HandSetupCard
+      <ContextBar
+        num={num}
+        heroPos={draft.heroPos}
+        opponents={picked.map((o) => o.pos)}
+        players={players}
+        stack={draft.heroStack}
+        extra={extra}
+        open={panel !== null}
+        onToggle={togglePanel}
+        onClose={closePanel}
+      >
+        <TablePanel
           session={session}
           draft={draft}
-          seats={seatCount}
-          opponents={opponents}
-          opponentStacks={opponentStacks}
+          players={players}
+          role={panel ?? 'villain'}
+          onRole={setPanel}
+          dropped={dropped}
+          options={opponents}
+          onHeroSeat={onHeroSeat}
+          onOpponentSeat={(pos) => setDraft((d) => toggleOpponent(d, pos))}
+          onPlayers={onPlayers}
+          onOpponentStack={(pos, stack) => setDraft((d) => setOpponentStack(d, pos, stack))}
+          onOpponentName={(pos, id) =>
+            setDraft((d) => nameOpponent(d, pos, id, id ? opponentStacks[id] : undefined))
+          }
+          onStraddles={(count) =>
+            setDraft((d) => setStraddleCount(session, d, players, count, bbForStraddle))
+          }
           set={set}
-          onPositions={setPositions}
-          canStart={mode === 'shorthand' || setup !== null}
-          onStart={() => setStep('play')}
-          startLabel={tr('start')}
-          num={num}
           mode={mode}
           onMode={switchMode}
           modeLocked={Boolean(edit?.initial.legacy)}
           switchBlocked={switchBlocked}
         />
-      ) : (
-        <>
-          <ContextBar num={num} summary={summary} onEditSetup={() => setStep('setup')} />
-          <BoardCard
-            slots={draft.slots.slice(2)}
-            check={buttonsMode ? (derived.board ?? null) : null}
-            blocked={[...draft.slots.slice(0, 2), ...draft.villCards]}
-            highlight={buttonsMode ? selected : null}
-            onChange={(next) => set('slots', [...draft.slots.slice(0, 2), ...next])}
-          />
+      </ContextBar>
 
-          {buttonsMode && view && tabs ? (
-            <ActionCard
-              state={view}
-              tabs={tabs}
-              selected={selected}
-              onSelect={selectStreet}
-              expanded={expanded}
-              onToggleExpanded={() => setExpanded((e) => !e)}
-              pillsOf={pillsOf}
-              onPill={setEditing}
-              who={seatPick ? tr('addSeat') : toActWho}
-              toCallText={callText}
-              canUndo={draft.actions.length > 0}
-              onButton={onButton}
-              onDead={() => setSheet('dead')}
-              onAddPlayer={() => setAddOpen(true)}
-              onUndo={() => {
-                if (!setup) return;
-                set('actions', stripForced(undoAction(full)));
-                setSeatPick(null);
-                setNotes([]);
-              }}
-            />
-          ) : (
-            <ShorthandInput
-              value={raw.rawLine}
-              onChange={(rawLine) => set('rawLine', rawLine)}
-              errors={lineErrors}
-            />
-          )}
+      <CardsCard
+        slots={draft.slots}
+        check={buttonsMode ? (derived.board ?? null) : null}
+        blocked={draft.villCards}
+        highlight={buttonsMode ? selected : null}
+        onChange={(slots) => set('slots', slots)}
+        onPicking={(open) => {
+          setPicking(open);
+          if (open) {
+            setSheet(null);
+            setPanel(null);
+          }
+        }}
+      />
 
-          {warnings.length > 0 && (
-            <ul role="status" className="space-y-1 rounded-md bg-warn/10 p-3 text-sm">
-              {warnings.map((w) => (
-                <li key={w}>{w}</li>
-              ))}
-            </ul>
-          )}
-
-          {showShowdown && (
-            <>
-              <ShowdownBlock
-                draft={draft}
-                set={set}
-                outcome={derived.outcome}
-                decided={decided}
-                mode={buttonsMode ? 'actions' : 'shorthand'}
-                result={derived.result}
-                resultBb={derived.resultBb}
+      {buttonsMode && machine && tabs ? (
+        <ActionCard
+          state={machine}
+          tabs={tabs}
+          selected={selected}
+          onSelect={selectStreet}
+          expanded={expanded}
+          onToggleExpanded={() => setExpanded((e) => !e)}
+          pillsOf={pillsOf}
+          onPill={setEditing}
+          who={toActWho}
+          toCallText={callText}
+          canUndo={draft.actions.length > 0}
+          onButton={onButton}
+          onDead={() => setSheet('dead')}
+          onUndo={() => {
+            set('actions', stripForced(undoAction(full)));
+            setNotes([]);
+            setSheet(null);
+          }}
+          collapsed={picking}
+          halted={halted}
+          pad={
+            sheet ? (
+              <AmountPad
+                kind={sheet}
+                state={machine}
+                bb={bb ?? 1}
                 money={money}
-                {...(wonText && { wonText })}
+                deadSeats={deadSeats}
+                onConfirm={onAmount}
+                onClose={() => setSheet(null)}
               />
-              <section className="space-y-2">
-                <label className="flex flex-col gap-1 text-sm">
-                  {t('thought')}
-                  <Input
-                    autoComplete="off"
-                    value={draft.thought}
-                    onChange={(e) => set('thought', e.target.value)}
-                  />
-                </label>
-                <Chip on={draft.flagged} onClick={() => set('flagged', !draft.flagged)}>
-                  ⚑ {t('flag')}
-                </Chip>
-              </section>
-            </>
-          )}
+            ) : null
+          }
+        />
+      ) : mode === 'buttons' ? (
+        <Panel tight>
+          <p role="status" className="text-sm text-muted">
+            {tr(draft.heroPos ? 'needOpponent' : 'needHero')}
+          </p>
+        </Panel>
+      ) : (
+        <ShorthandInput
+          value={raw.rawLine}
+          onChange={(rawLine) => set('rawLine', rawLine)}
+          errors={lineErrors}
+        />
+      )}
+
+      {warnings.length > 0 && (
+        <ul role="status" className="space-y-1 rounded-md bg-warn/10 p-3 text-sm">
+          {warnings.map((w) => (
+            <li key={w}>{w}</li>
+          ))}
+        </ul>
+      )}
+
+      {showShowdown && (
+        <>
+          <ShowdownBlock
+            draft={draft}
+            set={set}
+            outcome={derived.outcome}
+            decided={decided}
+            mode={buttonsMode ? 'actions' : 'shorthand'}
+            result={derived.result}
+            resultBb={derived.resultBb}
+            money={money}
+            {...(wonText && { wonText })}
+          />
+          <section className="space-y-2">
+            <label className="flex flex-col gap-1 text-sm">
+              {t('thought')}
+              <Input
+                autoComplete="off"
+                value={draft.thought}
+                onChange={(e) => set('thought', e.target.value)}
+              />
+            </label>
+            <Chip on={draft.flagged} onClick={() => set('flagged', !draft.flagged)}>
+              ⚑ {t('flag')}
+            </Chip>
+          </section>
         </>
       )}
 
@@ -550,49 +640,8 @@ export function HandForm({
         onSave={save}
       />
 
-      {view && (
-        <AmountSheet
-          kind={sheet}
-          state={view}
-          bb={bb ?? 1}
-          money={money}
-          deadSeats={deadSeats}
-          onConfirm={onAmount}
-          onClose={() => setSheet(null)}
-        />
-      )}
-      <Sheet
-        open={addOpen}
-        onClose={() => setAddOpen(false)}
-        title={tr('addPlayerTitle')}
-        closeLabel={tr('close')}
-      >
-        {view && (
-          <MiniTable
-            compact
-            seats={seatCount}
-            onSeat={(pos) => {
-              if (!view.addable.includes(pos)) return;
-              setSeatPick(pos);
-              setAddOpen(false);
-            }}
-            view={(pos) => {
-              const p = view.players.find((x) => x.pos === pos);
-              const addable = view.addable.includes(pos);
-              return {
-                tone: p ? toneOf(p.actor) : 'other',
-                ...(p?.actor === 'hero' && { caption: tr('roleHero') }),
-                ...(p?.actor === 'villain' && { caption: tr('roleVillain') }),
-                folded: Boolean(p?.folded) || (p ? !p.tracked && !addable : false),
-                addable,
-                disabled: !addable,
-              };
-            }}
-          />
-        )}
-      </Sheet>
       <EditActionSheet
-        action={editing !== null ? (view?.actions[editing] ?? null) : null}
+        action={editing !== null ? (machine?.actions[editing] ?? null) : null}
         before={editState}
         onApply={applyEdit}
         onDeleteFrom={() => {

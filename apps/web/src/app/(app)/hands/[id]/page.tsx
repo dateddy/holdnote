@@ -13,6 +13,7 @@ import {
   heroCards,
 } from '@/lib/hands/build';
 import { HAND_FILTERS } from '@/lib/hands/list';
+import { sortOpponents } from '@/lib/hands/table';
 import { isOneOf } from '@/lib/sessions/form';
 import { loadUsage } from '@/lib/ai/quota';
 import { aiStatus } from '@/lib/ai/status';
@@ -51,13 +52,7 @@ export default async function HandDetailPage({ params, searchParams }: PageProps
       .eq('hand_id', id)
       .eq('is_current', true)
       .maybeSingle(),
-    venue
-      ? supabase
-          .from('opponents')
-          .select('id, name')
-          .ilike('venue', venue.replace(/[\\%_]/g, '\\$&'))
-          .order('name')
-      : Promise.resolve({ data: [] }),
+    supabase.from('opponents').select('id, name, venue').order('name'),
     supabase.from('profiles').select('entry_mode').single(),
     getTranslations('hand'),
     getLocale(),
@@ -140,7 +135,14 @@ export default async function HandDetailPage({ params, searchParams }: PageProps
             locale={locale}
             lastNum={hand.num - 1}
             previous={null}
-            opponents={opponents ?? []}
+            opponents={sortOpponents(
+              (opponents ?? []).map((o) => ({
+                id: o.id,
+                name: o.name,
+                sameVenue:
+                  venue !== '' && (o.venue ?? '').trim().toLowerCase() === venue.toLowerCase(),
+              })),
+            )}
             entryMode={profile?.entry_mode === 'shorthand' ? 'shorthand' : 'buttons'}
             edit={{ handId: hand.id, num: hand.num, initial: draft }}
           />

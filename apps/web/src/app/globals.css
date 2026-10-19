@@ -13,6 +13,7 @@
   --loss: #f87171;
   --warn: #fbbf24;
   --villain: #fb923c;
+  --villain-foreground: #1c0b02;
   --suit-heart: #f87171;
   --suit-diamond: #60a5fa;
   --suit-club: #34d399;
@@ -31,6 +32,7 @@
     --loss: #c62828;
     --warn: #a15c00;
     --villain: #c2570c;
+    --villain-foreground: #ffffff;
     --suit-heart: #c62828;
     --suit-diamond: #1d5fd1;
     --suit-club: #0f7a55;
@@ -49,6 +51,7 @@
   --color-loss: var(--loss);
   --color-warn: var(--warn);
   --color-villain: var(--villain);
+  --color-villain-foreground: var(--villain-foreground);
   --color-suit-heart: var(--suit-heart);
   --color-suit-diamond: var(--suit-diamond);
   --color-suit-club: var(--suit-club);

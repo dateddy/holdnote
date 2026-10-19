@@ -3,6 +3,7 @@ import { notFound, redirect } from 'next/navigation';
 import { HandForm } from '@/components/hand/hand-form';
 import { SyncStatus } from '@/components/hand/sync-status';
 import { HAND_SESSION_COLUMNS } from '@/lib/hands/build';
+import { sortOpponents } from '@/lib/hands/table';
 import { TopBar } from '@/components/ui/top-bar';
 import { createClient } from '@/lib/supabase/server';
 
@@ -30,19 +31,11 @@ export default async function RecordPage({ params }: PageProps<'/sessions/[id]/r
         .order('num', { ascending: false })
         .limit(1)
         .maybeSingle(),
-      venue
-        ? supabase
-            .from('opponents')
-            .select('id, name')
-            .ilike('venue', venue.replace(/[\%_]/g, '\$&'))
-            .order('name')
-        : Promise.resolve({ data: [] }),
+      supabase.from('opponents').select('id, name, venue').order('name'),
       supabase.from('profiles').select('entry_mode').single(),
       supabase
         .from('hands')
-        .select('opponent_id, villain_stack')
-        .not('opponent_id', 'is', null)
-        .not('villain_stack', 'is', null)
+        .select('opponent_id, villain_stack, opponents')
         .order('created_at', { ascending: false })
         .limit(300),
       getTranslations('hand'),
@@ -51,11 +44,25 @@ export default async function RecordPage({ params }: PageProps<'/sessions/[id]/r
 
   // Most recent villain stack against each opponent; the newest row per opponent wins.
   const opponentStacks: Record<string, number> = {};
+  const remember = (id: unknown, stack: unknown) => {
+    if (typeof id === 'string' && typeof stack === 'number' && !(id in opponentStacks)) {
+      opponentStacks[id] = stack;
+    }
+  };
   for (const h of seen ?? []) {
-    if (h.opponent_id && h.villain_stack != null && !(h.opponent_id in opponentStacks)) {
-      opponentStacks[h.opponent_id] = h.villain_stack;
+    remember(h.opponent_id, h.villain_stack);
+    // Hands with several opponents keep each one's stack in `opponents`.
+    for (const o of Array.isArray(h.opponents) ? h.opponents : []) {
+      const x = o as { opponent_id?: unknown; stack?: unknown };
+      remember(x.opponent_id, x.stack);
     }
   }
+  // Everyone saved, those met at this venue first.
+  const options = (opponents ?? []).map((o) => ({
+    id: o.id,
+    name: o.name,
+    sameVenue: venue !== '' && (o.venue ?? '').trim().toLowerCase() === venue.toLowerCase(),
+  }));
   // The previous hand's straddles come from its forced bets.
   const straddles = (Array.isArray(last?.actions) ? last.actions : []).flatMap((a) => {
     const x = a as { act?: string; amount?: number };
@@ -63,7 +70,7 @@ export default async function RecordPage({ params }: PageProps<'/sessions/[id]/r
   });
 
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-3 p-6">
+    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-3 px-3 py-6">
       <TopBar
         title={t('screenTitle')}
         back={{ href: `/sessions/${id}`, label: t('backToSession') }}
@@ -75,7 +82,7 @@ export default async function RecordPage({ params }: PageProps<'/sessions/[id]/r
         locale={locale}
         lastNum={last?.num ?? 0}
         previous={last ? { ...last, straddles } : null}
-        opponents={opponents ?? []}
+        opponents={sortOpponents(options)}
         opponentStacks={opponentStacks}
         entryMode={profile?.entry_mode === 'shorthand' ? 'shorthand' : 'buttons'}
       />

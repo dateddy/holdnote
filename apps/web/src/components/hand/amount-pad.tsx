@@ -13,13 +13,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
 import { NumPad } from '@/components/ui/num-pad';
-import { Sheet } from '@/components/ui/sheet';
 
 export type AmountKind = 'open' | 'bet' | 'raise' | 'all-in' | 'dead';
 
 type Props = {
-  /** Null = closed. */
-  kind: AmountKind | null;
+  kind: AmountKind;
   state: HandState;
   bb: number;
   money: (n: number) => string;
@@ -31,19 +29,9 @@ type Props = {
 
 const SHORT: Record<string, string> = { '1/3': '⅓', '1/2': '½', '2/3': '⅔' };
 
-/** Keypad that slides up for open / bet / raise, an all-in without a known stack, or dead money. */
-export function AmountSheet({ kind, ...rest }: Props) {
-  const t = useTranslations('record');
-  return (
-    <Sheet
-      open={kind !== null}
-      onClose={rest.onClose}
-      title={kind === 'dead' ? t('deadTitle') : t('upTo')}
-      closeLabel={t('close')}
-    >
-      {kind && <AmountBody kind={kind} {...rest} />}
-    </Sheet>
-  );
+/** Keypad that opens inside the Action card for open / bet / raise, an all-in without a known stack, or dead money. */
+export function AmountPad({ kind, ...rest }: Props & { kind: AmountKind }) {
+  return <AmountBody key={kind} kind={kind} {...rest} />;
 }
 
 function AmountBody({
@@ -53,6 +41,7 @@ function AmountBody({
   money,
   deadSeats,
   onConfirm,
+  onClose,
 }: Props & { kind: AmountKind }) {
   const t = useTranslations('record');
   const [text, setText] = useState('');
@@ -71,7 +60,11 @@ function AmountBody({
   };
 
   return (
-    <>
+    <div
+      role="group"
+      aria-label={kind === 'dead' ? t('deadTitle') : t('upTo')}
+      className="space-y-2"
+    >
       {kind === 'dead' && (
         <div className="space-y-1">
           <p className="text-sm text-muted">{t('deadWho')}</p>
@@ -85,9 +78,12 @@ function AmountBody({
         </div>
       )}
 
-      <p className="text-2xl font-semibold tabular-nums" aria-live="polite">
-        {n === null ? '0' : `${money(n)} (${toBb(n, bb)}bb)`}
-      </p>
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="text-sm text-muted">{kind === 'dead' ? t('deadTitle') : t('upTo')}</span>
+        <p className="text-2xl font-semibold tabular-nums" aria-live="polite">
+          {n === null ? '0' : `${money(n)} (${toBb(n, bb)}bb)`}
+        </p>
+      </div>
 
       {sized && (
         <div className="flex flex-wrap gap-1.5">
@@ -115,12 +111,17 @@ function AmountBody({
         onBackspace={() => setText(text.slice(0, -1))}
         backspaceLabel={t('backspace')}
       />
-      <Button
-        disabled={n === null || (kind === 'dead' && !seat)}
-        onClick={() => n !== null && onConfirm(kind, n, seat ?? undefined)}
-      >
-        {t('confirm')}
-      </Button>
-    </>
+      <div className="grid grid-cols-2 gap-1.5">
+        <Button variant="secondary" onClick={onClose}>
+          {t('close')}
+        </Button>
+        <Button
+          disabled={n === null || (kind === 'dead' && !seat)}
+          onClick={() => n !== null && onConfirm(kind, n, seat ?? undefined)}
+        >
+          {t('confirm')}
+        </Button>
+      </div>
+    </div>
   );
 }

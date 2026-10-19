@@ -343,3 +343,11 @@ Append-only. Không sửa, không xóa mục cũ. Muốn đảo một quyết đ
 - Lý do: Hand tại bàn nhiều hơn 2 người và không phải lúc nào cũng 6/9 người; lưu một bộ villain_* làm mất dữ liệu multiway.
 - Supersedes: spec ghi hand theo action mục 1, 3, 4, 6 (đã sửa); spec 4 (thêm cột `opponents`).
 - Ai quyết: Đạt (duyệt kế hoạch ngày 2026-10-20)
+
+## DEC-049 — Gộp thiết lập vào màn Ghi hand; bộ chọn bài và bàn phím số trượt trong thẻ (task 5.1c-5b)
+
+- Ngày: 2026-10-20
+- Quyết định: (1) Bỏ bước thiết lập riêng và nút "Bắt đầu ghi": thanh ngữ cảnh dính ở đầu màn (chip vị trí, N người, stack, straddle/level) mở bàn mini trượt ra; hand mới có bàn mini tự mở ở thanh Đối thủ. (2) Chọn nhiều đối thủ (multiway): ghế được chọn là người được theo dõi (`listedOnly`), ghế khác tự fold; bỏ nút/sheet "Thêm người". `HandDraft.opponents` giữ mọi đối thủ theo thứ tự chọn, `villPos/villStack/opponentId` là bản sao của người chọn đầu; lúc tính và lưu, đối thủ chính (`primaryOpponent`) mới là `villain` trong `actions`, `villain_*`. (3) Danh sách đối thủ hiện tất cả, người trùng địa điểm phiên xếp lên đầu (sửa lỗi cũ chỉ hiện người trùng địa điểm). (4) Thẻ bài 7 ô (Bài mình | Flop | Turn | River) dùng một `CardPicker` bố cục xen kẽ, trượt ra trong thẻ; khóa lá đã dùng; bàn phím số cũng trượt trong thẻ Action. Không còn `Sheet` cho chọn bài/số tiền (chỉ giữ cho sửa action). (5) Bộ đếm N người nằm trong một hàng riêng ngay trên bàn mini (bên phải) thay vì đè lên góc bàn, vì ở bàn 9–10 người nó che ghế. (6) Trang chỉ cuộn tới phần đang mở bằng `revealAboveBar` (không dùng `scrollIntoView`, trình duyệt bỏ qua khi phần tử đã hiện một phần). (7) Số người của phiên (cash) chọn bằng Stepper 2–10; MTT chưa có trường này.
+- Lý do: Ghi hand tại bàn phải vào là nhập được ngay; chọn bài bằng sheet làm tối màn và che action.
+- Supersedes: DEC-046 mục "bước ① thiết lập", DEC-047 mục "bàn mini chỉ ở bước thiết lập và trong sheet Thêm người", "chọn board qua sheet".
+- Ai quyết: Đạt (duyệt kế hoạch ngày 2026-10-20)

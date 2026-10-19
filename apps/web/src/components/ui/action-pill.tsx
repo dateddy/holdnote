@@ -28,7 +28,7 @@ export function ActionPill({
     <button
       type={type}
       className={`flex h-9 items-center gap-1 rounded-md border px-2 text-sm tabular-nums ${
-        invalid ? 'border-warn bg-warn/10' : TONE_CLASS[tone]
+        invalid ? 'border-loss bg-loss/10 text-loss' : TONE_CLASS[tone]
       } ${className ?? ''}`.trim()}
       {...rest}
     >

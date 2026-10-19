@@ -25,7 +25,8 @@ Dùng qua class Tailwind: `bg-*`, `text-*`, `border-*`.
 | `win`               | #4ade80 | #12853f | Kết quả dương                             |
 | `loss`              | #f87171 | #c62828 | Kết quả âm, lỗi, nút xóa, chất ♥♦         |
 | `warn`              | #fbbf24 | #a15c00 | Stop-loss, thiếu dữ liệu                  |
-| `villain`           | #fb923c | #c2570c | Đối thủ chính (ghế, chip action) + chữ "Đối thủ" |
+| `villain`           | #fb923c | #c2570c | Đối thủ (ghế, thanh Đối thủ, chip action) + chữ "Đối thủ" |
+| `villain-foreground`| #1c0b02 | #ffffff | Chữ trên nền `villain`                    |
 | `suit-heart`        | #f87171 | #c62828 | ♥ trong bộ bài 4 màu                      |
 | `suit-diamond`      | #60a5fa | #1d5fd1 | ♦                                         |
 | `suit-club`         | #34d399 | #0f7a55 | ♣ (♠ dùng `foreground`)                   |
@@ -68,7 +69,22 @@ Bậc dùng được: 1 (4px), 2 (8px), 3 (12px), 4 (16px), 6 (24px).
 
 Không dùng `gap-5`, margin lẻ (`mt-*`, `mb-*`) để căn; dùng gap của cha.
 
-**Ngoại lệ — màn Ghi nhanh:** giữa các mục dùng `gap-3` (thay `gap-6`) và `Card tight`, để thẻ Board và thẻ Action vừa 375×667 khi đang nhập.
+**Ngoại lệ — màn Ghi nhanh** (cho vừa 375×550 và 375×667 khi đang nhập):
+
+| Chỗ                         | Giá trị                                                                                         |
+| --------------------------- | ----------------------------------------------------------------------------------------------- |
+| Giữa các mục                | `gap-3` (thay `gap-6`)                                                                          |
+| Lề màn                      | 12px (`px-3`); vùng trong thẻ bài ở màn 375px: 375 − 24 − 16 = **335px**                        |
+| Thẻ bài (`Card snug`)       | padding 8px (`p-2`), `space-y-2`                                                                |
+| Thẻ Action (`Card tight`)   | padding 12px (`p-3`)                                                                            |
+| Ô bài (`CardSlot size="card"`) | **41×57px**, khe **4px** trong nhóm, **12px** giữa các nhóm (7 ô: 287 + 12 + 36 = 335)        |
+| Nhãn nhóm bài               | 11px, chữ hoa, giãn chữ 0.06em, `text-muted` (Bài mình · Flop · Turn · River)                   |
+| Bàn phím chọn bài (`CardPicker`) | phím cao **48px**, khe **4px**; hàng 1: A K Q J T 9 8 (7 phím chia đều, ≈44px); hàng 2: 7 6 5 4 3 2 (6 phím cùng cỡ, thụt 24px mỗi bên); hàng 3: ♥ ♦ ♣ ♠ ? ⌫ (6 phím chia đều) |
+| Chữ phím                    | rank 17px mono đậm; chất 20px; bộ 4 màu (♥ `suit-heart`, ♦ `suit-diamond`, ♣ `suit-club`, ♠ `foreground`) |
+| Bàn phím số (`NumPad`)      | 4 cột × 4 hàng, phím cao 44px, khe 6px                                                          |
+| Bàn mini                    | cao 192px (`h-48`), ghế 44px, xếp đều theo N, BTN ở đáy; panel cao tối đa `100dvh − 12rem` rồi cuộn trong |
+
+Bộ chọn bài, bàn phím số và bàn mini **trượt ra trong luồng trang** (`Collapse`), không dùng `Sheet`, không làm tối màn. Phần đang dùng phải nằm trọn trên thanh Lưu ở 375×550 (`revealAboveBar` cuộn trang khi mở).
 
 ## 5. Kích thước control
 
@@ -87,7 +103,7 @@ Không dùng `gap-5`, margin lẻ (`mt-*`, `mb-*`) để căn; dùng gap của c
 | Component                  | Dùng khi                                                                                                                  |
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | `Button` / `buttonClass()` | Mọi nút; `buttonClass` cho `<Link>` trông như nút. Variant `primary` · `secondary` · `ghost`; size `sm` · `md` · `lg`     |
-| `Chip` / `chipClass()`     | Chọn một/nhiều trong nhóm (vị trí, hành động, kết quả, bộ lọc)                                                            |
+| `Chip` / `chipClass()`     | Chọn một/nhiều trong nhóm (vị trí, hành động, kết quả, bộ lọc); `tone="villain"` cho thanh Đối thủ                          |
 | `Input` / `INPUT_CLASS`    | Ô nhập một dòng                                                                                                           |
 | `Card` / `CARD_CLASS`      | Khối nội dung có viền                                                                                                     |
 | `TopBar`                   | Đầu mọi màn (trừ đăng nhập, onboarding)                                                                                   |
@@ -95,15 +111,19 @@ Không dùng `gap-5`, margin lẻ (`mt-*`, `mb-*`) để căn; dùng gap của c
 | `PlayingCard` / `CardRow`  | Hiện lá bài                                                                                                               |
 | `Result`                   | Số thắng/thua có màu                                                                                                      |
 | `CardKey` / `CardSlot`     | Phím hạng/chất và ô lá bài của bộ chọn bài                                                                                |
-| `Seat`                     | Ghế trên bàn mini (tone mình/đối thủ/khác, đến lượt, đã fold, có thể thêm)                                                |
-| `ActionPill`               | Chip action trong timeline của street; chạm để sửa; `invalid` tô cảnh báo                                                  |
-| `Sheet`                    | Panel trượt lên từ đáy (bàn phím số, sửa action)                                                                          |
+| `Seat`                     | Ghế trên bàn mini: chỉ có tên vị trí; `selected` = tô đặc theo tone (mình `accent`, đối thủ `villain`), chưa chọn = chỉ viền; nghĩa nằm ở `aria-label` |
+| `PosTag`                   | Chip vị trí nhỏ màu (`[MP]` xanh, `[BTN]` cam) trên thanh ngữ cảnh                                                         |
+| `BarButton`                | Cả một thanh là một nút, căn trái (thanh ngữ cảnh)                                                                         |
+| `Stepper`                  | `[−] N người [+]`, hai nút 44px, có min/max                                                                                |
+| `Collapse`                 | Vùng mở ra trong luồng trang (panel bàn mini, bộ chọn bài, bàn phím số); đóng thì `inert`                                   |
+| `ActionPill`               | Chip action trong timeline của street; chạm để sửa; `invalid` tô đỏ (`loss`)                                                  |
+| `Sheet`                    | Panel trượt lên từ đáy, phủ màn (chỉ còn dùng để sửa action)                                                              |
 | `NumPad`                   | Phím số 0–9, `.`, `k`, xóa                                                                                                |
 | `Toggle`                   | Công tắc bật/tắt                                                                                                          |
 | `StickyBar`                | Thanh dính đáy duy nhất của màn làm việc (Ghi nhanh): nền đặc, viền trên, safe-area                                       |
 | `Tab` / `IconButton`       | Hàng tab street (xanh = xong hoặc đang tới lượt, đỏ nét đứt = có action không hợp lệ, mờ = chưa tới; tab đang chọn tô đặc) và nút vuông 44px một ký tự (`<>`, `‹`, `›`) |
-| `CardSlot` (trạng thái)    | `missing` (nhấp nháy viền `warn`), `extra` (viền `warn` nét đứt), `highlight` (viền `accent`); ô khóa dùng `disabled`      |
-| `Card tight`               | Card `p-3` cho màn làm việc phải vừa một màn hình điện thoại (Ghi nhanh)                                                  |
+| `CardSlot` (trạng thái)    | `size="card"` (41×57px) hoặc `fill`; `missing` (nhấp nháy viền `warn`), `need` (nhấp nháy viền `accent`: bài mình còn trống), `extra` (viền `warn` nét đứt), `duplicate` (viền `loss`), `highlight` (viền `accent`); ô khóa dùng `disabled` |
+| `Card tight` / `Card snug` | Card `p-3` / `p-2` cho màn làm việc phải vừa một màn hình điện thoại (Ghi nhanh)                                          |
 
 Sẽ thêm trong các task 5.1b-x: `Icon` (lucide), `TopBar` variant tab/con, `Textarea`, `Field` (nhãn + ô + gợi ý), `Screen` (khung trang).
 

@@ -22,14 +22,21 @@ Chốt ngày 19/10/2026. Áp dụng chung cho Cash và MTT live. Chế độ ghi
 - Mọi số tiền lưu bằng chip, **nghĩa là "lên tới" (tổng của street đó)**, không phải "thêm bao nhiêu". bb tính lúc hiển thị: Cash theo BB của phiên, MTT theo `level_bb` của hand.
 - Nhãn giai đoạn giải (MTT) và loại ante: kiểm tra schema hiện có. Nếu phải thêm cột → **hỏi chủ dự án trước** (CLAUDE.md luật 7).
 
-## 3. Bước ① Thiết lập hand
+## 3. Thiết lập hand (trong thanh ngữ cảnh)
+
+Không có bước thiết lập riêng và không có nút "Bắt đầu ghi": vào màn Ghi hand là nhập được ngay (task 5.1c-5).
+
+**Thanh ngữ cảnh** (dính ở đầu màn): chip vị trí màu `[MP] vs [LJ] [BTN]`, "N người", stack của mình, straddle (cash) hoặc level/blind/giai đoạn (MTT). Điền sẵn theo hand trước; chạm thanh để mở **bàn mini** trượt ra ngay dưới thanh (không phủ màn, không làm tối). Bàn mini tự thu khi chạm ô bài, nút action hoặc chạm ra ngoài. Hand mới: vị trí mình điền sẵn, đối thủ trống, bàn mini tự mở ở thanh Đối thủ.
+
+**Bàn mini** có hai thanh: Mình (màu `accent`) và Đối thủ (màu cam). Ghế chỉ tô màu, không ghi chữ "Mình"/"Đối thủ" (nghĩa nằm ở nhãn thanh và `aria-label`); ghế chọn tô đặc, ghế trống chỉ viền. Thanh Mình chọn 1 ghế, chạm ghế khác để chuyển, chọn xong tự sang thanh Đối thủ. Thanh Đối thủ chạm để chọn, chạm lại để bỏ, chọn nhiều (multiway); ghế của mình không chọn được. Mỗi đối thủ đã chọn có một dòng dưới bàn mini: vị trí, stack (điền theo lần gặp gần nhất), gắn tên (danh sách hiện tất cả đối thủ đã lưu, người trùng địa điểm phiên xếp lên đầu; mỗi người chỉ gắn được một ghế). Bộ đếm "N người [−][+]" nằm ngay trên bàn mini, bên phải.
 
 | Trường | Mặc định | Ghi chú |
 |---|---|---|
-| Vị trí mình, vị trí đối thủ chính | Xoay theo hand trước | Chạm ghế trên bàn mini |
+| Vị trí mình | Xoay theo hand trước | Chạm ghế trên bàn mini |
+| Đối thủ (một hoặc nhiều) | Trống | Chạm ghế trên bàn mini |
 | Bài mình | Trống | CardPicker, bộ 4 màu |
 | Stack mình | Stack sau hand trước | Chip |
-| Stack đối thủ chính | Lần gần nhất gặp đối thủ này | Bỏ trống được |
+| Stack từng đối thủ | Lần gần nhất gặp đối thủ này | Bỏ trống được |
 | Straddle (chỉ Cash) | Theo hand trước, ban đầu theo phiên | Công tắc + số nhà straddle 1–3 |
 | Level, SB/BB, ante (chỉ MTT) | Theo hand trước | Nút "Lên level" |
 | Giai đoạn giải (chỉ MTT) | Theo hand trước | Tùy chọn |
@@ -97,7 +104,7 @@ Chốt ngày 19/10/2026. Áp dụng chung cho Cash và MTT live. Chế độ ghi
 
 - C không cần số: tự lấy mức phải theo (hoặc all-in nếu stack không đủ).
 - A không cần số: bằng stack còn lại. Stack không rõ → hỏi số.
-- O, B, R mở bàn phím số trượt lên.
+- O, B, R mở bàn phím số trượt ra ngay trong thẻ Action (không từ đáy màn).
 
 ## 8. Nhập số
 
@@ -139,8 +146,10 @@ Chốt ngày 19/10/2026. Áp dụng chung cho Cash và MTT live. Chế độ ghi
 
 ## 13. Hiển thị
 
-- Mình: màu `accent` + chữ "Mình". Đối thủ chính: cam + chữ "Đối thủ". Người khác: màu trung tính. Không để màu một mình mang nghĩa.
+- Mình: màu `accent`. Đối thủ: màu cam. Người khác: màu trung tính. Trong timeline chip vẫn ghi chữ "Mình"/"Đối thủ"; trên bàn mini ghế chỉ tô màu và nghĩa nằm ở nhãn thanh + `aria-label`.
 - Bộ bài 4 màu: ♠ trắng/đen, ♥ đỏ, ♦ xanh dương, ♣ xanh lục.
+- Thẻ bài 7 ô: Bài mình (2) | Flop (3) | Turn | River, một `CardPicker` dùng chung. Chạm ô thì bộ chọn trượt ra trong thẻ (không sheet, không làm tối); chọn xong tự sang ô trống kế (hết bài mình thì sang flop); chọn đủ lá hoặc chạm ra ngoài thì đóng, lúc mở thẻ Action thu còn hàng tab. Chọn rank xong, chất đã có trong bài mình/board bị mờ; lá trùng không chọn được (`takenSuits`, `duplicateCards`). Hai ô bài mình nhấp nháy khi còn trống; ô board thiếu nhắc bằng màu `warn`. Dòng nhắc: "Không nhớ board thì để trống".
+- Thẻ Action: bàn phím số trượt ra trong thẻ; Hoàn tác là nút nhỏ cùng hàng với ‹ › và ⋯ ("+ Tiền khác" nằm trong ⋯); "Chưa có cược" thay "Không phải theo"; tab chưa có action không chiếm chỗ.
 - Timeline chip theo street cập nhật ngay khi nhập (ví dụ "UTG O 2.5bb", "BTN C").
 
 ## 14. Kiến trúc

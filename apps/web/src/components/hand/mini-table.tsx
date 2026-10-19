@@ -5,11 +5,10 @@ import { Seat, type SeatTone } from '@/components/ui/seat';
 
 export type SeatView = {
   tone: SeatTone;
-  /** "Mình" / "Đối thủ" under the position; other seats have none. */
-  caption?: string;
-  toAct?: boolean;
-  folded?: boolean;
-  addable?: boolean;
+  /** Chosen: filled. Empty: outline. */
+  selected: boolean;
+  /** Spoken name, e.g. "BTN, Đối thủ". The colour alone says nothing to a screen reader. */
+  label: string;
   disabled?: boolean;
 };
 
@@ -17,18 +16,17 @@ type Props = {
   seats: number;
   view: (pos: Position) => SeatView;
   onSeat?: (pos: Position) => void;
-  compact?: boolean;
 };
 
-/** The table seen from above: seats around an oval, the button at the bottom. */
-export function MiniTable({ seats, view, onSeat, compact = false }: Props) {
+/** The table seen from above: N seats spread evenly around an oval, the button at the bottom. */
+export function MiniTable({ seats, view, onSeat }: Props) {
   const order = tableOrder(seats);
   const button = Math.max(
     0,
-    order.findIndex((p) => (seats <= 2 ? p === 'SB' : p === 'BTN')),
+    order.findIndex((p) => p === 'BTN'),
   );
   return (
-    <div className={`relative mx-auto w-full max-w-sm ${compact ? 'h-48' : 'h-64'}`}>
+    <div className="relative mx-auto h-48 w-full max-w-sm">
       <div aria-hidden className="absolute inset-x-8 inset-y-8 rounded-full border border-line" />
       {order.map((pos, i) => {
         const theta = (((i - button) * 360) / order.length) * (Math.PI / 180);
@@ -44,10 +42,8 @@ export function MiniTable({ seats, view, onSeat, compact = false }: Props) {
             <Seat
               position={pos}
               tone={v.tone}
-              {...(v.caption && { caption: v.caption })}
-              toAct={v.toAct ?? false}
-              folded={v.folded ?? false}
-              addable={v.addable ?? false}
+              selected={v.selected}
+              aria-label={v.label}
               disabled={v.disabled ?? !onSeat}
               onClick={() => onSeat?.(pos)}
             />

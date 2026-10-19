@@ -8,6 +8,8 @@ import {
   isPostAct,
   legacySeat,
   boardCheck,
+  canonPos,
+  primaryOpponent,
   replay,
   tableOrder,
   nextStack,
@@ -68,14 +70,20 @@ export type PreviousHand = {
   straddles?: number[];
 };
 
+/** An opponent picked on the mini table (5.1c-5): seat, his stack as typed, the saved opponent. */
+export type DraftOpponent = { pos: string; stack: string; opponentId: string };
+
 /** Everything typed on the Ghi nhanh screen. Strings stay raw until {@link deriveHand}. */
 export type HandDraft = {
   /** Seven card slots, `''` when empty. */
   slots: string[];
   villCards: string[];
   heroPos: string;
+  /** First opponent picked (mirror of `opponents[0]`); the main opponent is found by {@link deriveHand}. */
   villPos: string;
   opponentId: string;
+  /** Every opponent picked, in the order picked. Empty = only `villPos` (hands built without it). */
+  opponents: DraftOpponent[];
   actions: Action[];
   rawLine: string;
   outcome: string;
@@ -119,6 +127,8 @@ export type HandDerived = {
   board: BoardCheck | null;
   /** Outcome the betting decides by itself (hero folded, or everyone else did); else the draft's. */
   outcome: string;
+  /** The opponent the hand is about: first picked who has not folded (spec 11). */
+  primary: DraftOpponent | null;
 };
 
 export function emptyDraft(session: HandSession, prev: PreviousHand | null): HandDraft {
@@ -126,6 +136,7 @@ export function emptyDraft(session: HandSession, prev: PreviousHand | null): Han
     slots: Array<string>(SLOT_COUNT).fill(''),
     villCards: ['', ''],
     opponentId: '',
+    opponents: [],
     actions: [],
     rawLine: '',
     outcome: '',
@@ -144,6 +155,26 @@ export function rotatePos(seats: number, pos: string | null | undefined): string
   const order = tableOrder(seats);
   const i = order.findIndex((p) => p === legacySeat(seats, pos ?? ''));
   return i < 0 ? '' : (order[(i + 1) % order.length] ?? '');
+}
+
+/** The opponents picked, first picked first. */
+export function pickedOpponents(draft: HandDraft): DraftOpponent[] {
+  if (draft.opponents.length > 0) return draft.opponents;
+  return draft.villPos
+    ? [{ pos: draft.villPos, stack: draft.villStack, opponentId: draft.opponentId }]
+    : [];
+}
+
+/** Set the opponents and keep the first-picked mirror fields in step. */
+export function withOpponents(draft: HandDraft, list: DraftOpponent[]): HandDraft {
+  const first = list[0];
+  return {
+    ...draft,
+    opponents: list,
+    villPos: first?.pos ?? '',
+    villStack: first?.stack ?? '',
+    opponentId: first?.opponentId ?? '',
+  };
 }
 
 /** Fields that carry over from the previous hand: stack, level, head count. */
@@ -165,7 +196,8 @@ export function nextHandDefaults(
       : [];
   return {
     heroPos: rotatePos(seats, prev?.hero_pos),
-    villPos: rotatePos(seats, prev?.villain_pos),
+    // The opponents change from hand to hand: they are picked again (5.1c-5).
+    villPos: '',
     straddles: session.kind === 'cash' ? straddles.map(String) : [],
     stage: prev?.stage ?? '',
     heroStack: stack == null ? '' : String(stack),
@@ -258,6 +290,7 @@ export function deriveHand(session: HandSession, draft: HandDraft): HandDerived 
     machine: null,
     board: null,
     outcome: draft.outcome,
+    primary: pickedOpponents(draft)[0] ?? null,
   };
   if (bb == null) return blank;
 
@@ -267,7 +300,22 @@ export function deriveHand(session: HandSession, draft: HandDraft): HandDerived 
   const machine = setup ? replay(setup, withForced, boardInput(draft)) : null;
   // Button entry drops actions that no longer fit; the shorthand line is taken as typed.
   const invalid = new Set(draft.rawLine.trim() ? [] : (machine?.invalid ?? []));
-  const actions = withForced.filter((_, i) => !invalid.has(i));
+  const picked = pickedOpponents(draft);
+  const seats = setup?.seats ?? 9;
+  // Main opponent: the first picked who has not folded; he is 'villain' in everything saved.
+  const primaryPos =
+    machine && picked.length > 0
+      ? primaryOpponent(
+          machine,
+          picked.map((o) => canonPos(seats, o.pos as Position)),
+        )
+      : null;
+  const primary =
+    (primaryPos && picked.find((o) => canonPos(seats, o.pos as Position) === primaryPos)) ||
+    picked[0] ||
+    null;
+  const casted = machine && primary ? castVillain(withForced, seats, primary.pos) : withForced;
+  const actions = casted.filter((_, i) => !invalid.has(i));
   const outcome = (machine && autoOutcome(machine)) || draft.outcome;
   const board = machine ? boardCheck(machine, draft.slots.slice(2)) : null;
 
@@ -276,9 +324,13 @@ export function deriveHand(session: HandSession, draft: HandDraft): HandDerived 
     actions,
     ...(num(draft.playersDealt) !== undefined && { playersDealt: num(draft.playersDealt) }),
     ...(position(draft.heroPos) && { heroPos: position(draft.heroPos) }),
-    ...(position(draft.villPos) && { villPos: position(draft.villPos) }),
+    ...(position(primary?.pos ?? draft.villPos) && {
+      villPos: position(primary?.pos ?? draft.villPos),
+    }),
     ...(num(draft.heroStack) !== undefined && { heroStack: num(draft.heroStack) }),
-    ...(num(draft.villStack) !== undefined && { villStack: num(draft.villStack) }),
+    ...(num(primary?.stack ?? draft.villStack) !== undefined && {
+      villStack: num(primary?.stack ?? draft.villStack),
+    }),
     ...(isOneOf(OUTCOMES, outcome) && { outcome: outcome as Outcome }),
   };
 
@@ -300,7 +352,18 @@ export function deriveHand(session: HandSession, draft: HandDraft): HandDerived 
     machine,
     board,
     outcome,
+    primary,
   };
+}
+
+/** Actions with 'villain' on the main opponent's seat; the first picked, if he is not it, is 'other'. */
+function castVillain(actions: readonly Action[], seats: number, pos: string): Action[] {
+  const main = canonPos(seats, pos as Position);
+  return actions.map((a) => {
+    const here = a.pos ? canonPos(seats, a.pos) === main : a.actor === 'villain';
+    if (here) return a.actor === 'villain' ? a : { ...a, actor: 'villain' };
+    return a.actor === 'villain' ? { ...a, actor: 'other' } : a;
+  });
 }
 
 /** When the betting alone settles the hand: hero folded, or everyone but one folded. */
@@ -329,15 +392,27 @@ export function toHandRow(session: HandSession, draft: HandDraft, num_: number) 
     board: boardCards(draft),
     villain_cards: villCards.length === 2 ? villCards : null,
     hero_pos: heroPos ?? null,
-    villain_pos: villPos ?? null,
-    opponent_id: draft.opponentId || null,
+    villain_pos: position(d.primary?.pos ?? '') ?? villPos ?? null,
+    opponent_id: d.primary?.opponentId || null,
+    opponents: pickedOpponents(draft).flatMap((o) => {
+      const stack = num(o.stack);
+      return position(o.pos)
+        ? [
+            {
+              pos: o.pos,
+              ...(stack !== undefined && { stack }),
+              ...(o.opponentId && { opponent_id: o.opponentId }),
+            },
+          ]
+        : [];
+    }) as unknown as never,
     actions: d.actions as unknown as never,
     raw_line: draft.rawLine.trim() || null,
     outcome: isOneOf(OUTCOMES, d.outcome) ? d.outcome : null,
     result: d.result,
     pot_final: d.potFinal,
     hero_stack: num(draft.heroStack) ?? null,
-    villain_stack: num(draft.villStack) ?? null,
+    villain_stack: num(d.primary?.stack ?? draft.villStack) ?? null,
     eff_stack: d.eff?.amount ?? null,
     level_bb: session.kind === 'mtt' ? d.bb : null,
     ...levelAnteColumns(session, d),
@@ -357,7 +432,7 @@ function integerOrNull(raw: string): number | null {
 
 /** Columns of a saved hand that {@link fromHandRow} reads. */
 export const HAND_EDIT_COLUMNS =
-  'id, num, session_id, hero_cards, board, villain_cards, hero_pos, villain_pos, opponent_id, actions, raw_line, outcome, result, hero_stack, villain_stack, level_bb, players_dealt, ante, stage, thought, flagged';
+  'id, num, session_id, hero_cards, board, villain_cards, hero_pos, villain_pos, opponent_id, actions, raw_line, outcome, result, hero_stack, villain_stack, level_bb, players_dealt, ante, stage, thought, flagged, opponents';
 
 export type HandRowIn = {
   hero_cards: string[] | null;
@@ -378,6 +453,8 @@ export type HandRowIn = {
   stage: string | null;
   thought: string | null;
   flagged: boolean;
+  /** `hands.opponents`: [{ pos, stack?, opponent_id? }] in the order picked. */
+  opponents?: unknown;
 };
 
 const ACTS = [
@@ -404,6 +481,45 @@ const isAction = (x: unknown): x is Action => {
   );
 };
 
+/** Opponents of a saved hand: the column, else the main opponent plus every other seat that acted. */
+function rowOpponents(
+  row: HandRowIn,
+  saved: readonly Action[],
+  hero: string,
+  rename: (pos: string) => string,
+): DraftOpponent[] {
+  const str = (n: unknown) => (typeof n === 'number' ? String(n) : '');
+  const fromColumn = (Array.isArray(row.opponents) ? row.opponents : []).flatMap((o: unknown) => {
+    const x = o as { pos?: unknown; stack?: unknown; opponent_id?: unknown } | null;
+    return x && typeof x.pos === 'string'
+      ? [
+          {
+            pos: rename(x.pos),
+            stack: str(x.stack),
+            opponentId: typeof x.opponent_id === 'string' ? x.opponent_id : '',
+          },
+        ]
+      : [];
+  });
+  if (fromColumn.length > 0) return fromColumn;
+
+  const list: DraftOpponent[] = [];
+  if (row.villain_pos) {
+    list.push({
+      pos: rename(row.villain_pos),
+      stack: str(row.villain_stack),
+      opponentId: row.opponent_id ?? '',
+    });
+  }
+  for (const a of saved) {
+    if (!a.pos || a.actor !== 'other' || isPostAct(a.act) || a.act === 'dead') continue;
+    if (a.pos !== hero && !list.some((o) => o.pos === a.pos)) {
+      list.push({ pos: a.pos, stack: '', opponentId: '' });
+    }
+  }
+  return list;
+}
+
 /** Back from a saved row to the editable draft. A manual result is kept as an override. */
 export function fromHandRow(session: HandSession, row: HandRowIn): HandDraft {
   const slots = Array<string>(SLOT_COUNT).fill('');
@@ -417,20 +533,23 @@ export function fromHandRow(session: HandSession, row: HandRowIn): HandDraft {
     a.pos ? { ...a, pos: rename(a.pos) as Position } : a,
   );
   const posts = saved.filter((a) => isPostAct(a.act));
+  const heroSeat = rename(row.hero_pos ?? '');
+  const opponents = rowOpponents(row, saved, heroSeat, rename);
   const amounts = (act: Action['act']) =>
     posts.filter((a) => a.act === act && a.amount !== undefined).map((a) => String(a.amount));
   const draft: HandDraft = {
     slots,
     villCards: [row.villain_cards?.[0] ?? '', row.villain_cards?.[1] ?? ''],
-    heroPos: rename(row.hero_pos ?? ''),
-    villPos: rename(row.villain_pos ?? ''),
-    opponentId: row.opponent_id ?? '',
+    heroPos: heroSeat,
+    villPos: opponents[0]?.pos ?? rename(row.villain_pos ?? ''),
+    opponentId: opponents[0]?.opponentId ?? row.opponent_id ?? '',
+    opponents,
     actions: stripForced(saved),
     rawLine: row.raw_line ?? '',
     outcome: row.outcome ?? '',
     resultText: '',
     heroStack: str(row.hero_stack),
-    villStack: str(row.villain_stack),
+    villStack: opponents[0]?.stack ?? str(row.villain_stack),
     levelBb: str(row.level_bb),
     playersDealt: str(row.players_dealt),
     ante: levelAnte(session) === 'typed' ? str(row.ante) : '',

@@ -1,12 +1,12 @@
 /**
- * Screenshots of the Ghi nhanh flow at 375px, driven by Playwright against a running app.
+ * Screenshots of the Ghi nhanh flow at 375px (667 high; the panels are also checked at 550), driven by Playwright against a running app.
  *
  *   pnpm --filter web build && pnpm --filter web start -p 3100   (other terminal)
  *   pnpm screens
  *
  * Creates a throwaway user with two sessions through the Supabase secret key, signs in by writing
  * the session cookie, plays the golden hand (-360bb), saves it, checks the stored row and deletes
- * the user (cascade). Start the app with HOLDNOTE_SCREENS=1 so no dev badge is in the pictures. Pictures land in screens/5.1c-2/ (ignored by git).
+ * the user (cascade). Start the app with HOLDNOTE_SCREENS=1 so no dev badge is in the pictures. Pictures land in screens/5.1c-5/ (ignored by git).
  */
 import { mkdirSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
@@ -28,7 +28,7 @@ const env = Object.fromEntries(
 );
 const URL_ = env.NEXT_PUBLIC_SUPABASE_URL;
 const BASE = process.env.BASE_URL ?? 'http://localhost:3100';
-const OUT = process.env.SCREENS_DIR ?? 'screens/5.1c-4';
+const OUT = process.env.SCREENS_DIR ?? 'screens/5.1c-5';
 const OPTS = { auth: { persistSession: false, autoRefreshToken: false } };
 const chrome = join(homedir(), 'AppData/Local/ms-playwright/chromium-1200/chrome-win64/chrome.exe');
 mkdirSync(OUT, { recursive: true });
@@ -107,68 +107,112 @@ function authCookies(session) {
 async function main() {
   const { cash, mtt, session } = await setUp();
   const browser = await chromium.launch({ executablePath: chrome, headless: true });
-  const context = await browser.newContext({
-    viewport: { width: 375, height: 667 },
-    deviceScaleFactor: 2,
-    colorScheme: 'dark',
-  });
-  await context.addCookies(authCookies(session));
-  const page = await context.newPage();
   const errors = [];
   const misfits = [];
-  page.on('pageerror', (e) => errors.push(e.message));
-  page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
 
+  /** A page at 375 x height with the signed-in cookie. */
+  const open = async (height) => {
+    const context = await browser.newContext({
+      viewport: { width: 375, height },
+      deviceScaleFactor: 2,
+      colorScheme: 'dark',
+    });
+    await context.addCookies(authCookies(session));
+    const page = await context.newPage();
+    page.on('pageerror', (e) => errors.push(e.message));
+    page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+    return page;
+  };
+
+  const page = await open(667);
   const shot = (name) => page.screenshot({ path: `${OUT}/${name}.png` });
   const tap = (name) => page.getByRole('button', { name, exact: true }).first().click();
-  const dialog = () => page.getByRole('dialog');
+  const pad = () => page.getByRole('group', { name: 'Lên tới' });
+  const picker = () => page.getByRole('group', { name: 'Bài và board' });
+  const tableGroup = () => page.getByRole('group', { name: 'Chạm một ghế để đặt vị trí.' });
   const pickIn = async (scope, rank, suit) => {
     await scope.getByRole('button', { name: rank, exact: true }).first().click();
     await scope.getByRole('button', { name: suit, exact: true }).first().click();
   };
   const keypad = async (text, confirm = true) => {
-    for (const k of text) await dialog().getByRole('button', { name: k, exact: true }).click();
-    if (confirm) await dialog().getByRole('button', { name: 'Xác nhận' }).click();
+    for (const k of text) await pad().getByRole('button', { name: k, exact: true }).click();
+    if (confirm) await pad().getByRole('button', { name: 'Xác nhận' }).click();
   };
-  /** Pick the cards of one board group through the sheet; it closes by itself after the last. */
+  /** Pick the cards of one slot group through the inline picker; it closes when no slot is left. */
   const board = async (first, cards) => {
     await page.getByRole('button', { name: first, exact: true }).click();
-    for (const [rank, suit] of cards) await pickIn(dialog(), rank, suit);
-    await dialog().waitFor({ state: 'detached' });
+    for (const [rank, suit] of cards) await pickIn(picker(), rank, suit);
+    await picker().waitFor({ state: 'detached' });
   };
-  /** The Board card and the Action card must sit above the save bar without scrolling. */
-  const fits = async (name) => {
-    const card = page.getByRole('tablist').locator('xpath=ancestor::section[1]');
-    const bar = page
+  const bar = (p) =>
+    p
       .getByRole('button', { name: /^(Lưu hand|Kiểm tra)/ })
       .locator('xpath=ancestor::div[contains(@class,"fixed")][1]');
-    const [c, b, top] = await Promise.all([
-      card.boundingBox(),
-      bar.boundingBox(),
-      page.getByRole('button', { name: 'Flop 1', exact: true }).boundingBox(),
-    ]);
-    const ok = c && b && top && top.y >= 0 && c.y + c.height <= b.y + 1;
-    const bottom = Math.round((c?.y ?? 0) + (c?.height ?? 0));
+  /** The part in use must sit between the top of the screen and the save bar, without scrolling. */
+  const fits = async (p, name, locator) => {
+    await p.waitForTimeout(400);
+    const [b, saveBar] = await Promise.all([locator.first().boundingBox(), bar(p).boundingBox()]);
+    const ok = b && saveBar && b.y >= 0 && b.y + b.height <= saveBar.y + 1;
     console.log(
-      `${ok ? 'fits  ' : 'NO FIT'} ${name}: action card bottom ${bottom}, save bar top ${Math.round(b?.y ?? 0)}`,
+      `${ok ? 'fits  ' : 'NO FIT'} ${name}: bottom ${Math.round((b?.y ?? 0) + (b?.height ?? 0))}, save bar top ${Math.round(saveBar?.y ?? 0)}`,
     );
     if (!ok) misfits.push(name);
   };
+
+  const panelBar = (p) => p.getByRole('button', { name: /^Hand #/ }).first();
+  const openPanel = async (p) => {
+    if ((await panelBar(p).getAttribute('aria-expanded')) !== 'true') await panelBar(p).click();
+  };
+  const closePanel = async (p) => {
+    if ((await panelBar(p).getAttribute('aria-expanded')) === 'true') await panelBar(p).click();
+    await p.waitForTimeout(300);
+  };
+  const seatBtn = (p, pos) =>
+    p.getByRole('button', { name: new RegExp(`^${pos.replace('+', '\\+')}(,|$)`) }).first();
+
+  /** Head count, hero seat and opponents on the mini table (the panel is open on a new hand). */
+  const seatUp = async (p, { players, hero, villains, stacks = {}, heroStack }) => {
+    await openPanel(p);
+    const count = async () =>
+      Number(
+        (
+          await p
+            .getByRole('region', { name: 'Bàn' })
+            .getByText(/^\d+ người$/)
+            .textContent()
+        ).split(' ')[0],
+      );
+    while (players && (await count()) > players) await p.getByLabel('Bớt một người').click();
+    while (players && (await count()) < players) await p.getByLabel('Thêm một người').click();
+    const group = p.getByRole('group', { name: 'Chạm một ghế để đặt vị trí.' });
+    await group.getByRole('button', { name: /^Mình/ }).click();
+    if (hero) await seatBtn(p, hero).click();
+    await group.getByRole('button', { name: /^Đối thủ/ }).click();
+    for (const v of villains) {
+      const btn = p.getByRole('button', { name: v, exact: true });
+      if (await btn.count()) await btn.click();
+    }
+    for (const [pos, stack] of Object.entries(stacks)) {
+      await p.getByLabel(`Stack của đối thủ ${pos}`).fill(stack);
+    }
+    if (heroStack) await p.getByLabel('Stack của mình').fill(heroStack);
+  };
+
   const setupHand = async ({ hero, villain, cards, heroStack, villStack, record }) => {
     await page.goto(record);
-    await page.getByText('Thiết lập hand').waitFor();
-    await page.getByRole('button', { name: /^Mình/ }).first().click();
-    await tap(hero);
-    await page
-      .getByRole('button', { name: /^Đối thủ/ })
-      .first()
-      .click();
-    await tap(villain);
-    await pickIn(page, cards[0][0], cards[0][1]);
-    await pickIn(page, cards[1][0], cards[1][1]);
-    await page.getByLabel('Stack của mình').fill(heroStack);
-    await page.getByLabel('Stack của đối thủ').fill(villStack);
-    await tap('Bắt đầu ghi');
+    await page.getByRole('button', { name: 'Mình 1', exact: true }).waitFor();
+    await seatUp(page, {
+      players: 9,
+      hero,
+      villains: [villain],
+      stacks: { [villain]: villStack },
+      heroStack,
+    });
+    await closePanel(page);
+    await page.getByRole('button', { name: 'Mình 1', exact: true }).click();
+    await pickIn(picker(), cards[0][0], cards[0][1]);
+    await pickIn(picker(), cards[1][0], cards[1][1]);
+    await picker().waitFor({ state: 'detached' });
     await page.getByText(/Lượt: /).waitFor();
   };
   const gold = {
@@ -184,31 +228,39 @@ async function main() {
   };
   const small = { ...gold, heroStack: '5000', villStack: '5000' };
 
-  // ---- setup screen ----
+  // ---- a new hand: the table panel is open on the hero bar ----
   await page.goto(gold.record);
-  await page.getByText('Thiết lập hand').waitFor();
-  await shot('01-setup');
+  await page.getByRole('button', { name: 'Mình 1', exact: true }).waitFor();
+  await page.waitForTimeout(400);
+  await shot('01-new-hand-table-open');
+  await fits(page, 'new hand, table panel', page.getByRole('region', { name: 'Bàn' }));
 
   // ---- hand 1, the golden hand: -360bb ----
   await setupHand(gold);
+  await shot('02-hero-cards-picked');
   await tap('Call'); // limp
-  await fits('preflop, villain to act');
-  await shot('02-preflop-entering');
+  await shot('03-preflop-entering');
   await tap('Open'); // villain
+  await fits(page, 'number pad (667)', pad());
   await keypad('500', false);
-  await shot('03-keypad');
-  await dialog().getByRole('button', { name: 'Xác nhận' }).click();
+  await shot('04-numpad-open');
+  await pad().getByRole('button', { name: 'Xác nhận' }).click();
   await tap('Call');
 
   await page.getByText(/Lượt: MP/).waitFor();
   await tap('Check');
-  await fits('flop, board still empty');
-  await shot('04-flop-entering');
-  await board('Flop 1', [
+  await page.getByRole('button', { name: 'Flop 1', exact: true }).click();
+  await page.waitForTimeout(450);
+  await shot('05-picking-flop');
+  await fits(page, 'flop picker (667)', picker());
+  for (const [rank, suit] of [
     ['Q', 'h'],
     ['7', 'd'],
     ['2', 'c'],
-  ]);
+  ]) {
+    await pickIn(picker(), rank, suit);
+  }
+  await picker().waitFor({ state: 'detached' });
   await tap('Bet'); // villain
   await keypad('500');
   await tap('Call');
@@ -217,7 +269,7 @@ async function main() {
   await tap('Bet');
   await keypad('1k');
   await tap('Call');
-  // the sheet carries on to the next open slot: turn, then river
+  // the picker carries on to the next open slot: turn, then river
   await board('Turn 1', [
     ['9', 's'],
     ['3', 'h'],
@@ -230,20 +282,76 @@ async function main() {
   await page.getByText('Ai thắng?').waitFor();
   await tap('Đối thủ thắng');
   await page.getByText('-360bb').first().waitFor();
-  await shot('05-showdown');
+  await shot('06-showdown');
 
   await page.getByRole('button', { name: 'Mở rộng: xem mọi action' }).click();
-  await shot('06-expanded');
+  await shot('07-expanded');
   await page.getByRole('button', { name: 'Thu về từng street' }).click();
 
   await page.getByRole('button', { name: /^Lưu hand/ }).click();
   await page.getByText(/Đã lưu hand #1/).waitFor();
+  await page.waitForTimeout(400);
+  await shot('08-next-hand-table-open');
+
+  // ---- two opponents ----
+  await seatUp(page, {
+    players: 9,
+    hero: 'MP',
+    villains: ['CO', 'BTN'],
+    stacks: { CO: '3000', BTN: '4000' },
+    heroStack: '5000',
+  });
+  await shot('09-two-opponents');
+  await closePanel(page);
+
+  // ---- deselecting an opponent who already acted: his action and all after turn red ----
+  await page.getByRole('button', { name: 'Mình 1', exact: true }).click();
+  await pickIn(picker(), 'A', 's');
+  await pickIn(picker(), 'K', 'd');
+  await picker().waitFor({ state: 'detached' });
+  await tap('Open'); // hero MP
+  await keypad('150');
+  await tap('Call'); // CO
+  await tap('Fold'); // BTN
+  await openPanel(page);
+  await page.getByRole('button', { name: 'CO, Đối thủ' }).click();
+  await closePanel(page);
+  await page
+    .getByText(/không còn được chọn/)
+    .first()
+    .scrollIntoViewIfNeeded();
+  await shot('10-deselected-opponent-red');
+  await page
+    .getByText(/không còn được chọn/)
+    .first()
+    .waitFor();
+
+  // ---- table of 6, heads-up, and 9 -> 8 while hero sits MP ----
+  await page.goto(gold.record);
+  await page.getByRole('button', { name: 'Mình 1', exact: true }).waitFor();
+  await seatUp(page, { players: 6, hero: 'HJ', villains: ['BTN'] });
+  await page.waitForTimeout(400);
+  await shot('11-six-handed');
+
+  await page.goto(gold.record);
+  await page.getByRole('button', { name: 'Mình 1', exact: true }).waitFor();
+  await seatUp(page, { players: 2, hero: 'BTN', villains: ['BB'] });
+  await page.waitForTimeout(400);
+  await shot('12-heads-up');
+
+  await page.goto(gold.record);
+  await page.getByRole('button', { name: 'Mình 1', exact: true }).waitFor();
+  await seatUp(page, { players: 9, hero: 'MP', villains: ['BTN'] });
+  await page.getByLabel('Bớt một người').click();
+  await page.getByText(/Bàn 8 người không có ghế MP/).waitFor();
+  await page.waitForTimeout(400);
+  await shot('13-nine-to-eight-at-mp');
 
   // ---- hand ended by a fold ----
   await setupHand(small);
   await tap('Fold');
   await page.getByText('Đối thủ thắng (mình fold)').waitFor();
-  await shot('07-hero-folded');
+  await shot('14-hero-folded');
 
   // ---- an edit makes later streets invalid ----
   await setupHand(small);
@@ -265,16 +373,16 @@ async function main() {
     .getByRole('button', { name: /^Mình Call/ })
     .first()
     .click();
-  await dialog().getByRole('button', { name: 'Fold', exact: true }).click();
-  await dialog().getByRole('button', { name: 'Xác nhận' }).click();
-  await shot('08-edit-makes-street-invalid');
+  await page.getByRole('dialog').getByRole('button', { name: 'Fold', exact: true }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Xác nhận' }).click();
+  await shot('15-edit-makes-street-invalid');
 
   // ---- all-in called before the flop: the whole board opens ----
   await setupHand(small);
   await tap('All-in');
   await tap('Call');
   await page.getByText(/chọn nốt các lá board/).waitFor();
-  await shot('09-allin-runout');
+  await shot('16-allin-runout');
 
   // ---- the saved hand opens as a read view, edit form saves ----
   await page.goto(gold.record); // lets the offline queue send hand 1
@@ -287,32 +395,50 @@ async function main() {
   if (!saved) throw new Error('hand 1 never reached the database');
   await page.goto(`${BASE}/hands/${saved.id}`);
   await page.getByText('Sửa hand').waitFor();
-  await shot('10-hand-detail');
+  await shot('17-hand-detail');
   await page.getByText('Sửa hand').click();
   await page.getByRole('button', { name: 'Lưu thay đổi' }).click();
   await page.getByText('Đã lưu thay đổi.').waitFor();
 
   // ---- onboarding practice uses the same form ----
   await page.goto(`${BASE}/onboarding/practice`);
-  await page.getByText('Thiết lập hand').waitFor();
+  await page.getByRole('button', { name: 'Mình 1', exact: true }).waitFor();
 
-  // ---- MTT session setup ----
+  // ---- MTT session: the level fields live in the table panel ----
   await page.goto(`${BASE}/sessions/${mtt}/record`);
   await page.getByText('Level của giải').waitFor();
   await page.getByText('Level của giải').scrollIntoViewIfNeeded();
-  await shot('11-mtt-setup');
+  await shot('18-mtt-table-panel');
+
+  // ---- 375 x 550: the part in use must still sit above the save bar ----
+  const low = await open(550);
+  await low.goto(gold.record);
+  await low.getByRole('button', { name: 'Mình 1', exact: true }).waitFor();
+  await fits(low, 'new hand, table panel (550)', low.getByRole('region', { name: 'Bàn' }));
+  await low.screenshot({ path: `${OUT}/19-550-table-open.png` });
+  await seatUp(low, { players: 9, hero: 'MP', villains: ['BTN'], heroStack: '5000' });
+  await closePanel(low);
+  await low.getByRole('button', { name: 'Mình 1', exact: true }).click();
+  await fits(low, 'hero card picker (550)', low.getByRole('group', { name: 'Bài và board' }));
+  await low.screenshot({ path: `${OUT}/20-550-picker-open.png` });
+  await pickIn(low.getByRole('group', { name: 'Bài và board' }), 'A', 's');
+  await pickIn(low.getByRole('group', { name: 'Bài và board' }), 'K', 'd');
+  await low.getByRole('button', { name: 'Open', exact: true }).first().click();
+  await fits(low, 'number pad (550)', low.getByRole('group', { name: 'Lên tới' }));
+  await low.screenshot({ path: `${OUT}/21-550-numpad-open.png` });
 
   await browser.close();
 
   const { data: hands } = await admin
     .from('hands')
     .select('result, actions')
-    .eq('session_id', cash);
+    .eq('session_id', cash)
+    .eq('num', 1);
   const row = hands?.[0];
   console.log('stored result:', row?.result, '| first action:', row?.actions?.[0]?.act);
   if (row?.result !== -18000) throw new Error(`expected -18000, got ${row?.result}`);
   if (errors.length) console.log('browser errors:', errors.slice(0, 5));
-  if (misfits.length) throw new Error(`does not fit 375x667: ${misfits.join(', ')}`);
+  if (misfits.length) throw new Error(`does not fit: ${misfits.join(', ')}`);
 }
 
 try {

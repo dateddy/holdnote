@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { act, forcedBets } from 'poker-core';
+import { act, forcedBets, type Action } from 'poker-core';
 import { comparePractice, SAMPLE, SAMPLE_SESSION } from '@/lib/onboarding/sample';
 import {
   deriveHand,
@@ -87,7 +87,8 @@ describe('next hand defaults', () => {
     });
     expect(next).toMatchObject({
       heroPos: 'SB',
-      villPos: 'BB',
+      villPos: '',
+      opponents: [],
       straddles: ['100'],
       stage: 'bubble',
       heroStack: '5100',
@@ -97,6 +98,70 @@ describe('next hand defaults', () => {
   it('starts with the session straddle on a first cash hand', () => {
     expect(emptyDraft({ ...cash, straddle: 100 }, null).straddles).toEqual(['100']);
     expect(emptyDraft(cash, null).straddles).toEqual([]);
+  });
+});
+
+describe('several opponents (5.1c-5)', () => {
+  const picked = (list: [string, string][]) =>
+    draft({
+      heroPos: 'MP',
+      villPos: '',
+      opponents: list.map(([pos, stack]) => ({ pos, stack, opponentId: '' })),
+    });
+
+  it('the first picked is villain, the rest are followed; only listed seats play', () => {
+    const s = draftToSetup(
+      cash,
+      picked([
+        ['BTN', '4000'],
+        ['CO', '3000'],
+      ]),
+      50,
+    );
+    expect(s).toMatchObject({
+      villPos: 'BTN',
+      tracked: ['CO'],
+      listedOnly: true,
+      stacks: { BTN: 4000, CO: 3000 },
+    });
+  });
+
+  it('needs at least one opponent', () => {
+    expect(draftToSetup(cash, picked([]), 50)).toBeNull();
+  });
+
+  it('the main opponent moves on when the first picked folds; saved as villain', () => {
+    const d = picked([
+      ['BTN', '4000'],
+      ['CO', '3000'],
+    ]);
+    d.heroPos = 'SB';
+    const setup = draftToSetup(cash, d, 50);
+    if (!setup) throw new Error('setup');
+    let actions = forcedBets(setup);
+    // CO opens, BTN folds, hero (SB) calls, BB folds -> hero vs CO
+    for (const input of [
+      { act: 'open', to: 150, seat: 'CO' },
+      { act: 'fold' },
+      { act: 'call' },
+      { act: 'fold' },
+    ] as const) {
+      actions = act(setup, actions, input).actions;
+    }
+    d.actions = stripForced(actions);
+    const derived = deriveHand(cash, d);
+    expect(derived.primary?.pos).toBe('CO');
+    const row = toHandRow(cash, d, 1);
+    expect(row.villain_pos).toBe('CO');
+    expect(row.villain_stack).toBe(3000);
+    expect(row.opponents).toEqual([
+      { pos: 'BTN', stack: 4000 },
+      { pos: 'CO', stack: 3000 },
+    ]);
+    const co = (row.actions as unknown as Action[]).find(
+      (a) => a.pos === 'CO' && a.act === 'raise',
+    );
+    expect(co?.actor).toBe('villain');
   });
 });
 
