@@ -13,3 +13,6 @@ legacy/data/
 
 # Python bytecode
 __pycache__/
+
+# screenshots from pnpm screens
+screens/
