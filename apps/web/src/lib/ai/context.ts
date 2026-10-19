@@ -78,6 +78,11 @@ const ACT_WORD: Record<Action['act'], string> = {
   raise: 'raises to',
   fold: 'folds',
   'all-in': 'goes all-in',
+  post_ante: 'posts the ante',
+  post_sb: 'posts the small blind',
+  post_bb: 'posts the big blind',
+  post_straddle: 'posts a straddle',
+  dead: 'adds dead money',
 };
 
 const clean = (s: string | null | undefined, max = 400) =>

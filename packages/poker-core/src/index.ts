@@ -24,6 +24,27 @@ export { potOddsAtDecisions, type Decision } from './engine/odds';
 export { previewNext, suggestAmount, type NextSpot, type SizedAct } from './engine/sizing';
 export { formatShorthand } from './shorthand/format';
 export {
+  act,
+  edit,
+  forcedBets,
+  maxStraddles,
+  replay,
+  settle,
+  tableOrder,
+  undo,
+  type ActResult,
+  type ActInput,
+  type BoardInput,
+  type ButtonKind,
+  type HandSetup,
+  type HandState,
+  type Notice,
+  type Phase,
+  type SeatState,
+  type Settlement,
+  type WarningCode,
+} from './machine';
+export {
   LEAK_WINDOW,
   bbPerHour,
   cumulativeSeries,

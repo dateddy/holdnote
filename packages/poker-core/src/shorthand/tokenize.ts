@@ -1,6 +1,6 @@
 import { parseAmount } from '../amount';
 import { normalizePosition } from '../positions';
-import type { ActKind, Position, Verb } from '../types';
+import type { PlayerAct, Position, Verb } from '../types';
 
 /** Who a token names, before hero/villain positions are known. */
 export type ActorRef =
@@ -11,12 +11,12 @@ export type ActorRef =
 
 export type Token =
   | { type: 'actor'; ref: ActorRef; raw: string }
-  | { type: 'act'; act: ActKind; verb?: Verb; amount?: number; raw: string }
+  | { type: 'act'; act: PlayerAct; verb?: Verb; amount?: number; raw: string }
   | { type: 'bad_amount'; raw: string }
   | { type: 'word'; raw: string };
 
 interface VerbDef {
-  act: ActKind;
+  act: PlayerAct;
   verb?: Verb;
   /** Calls, checks and folds never carry a meaningful amount. */
   sized: boolean;

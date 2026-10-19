@@ -10,7 +10,7 @@ import {
   STREETS,
   suggestAmount,
   type Action,
-  type ActKind,
+  type PlayerAct,
   type HandInput,
   type Position,
   type Street,
@@ -98,7 +98,7 @@ export function ActionRows({
   const actorLabel = (a: Action) =>
     a.actor === 'hero' ? t('hero') : a.actor === 'villain' ? t('villain') : (a.pos ?? a.who ?? '?');
 
-  function add(street: Street, who: Who, act: ActKind, amount?: number) {
+  function add(street: Street, who: Who, act: PlayerAct, amount?: number) {
     const action: Action = {
       street,
       actor: who.actor,

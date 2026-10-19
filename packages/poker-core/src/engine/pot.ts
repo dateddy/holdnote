@@ -1,5 +1,12 @@
 import { roundMoney } from '../amount';
-import { STREETS, type Action, type HandInput, type Position, type Street } from '../types';
+import {
+  STREETS,
+  isPostAct,
+  type Action,
+  type HandInput,
+  type Position,
+  type Street,
+} from '../types';
 
 export type PotIssue =
   'missing_players_for_ante' | 'missing_amount' | 'all_in_without_stack' | 'missing_actor';
@@ -75,12 +82,21 @@ export function computePot(input: HandInput): PotResult {
     return a.who ?? null;
   };
   const stackOf = (key: string): number | undefined =>
-    key === HERO ? input.heroStack : key === VILLAIN ? input.villStack : undefined;
+    key === HERO
+      ? input.heroStack
+      : key === VILLAIN
+        ? input.villStack
+        : input.seatStacks?.[key as Position];
+
+  // Forced bets recorded as actions (DEC-045) replace the ones derived from `blinds`.
+  const hasPosts = input.actions.some((a) => isPostAct(a.act));
 
   // Dead antes.
   let pot = 0;
   const ante = blinds.ante;
-  if (ante.mode === 'each' && ante.amount > 0) {
+  if (hasPosts) {
+    // Posted ante actions are added to the pot below, before the first street.
+  } else if (ante.mode === 'each' && ante.amount > 0) {
     // Hero and villain always pay their own ante; the pot also needs the head count.
     add(HERO, ante.amount);
     if (villPos || input.actions.some((a) => a.actor === 'villain')) add(VILLAIN, ante.amount);
@@ -98,6 +114,17 @@ export function computePot(input: HandInput): PotResult {
   const steps: ActionStep[] = [];
   const streets: StreetSummary[] = [];
   const indexed = input.actions.map((action, index) => ({ action, index }));
+
+  // Posted antes and later dead money go straight into the pot and count as invested.
+  const addDead = (key: string, amount: number, prior?: Record<string, number>) => {
+    pot = roundMoney(pot + amount);
+    add(key, amount);
+    if (prior) prior[key] = roundMoney((prior[key] ?? 0) + amount);
+  };
+  for (const { action } of indexed) {
+    const key = keyOf(action);
+    if (action.act === 'post_ante' && key && action.amount) addDead(key, action.amount);
+  }
 
   for (const street of STREETS) {
     const streetActions = indexed.filter((x) => x.action.street === street);
@@ -121,7 +148,7 @@ export function computePot(input: HandInput): PotResult {
     let level = 0;
     let facingIndex: number | null = null;
 
-    if (street === 'preflop') {
+    if (street === 'preflop' && !hasPosts) {
       const post = (pos: Position, amount: number) => {
         const key = keyOfPos(pos);
         bets[key] = Math.min(amount, cap(key));
@@ -141,7 +168,26 @@ export function computePot(input: HandInput): PotResult {
       const resolved: Action = { ...action };
       delete resolved.amount;
 
-      if (
+      if (action.act === 'post_ante') {
+        resolved.amount = action.amount;
+      } else if (action.act === 'dead') {
+        if (!key) issues.add('missing_actor');
+        else if (action.amount !== undefined) {
+          addDead(key, action.amount, priorInvested);
+          resolved.amount = action.amount;
+        }
+      } else if (
+        action.act === 'post_sb' ||
+        action.act === 'post_bb' ||
+        action.act === 'post_straddle'
+      ) {
+        if (!key) issues.add('missing_actor');
+        else if (action.amount !== undefined) {
+          bets[key] = roundMoney(Math.min(action.amount, cap(key)));
+          level = Math.max(level, action.amount);
+          resolved.amount = action.amount;
+        }
+      } else if (
         action.act === 'call' ||
         action.act === 'bet' ||
         action.act === 'raise' ||
@@ -178,7 +224,7 @@ export function computePot(input: HandInput): PotResult {
         action: resolved,
         potBefore,
         potAfter: roundMoney(pot + streetSum()),
-        toCall,
+        toCall: isPostAct(action.act) || action.act === 'dead' ? 0 : toCall,
         level,
         facingIndex: facing,
       });

@@ -17,8 +17,20 @@ export type Position = (typeof POSITIONS)[number];
 
 export type Actor = 'hero' | 'villain' | 'other';
 
-/** The action set offered by the button entry mode. */
-export type ActKind = 'check' | 'bet' | 'call' | 'raise' | 'fold' | 'all-in';
+/** What a player chooses to do. */
+export type PlayerAct = 'check' | 'bet' | 'call' | 'raise' | 'fold' | 'all-in';
+
+/** Forced bets, stored as actions (DEC-045). They sit at the head of the preflop actions. */
+export type PostAct = 'post_ante' | 'post_sb' | 'post_bb' | 'post_straddle';
+
+/** Every value `Action.act` can hold. `dead` = money in the pot that is not a bet ("+ other"). */
+export type ActKind = PlayerAct | PostAct | 'dead';
+
+export const POST_ACTS: readonly PostAct[] = ['post_ante', 'post_sb', 'post_bb', 'post_straddle'];
+
+export function isPostAct(act: ActKind): act is PostAct {
+  return (POST_ACTS as readonly string[]).includes(act);
+}
 
 /** Shorthand nuance kept for review context. Never changes the math. */
 export type Verb = 'open' | 'limp' | '3bet' | '4bet' | '5bet' | 'lead' | 'check-raise' | 'donk';
@@ -63,6 +75,8 @@ export interface HandInput {
   /** Stacks at the start of the hand, in session money units. */
   heroStack?: number;
   villStack?: number;
+  /** Stacks of other seats, when known (state machine setups). Hero and villain use the fields above. */
+  seatStacks?: Partial<Record<Position, number>>;
   outcome?: Outcome;
   actions: Action[];
 }

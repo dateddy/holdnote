@@ -1,7 +1,7 @@
 import { STREETS, type Action, type Card } from '../types';
 
 /** Token for an action, picking the shorthand code that keeps the verb nuance. */
-function actToken(a: Action): string {
+function actToken(a: Action): string | null {
   const amount = a.amount === undefined ? '' : String(a.amount);
   switch (a.act) {
     case 'check':
@@ -29,6 +29,9 @@ function actToken(a: Action): string {
                   : 'r';
       return `${code}${amount}`;
     }
+    // Forced bets and dead money have no shorthand: the setup and the betting imply them.
+    default:
+      return null;
   }
 }
 
@@ -55,7 +58,7 @@ function streetBoard(board: readonly Card[], index: number): string {
 export function formatShorthand(actions: Action[], board: readonly Card[] = []): string {
   const segments = STREETS.map((street, i) => {
     const tokens = actions
-      .filter((a) => a.street === street)
+      .filter((a) => a.street === street && actToken(a) !== null)
       .map((a) => [actorToken(a), actToken(a)].filter(Boolean).join(' '));
     return [streetBoard(board, i), ...tokens].filter(Boolean).join(' ');
   });

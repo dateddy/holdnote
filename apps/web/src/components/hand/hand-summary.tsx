@@ -1,5 +1,5 @@
 import { useTranslations } from 'next-intl';
-import { STREETS, type Action, type Street } from 'poker-core';
+import { STREETS, isPostAct, type Action, type Street } from 'poker-core';
 import { Card } from '@/components/ui/card';
 import { CardRow } from '@/components/ui/playing-card';
 import { Result } from '@/components/ui/result';
@@ -36,7 +36,11 @@ export function HandSummary({
   const t = useTranslations('hand');
   const actor = (a: Action) =>
     a.actor === 'hero' ? t('hero') : a.actor === 'villain' ? t('villain') : (a.pos ?? a.who ?? '?');
-  const byStreet = (street: Street) => steps.filter((s) => s.action.street === street);
+  // Forced bets and dead money are not choices; the pot column already counts them.
+  const byStreet = (street: Street) =>
+    steps.filter(
+      (s) => s.action.street === street && !isPostAct(s.action.act) && s.action.act !== 'dead',
+    );
 
   return (
     <Card>
