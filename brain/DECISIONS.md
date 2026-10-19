@@ -320,3 +320,10 @@ Append-only. Không sửa, không xóa mục cũ. Muốn đảo một quyết đ
 - Supersedes: một phần spec 4.2 (thêm kiểu `act`) và spec 3.5 mục 3.
 - Ai quyết: Đạt
 
+## DEC-046 — Màn Ghi nhanh theo action (task 5.1c-2)
+
+- Ngày: 2026-10-19
+- Quyết định: (1) Màn Ghi nhanh có một thanh dính duy nhất (Pot · Stack · Lưu hand, nền đặc, safe-area); thanh tab dưới **ẩn** ở `/sessions/[id]/record`. (2) `HandDraft.actions` chỉ giữ action của người chơi; forced bet thêm bằng `forcedBets(setup)` khi tính và khi lưu (`hands.actions` có `post_*`). Hand lưu trước DEC-045 (không có `post_*`) đánh dấu `legacy`, mở ở chế độ ghi tắt, tính theo blind của phiên. (3) Kết quả tính bằng `computeResult` trên các action còn hợp lệ; action bị state machine đánh dấu `invalid` không vào tiền. Hết hand do fold thì kết quả tự có, không cần chọn người thắng. (4) Sửa tay kết quả giữ số đã nhập và gắn tag `manual_result` vào `hands.tags`; giai đoạn giải lưu vào `hands.stage`. (5) Vị trí hand sau xoay tiến một ghế theo `tableOrder`; straddle, giai đoạn lấy từ hand trước. (6) Chữ tiếng Việt trên màn không viết tắt ("Đối thủ"); nút action ghi đủ chữ. (7) Thêm devDependency `playwright-core` ở root cho `pnpm screens`. (8) Cấu trúc blind MTT và nút "Lên level" tách thành task 5.1c-3.
+- Lý do: Spec ghi hand theo action; một thanh dính tránh hai thanh chồng nhau ở đáy màn hình điện thoại.
+- Supersedes: spec 3.5 mục 3 (chế độ Nút).
+- Ai quyết: Đạt (duyệt kế hoạch ngày 2026-10-19)

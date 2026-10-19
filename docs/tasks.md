@@ -45,7 +45,8 @@ Mỗi task cỡ một phiên làm việc. Làm theo thứ tự trừ khi chủ d
   - [ ] **5.1b-7 Quét phần còn lại** (thêm ngoài danh sách ban đầu): `rules`, `stats`, `session-form`, `opponent-form`, `onboarding`, `ai-key-form`, `login` và lẻ tẻ; bỏ `border-red-700` ở chi tiết đối thủ. Xong khi grep `<button|<input|<textarea|<select` ngoài `components/ui` = 0.
 - [ ] **5.1c** Ghi hand theo action (spec `docs/spec-ghi-hand-theo-action.md`, thay spec 3.5 chế độ Nút; DEC-045):
   - [x] **5.1c-1 State machine:** `packages/poker-core/src/machine/` (spec mục 4–12, 14): thứ tự hành động, nút hợp lệ, mức phải theo, raise tối thiểu, straddle tới 3 nhà, ante MTT, đóng vòng cược/chuyển street, cảnh báo, hoàn tác/sửa action. Thêm `post_ante/post_sb/post_bb/post_straddle` + `dead` vào `ActKind`; hand cũ không có post vẫn tính theo `Blinds`. 24 ca test mục 15 viết trước; ca vàng −360bb và test cũ giữ xanh. Không đụng UI, không đổi schema.
-  - [ ] **5.1c-2 UI:** bước ① thiết lập hand (bàn mini, straddle, level/ante/giai đoạn MTT), nút theo tình huống, bàn phím "Lên tới", timeline chip, hoàn tác/sửa; form phiên MTT thêm cấu trúc blind (`sessions.mtt.blind_levels`); mọi màn đọc `actions` bỏ qua `post_*`/`dead`. Cập nhật spec 3.5.
+  - [x] **5.1c-2 UI:** bước ① thiết lập hand (bàn mini, straddle, level/ante/giai đoạn MTT), nút theo tình huống, bàn phím "Lên tới", timeline chip, hoàn tác/sửa; ảnh 375px bằng `pnpm screens` (Playwright). Cấu trúc blind MTT và nút Lên level tách sang 5.1c-3; mọi màn đọc `actions` bỏ qua `post_*`/`dead`. Cập nhật spec 3.5.
+  - [ ] **5.1c-3 Cấu trúc blind MTT:** nhập danh sách level (SB, BB, ante) khi tạo phiên MTT, lưu `sessions.mtt.blind_levels`; nút "Lên level" ở bước Thiết lập tự điền SB/BB/ante (spec mục 5).
 - [ ] 5.2 Script migrate `legacy/data` → tài khoản chủ dự án.
 - [ ] 5.3 Hoàn thiện bản tiếng Anh, cài đặt, xuất/xóa dữ liệu.
 - [ ] 5.4 Deploy Vercel + domain holdnote.app.

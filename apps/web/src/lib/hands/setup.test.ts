@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { act, forcedBets } from 'poker-core';
+import { comparePractice, SAMPLE, SAMPLE_SESSION } from '@/lib/onboarding/sample';
 import {
   deriveHand,
   emptyDraft,
@@ -182,5 +183,47 @@ describe('hands recorded by action', () => {
     const derived = deriveHand(cash, bad);
     expect(derived.machine?.invalid.length).toBeGreaterThan(0);
     expect(derived.potFinal).toBe(50); // the big blind gets the uncalled half back
+  });
+});
+
+describe('onboarding practice', () => {
+  it('the sample hand entered by action matches the sample actions', () => {
+    const d = {
+      ...emptyDraft(SAMPLE_SESSION, null),
+      slots: [...SAMPLE.heroCards, ...SAMPLE.board],
+      heroPos: SAMPLE.heroPos,
+      villPos: SAMPLE.villPos,
+      heroStack: String(SAMPLE.heroStack),
+      villStack: String(SAMPLE.villStack),
+      outcome: SAMPLE.outcome,
+    };
+    const setup = draftToSetup(SAMPLE_SESSION, d, 50);
+    if (!setup) throw new Error('setup');
+    const board = boardInput(d);
+    let actions = forcedBets(setup);
+    const inputs = [
+      { act: 'open', to: 150 },
+      { act: 'call' },
+      { act: 'check' },
+      { act: 'bet', to: 100 },
+      { act: 'call' },
+      { act: 'check' },
+      { act: 'check' },
+      { act: 'bet', to: 300 },
+      { act: 'call' },
+    ] as const;
+    for (const input of inputs) {
+      const r = act(setup, actions, input, board);
+      expect(r.accepted).toBe(true);
+      actions = r.actions;
+    }
+    const checked = comparePractice(d, stripForced(actions));
+    expect(checked).toEqual({
+      cards: true,
+      board: true,
+      positions: true,
+      actions: true,
+      outcome: true,
+    });
   });
 });

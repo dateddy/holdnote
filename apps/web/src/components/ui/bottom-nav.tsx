@@ -10,7 +10,8 @@ type Tab = { key: 'home' | 'record' | 'stats' | 'settings'; href: string; active
 export function BottomNav({ recordHref }: { recordHref: string }) {
   const t = useTranslations('nav');
   const path = usePathname();
-  if (path.startsWith('/onboarding')) return null;
+  // Onboarding and the Ghi nhanh screen have their own bottom bar.
+  if (path.startsWith('/onboarding') || /^\/sessions\/[^/]+\/record$/.test(path)) return null;
 
   const tabs: Tab[] = [
     { key: 'home', href: '/', active: path === '/' },

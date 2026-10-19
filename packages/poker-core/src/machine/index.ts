@@ -18,8 +18,10 @@ export function replay(
   setup: HandSetup,
   actions: readonly Action[],
   board?: BoardInput,
+  /** Seats to treat as followed, to preview the buttons of a seat that is about to be added. */
+  extra: readonly Position[] = [],
 ): HandState {
-  const state = run(setup, actions, board);
+  const state = run(setup, actions, board, extra);
   if (
     state.phase.kind === 'won' ||
     state.phase.kind === 'showdown' ||
@@ -32,7 +34,7 @@ export function replay(
   const addable: Position[] = state.players
     .filter((p) => !p.tracked)
     .map((p) => p.pos)
-    .filter((pos) => run(setup, actions, board, [pos]).invalid.every((i) => base.has(i)));
+    .filter((pos) => run(setup, actions, board, [...extra, pos]).invalid.every((i) => base.has(i)));
   return { ...state, addable };
 }
 
