@@ -36,7 +36,7 @@ export async function POST(request: Request) {
   // Reads go through the user's own client, so RLS decides what exists.
   const { data: hand } = await supabase
     .from('hands')
-    .select(`${HAND_EDIT_COLUMNS}, stage, players_left, updated_at`)
+    .select(`${HAND_EDIT_COLUMNS}, players_left, updated_at`)
     .eq('id', handId)
     .maybeSingle();
   if (!hand) return fail('not_found', 404);

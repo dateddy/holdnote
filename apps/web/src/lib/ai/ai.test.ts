@@ -43,6 +43,7 @@ const golden: ReviewHand = {
   level_bb: null,
   players_dealt: null,
   ante: null,
+  stage: null,
   thought: 'felt strong',
   flagged: false,
   actions: [

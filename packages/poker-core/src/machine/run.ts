@@ -334,7 +334,12 @@ export function run(
   // Where the hand stands now.
   let phase: Phase | null = ended;
   if (!phase && pending) {
-    const have = board?.cards.length ?? 0;
+    // Cards of a skipped street count as present, so a later street's cards still add up.
+    const target = pending;
+    const skippedBefore = (['flop', 'turn', 'river'] as const)
+      .filter((st) => NEEDED[st] < NEEDED[target] && board?.skipped?.includes(st))
+      .reduce((sum, st) => sum + (st === 'flop' ? 3 : 1), 0);
+    const have = (board?.cards.length ?? 0) + skippedBefore;
     if (board?.skipped?.includes(pending) || have >= NEEDED[pending]) startStreet(pending);
     else phase = { kind: 'board', street: pending, count: pending === 'flop' ? 3 : 1 };
   }

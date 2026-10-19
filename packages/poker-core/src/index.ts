@@ -25,6 +25,7 @@ export { previewNext, suggestAmount, type NextSpot, type SizedAct } from './engi
 export { formatShorthand } from './shorthand/format';
 export {
   act,
+  canonPos,
   edit,
   forcedBets,
   maxStraddles,

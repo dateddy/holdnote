@@ -393,6 +393,20 @@ describe('spec 15: 24 required cases', () => {
     expect(skip.state.warnings.map((n) => n.code)).toContain('board_skipped');
   });
 
+  it('23b. a skipped flop still lets the turn card count', () => {
+    const s = setup({ heroPos: 'BTN', villPos: 'BB' });
+    const flop = [
+      { act: 'open', to: 150 },
+      { act: 'call' },
+      { act: 'check' },
+      { act: 'check' },
+    ] as const;
+    const r = play(s, [...flop], { cards: ['9h'], skipped: ['flop'] });
+    expect(r.state.phase).toMatchObject({ kind: 'act', street: 'turn' });
+    const none = play(s, [...flop], { cards: [], skipped: ['flop'] });
+    expect(none.state.phase).toEqual({ kind: 'board', street: 'turn', count: 1 });
+  });
+
   it('24. shorthand and button entry give the identical actions array', () => {
     const hu = { heroPos: 'MP', villPos: 'BTN' } as const;
     const s = setup({ ...hu, stacks: { MP: 18000, BTN: 20000 } });

@@ -47,7 +47,9 @@ const sameSet = (a: readonly string[], b: readonly string[]) =>
   a.length === b.length && a.every((x) => b.includes(x));
 
 /** The fields that matter when comparing actions: who, what, how much, on which street. */
-const actionKey = (a: Action) => `${a.street}|${a.actor}|${a.act}|${a.amount ?? ''}`;
+const actionKey = (a: Action) =>
+  // Calls take their amount from the betting, so only bets, raises and all-ins compare amounts.
+  `${a.street}|${a.actor}|${a.act}|${a.act === 'call' ? '' : (a.amount ?? '')}`;
 
 /** Which parts of a practice hand match the sample. Card order inside hole cards does not matter. */
 export function comparePractice(

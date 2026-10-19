@@ -5,7 +5,7 @@ import { run, ensureForced } from './run';
 import { actorAt, canonPos, tableOrder } from './seats';
 import type { ActInput, BoardInput, HandSetup, HandState, Notice, Settlement } from './types';
 
-export { forcedBets, tableOrder, maxStraddles } from './seats';
+export { canonPos, forcedBets, tableOrder, maxStraddles } from './seats';
 export type * from './types';
 export { previewAmount, quickSizes } from './sizes';
 export type { AmountPreview, QuickSize, SizeKind } from './sizes';
