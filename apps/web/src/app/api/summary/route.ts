@@ -3,7 +3,13 @@ import { z } from 'zod';
 import { buildSummaryContext } from '@/lib/ai/summary-context';
 import { budgetFromEnv, decideAccess, loadUsage, SUMMARY_MONTHLY_LIMIT } from '@/lib/ai/quota';
 import { runSummary } from '@/lib/ai/run-summary';
-import { isFailure, modelFailure, resolveCredentials } from '@/lib/ai/server';
+import {
+  failedUsageRow,
+  isFailure,
+  modelFailure,
+  resolveCredentials,
+  spentOn,
+} from '@/lib/ai/server';
 import { toSummaryDraft } from '@/lib/ai/summary-schema';
 import { applyFormToStats, STATS_COLUMNS, toStatsSession } from '@/lib/sessions/summary';
 import { createAdminClient } from '@/lib/supabase/admin';
@@ -102,6 +108,16 @@ export async function POST(request: Request) {
     run = await runSummary({ apiKey: creds.apiKey, model: creds.model, userMessage, locale });
   } catch (e) {
     const failure = modelFailure(e, usage.hasOwnKey);
+    const { error: failedError } = await admin.from('ai_usage').insert(
+      failedUsageRow({
+        userId,
+        kind: 'session_summary',
+        model: creds.model,
+        billedTo: access.billedTo,
+        spent: spentOn(e),
+      }),
+    );
+    if (failedError) console.error('ai_usage insert failed', failedError.message);
     return fail(failure.code, failure.status);
   }
 

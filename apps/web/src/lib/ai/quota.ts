@@ -87,6 +87,8 @@ export async function loadUsage(
       .select('id', { count: 'exact', head: true })
       .eq('user_id', userId)
       .eq('billed_to', 'app')
+      // A failed call costs the app money but never uses up the user's allowance (DEC-057).
+      .eq('failed', false)
       .in('kind', [...kinds])
       .gte('created_at', since);
 
@@ -99,6 +101,7 @@ export async function loadUsage(
       .select('id', { count: 'exact', head: true })
       .eq('user_id', userId)
       .eq('billed_to', 'user')
+      .eq('failed', false)
       .gte('created_at', hourAgo),
     admin.rpc('ai_app_spend_since', { p_since: since }),
   ]);

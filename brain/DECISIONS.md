@@ -407,3 +407,10 @@ Append-only. Không sửa, không xóa mục cũ. Muốn đảo một quyết đ
 - Lý do: spec 5 (spec-ghi-hand-theo-action) và DEC-045/046 đã chốt cấu trúc nằm trong `sessions.mtt`; chỉ thiếu số level theo hand. Lỗi SB không mang sang thấy khi đọc `nextHandDefaults`.
 - Chưa làm: hand cũ lưu trước 5.1c-3 không có `level` (nút Lên level suy ra level theo BB trùng); sửa cấu trúc giữa phiên không đổi hand đã lưu; ngữ cảnh AI chưa dùng `level`.
 - Ai quyết: Đạt (duyệt kế hoạch và SQL migration 2026-10-20)
+
+## DEC-057 — Lượt gọi AI hỏng cộng vào ngân sách app, không trừ lượt (cột ai_usage.failed)
+
+- Ngày: 2026-10-21
+- Quyết định: (1) Thêm cột `ai_usage.failed boolean not null default false` (migration `20261021100000`). (2) Mọi lượt gọi model thật mà hỏng (JSON sai sau thử lại, trả rỗng, timeout, lỗi nhà cung cấp, key bị từ chối) ghi một dòng `failed = true` với token và chi phí đã tiêu: `spentOn(e)` cộng cả lần gọi đầu đã trả tiền khi lần thử lại hỏng (`OpenRouterError.paid`), cộng chi phí trả rỗng; timeout/mạng/5xx = 0 vì không biết giá. Nút Thử lại là request mới nên mỗi lần hỏng một dòng. (3) `ai_app_spend_since` giữ nguyên (cộng mọi dòng `billed_to = 'app'`) nên ngân sách tính cả lượt hỏng; `loadUsage` đếm lượt tháng, lượt tóm tắt và lượt theo giờ chỉ với `failed = false`, nên người dùng không mất lượt. (4) Client không ghi/sửa được `ai_usage` (đã có, thêm ca test RLS).
+- Thay thế phần "Chưa làm" của DEC-055.
+- Ai quyết: Đạt (chọn cột `failed`, 2026-10-21)

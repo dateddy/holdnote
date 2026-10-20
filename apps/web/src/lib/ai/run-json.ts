@@ -1,4 +1,4 @@
-import { chatJson, type ChatMessage, type ChatResult } from './openrouter';
+import { chatJson, OpenRouterError, type ChatMessage, type ChatResult } from './openrouter';
 
 export type Usage = { tokensIn: number; tokensOut: number; costUsd: number };
 
@@ -58,14 +58,21 @@ export async function runJson<T>(opts: {
   const a = opts.parse(first.content);
   if (a.ok) return { value: a.value, attempts: 1, ...sum([first]) };
 
-  const second = await call([
-    ...messages,
-    { role: 'assistant', content: first.content.slice(0, 4000) },
-    {
-      role: 'user',
-      content: `Your reply did not match the schema: ${a.error}\nReturn ONLY corrected JSON.`,
-    },
-  ]);
+  let second: ChatResult;
+  try {
+    second = await call([
+      ...messages,
+      { role: 'assistant', content: first.content.slice(0, 4000) },
+      {
+        role: 'user',
+        content: `Your reply did not match the schema: ${a.error}\nReturn ONLY corrected JSON.`,
+      },
+    ]);
+  } catch (e) {
+    // The first call was paid for even though the retry failed.
+    if (e instanceof OpenRouterError) e.paid = sum([first]);
+    throw e;
+  }
   const b = opts.parse(second.content);
   if (b.ok) return { value: b.value, attempts: 2, ...sum([first, second]) };
   throw new InvalidOutputError(b.error, sum([first, second]));

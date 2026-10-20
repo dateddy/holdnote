@@ -2,7 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/lib/supabase/database.types';
 import { OpenRouterError } from './openrouter';
 import type { UsageSnapshot } from './quota';
-import { InvalidOutputError } from './run-json';
+import { InvalidOutputError, type Usage } from './run-json';
 
 export type Failure = { code: string; status: number };
 
@@ -39,3 +39,45 @@ export function modelFailure(e: unknown, hasOwnKey: boolean): Failure {
 }
 
 export const isFailure = (x: object): x is Failure => 'code' in x;
+
+const round6 = (n: number) => Math.round(n * 1e6) / 1e6;
+
+/**
+ * What a failed model call still cost: both calls of an invalid reply, an empty reply's own cost,
+ * plus a first call that was paid before the retry failed. Timeouts and the like report nothing.
+ */
+export function spentOn(e: unknown): Usage {
+  const none: Usage = { tokensIn: 0, tokensOut: 0, costUsd: 0 };
+  if (e instanceof InvalidOutputError) return e.usage;
+  if (!(e instanceof OpenRouterError)) return none;
+  const own = e.detail ?? none;
+  const paid = e.paid ?? none;
+  return {
+    tokensIn: own.tokensIn + paid.tokensIn,
+    tokensOut: own.tokensOut + paid.tokensOut,
+    costUsd: round6(own.costUsd + paid.costUsd),
+  };
+}
+
+/**
+ * The `ai_usage` row for a call that failed. It adds to the app budget when the app paid, but
+ * `failed` keeps it out of the user's allowance and the hourly guard (DEC-055, DEC-057).
+ */
+export function failedUsageRow(opts: {
+  userId: string;
+  kind: 'hand_review' | 'rebuttal' | 'session_summary';
+  model: string;
+  billedTo: 'app' | 'user';
+  spent: Usage;
+}) {
+  return {
+    user_id: opts.userId,
+    kind: opts.kind,
+    model: opts.model,
+    tokens_in: opts.spent.tokensIn,
+    tokens_out: opts.spent.tokensOut,
+    cost_usd: opts.spent.costUsd,
+    billed_to: opts.billedTo,
+    failed: true,
+  };
+}

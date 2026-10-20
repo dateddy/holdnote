@@ -74,7 +74,14 @@ async function setUp() {
     .insert({
       ...base,
       start_at: new Date(Date.now() - 45 * 60_000).toISOString(),
-      mtt: { name: 'Giải thử', type: 'regular', reentry: true, start_level: 1, start_stack: 20000, blind_levels: LEVELS },
+      mtt: {
+        name: 'Giải thử',
+        type: 'regular',
+        reentry: true,
+        start_level: 1,
+        start_stack: 20000,
+        blind_levels: LEVELS,
+      },
     })
     .select('id')
     .single();
@@ -91,7 +98,10 @@ async function setUp() {
   await admin.from('opponents').insert({ user_id: userId, name: 'Hùng', venue: 'Screens' });
 
   const anon = createClient(URL_, env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, OPTS);
-  const { data: signed, error: signError } = await anon.auth.signInWithPassword({ email, password });
+  const { data: signed, error: signError } = await anon.auth.signInWithPassword({
+    email,
+    password,
+  });
   if (signError) throw signError;
   return { withLevels: withLevels.data.id, plain: plain.data.id, session: signed.session };
 }
@@ -191,9 +201,14 @@ async function main() {
   await page
     .getByPlaceholder(/8 300\/600 600/)
     .fill(
-      ['Level SB/BB Ante', '2 150/300 300 20', '3 200/400 400 20', 'xin chào', '4 300/600 600 20', '5 400/800'].join(
-        '\n',
-      ),
+      [
+        'Level SB/BB Ante',
+        '2 150/300 300 20',
+        '3 200/400 400 20',
+        'xin chào',
+        '4 300/600 600 20',
+        '5 400/800',
+      ].join('\n'),
     );
   await page.getByRole('button', { name: 'Đọc văn bản', exact: true }).click();
   await page.getByText(/Đọc được 4 dòng, bỏ qua 2 dòng/).waitFor();
@@ -258,18 +273,28 @@ async function main() {
 
   let row = null;
   for (let i = 0; i < 30 && !row; i++) {
-    const { data } = await admin.from('hands').select('level, level_bb, ante, ante_mode').eq('session_id', withLevels).eq('num', 1);
+    const { data } = await admin
+      .from('hands')
+      .select('level, level_bb, ante, ante_mode')
+      .eq('session_id', withLevels)
+      .eq('num', 1);
     row = data?.[0] ?? null;
     if (!row) await new Promise((r) => setTimeout(r, 500));
   }
-  check(row?.level === 2 && Number(row?.level_bb) === 100, `hand 1 stored level ${row?.level}, level_bb ${row?.level_bb}`);
+  check(
+    row?.level === 2 && Number(row?.level_bb) === 100,
+    `hand 1 stored level ${row?.level}, level_bb ${row?.level_bb}`,
+  );
 
   // ---- 3. no structure: everything typed, SB carried to the next hand ----
   await page.goto(`${BASE}/sessions/${plain}/record`);
   await page.getByRole('button', { name: 'Mình 1', exact: true }).waitFor();
   await openPanel();
   await page.getByText('Level của giải').scrollIntoViewIfNeeded();
-  check((await page.getByRole('button', { name: 'Lên level' }).count()) === 0, 'no Lên level button without a structure');
+  check(
+    (await page.getByRole('button', { name: 'Lên level' }).count()) === 0,
+    'no Lên level button without a structure',
+  );
   await shot('10-plain-session-panel');
   await levelInput('Big blind').fill('200');
   await levelInput('Small blind').fill('100');
@@ -280,7 +305,10 @@ async function main() {
   await page.waitForTimeout(500);
   await openPanel();
   check((await levelInput('Big blind').inputValue()) === '200', 'BB 200 carried to the next hand');
-  check((await levelInput('Small blind').inputValue()) === '100', 'SB 100 carried to the next hand');
+  check(
+    (await levelInput('Small blind').inputValue()) === '100',
+    'SB 100 carried to the next hand',
+  );
   await page.getByText('Level của giải').scrollIntoViewIfNeeded();
   await shot('11-plain-session-next-hand-carried');
 
@@ -294,7 +322,10 @@ async function main() {
   await shot('13-structure-saved');
   const { data: after } = await admin.from('sessions').select('mtt').eq('id', withLevels).single();
   check(after?.mtt?.blind_levels?.length === 3, 'structure edit saved 3 levels');
-  check(after?.mtt?.name === 'Giải thử' && after?.mtt?.start_stack === 20000, 'rest of sessions.mtt kept');
+  check(
+    after?.mtt?.name === 'Giải thử' && after?.mtt?.start_stack === 20000,
+    'rest of sessions.mtt kept',
+  );
 
   // ---- 5. end of an MTT session ----
   await page.goto(`${BASE}/sessions/${withLevels}/end`);

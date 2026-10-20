@@ -5,7 +5,13 @@ import { languagePack, reviewInLanguage } from '@/lib/ai/languages';
 import { budgetFromEnv, decideAccess, loadUsage } from '@/lib/ai/quota';
 import { runReview } from '@/lib/ai/run-review';
 import { toAiReviewRow } from '@/lib/ai/schema';
-import { isFailure, modelFailure, resolveCredentials } from '@/lib/ai/server';
+import {
+  failedUsageRow,
+  isFailure,
+  modelFailure,
+  resolveCredentials,
+  spentOn,
+} from '@/lib/ai/server';
 import { HAND_EDIT_COLUMNS, HAND_SESSION_COLUMNS } from '@/lib/hands/build';
 import { REVIEW_COLUMNS } from '@/lib/review/review';
 import { createAdminClient } from '@/lib/supabase/admin';
@@ -130,6 +136,17 @@ export async function POST(request: Request) {
     run = await runReview({ apiKey, model, userMessage, locale, promptFields });
   } catch (e) {
     const failure = modelFailure(e, usage.hasOwnKey);
+    // The call was real: its cost goes to the app budget even though no allowance is used.
+    const { error: failedError } = await admin.from('ai_usage').insert(
+      failedUsageRow({
+        userId,
+        kind: rebuttal ? 'rebuttal' : 'hand_review',
+        model,
+        billedTo: access.billedTo,
+        spent: spentOn(e),
+      }),
+    );
+    if (failedError) console.error('ai_usage insert failed', failedError.message);
     return fail(failure.code, failure.status);
   }
 

@@ -9,6 +9,9 @@ export type ChatResult = {
 };
 
 export class OpenRouterError extends Error {
+  /** Cost of earlier calls of the same request that did succeed (set by the retry in `runJson`). */
+  paid?: { tokensIn: number; tokensOut: number; costUsd: number };
+
   constructor(
     readonly kind: 'auth' | 'rate' | 'upstream' | 'timeout' | 'empty',
     message: string,
