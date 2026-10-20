@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseShorthand } from 'poker-core';
+import { parseShorthand, readBlindLevels } from 'poker-core';
 import {
   blindsFor,
   deriveHand,
@@ -9,6 +9,8 @@ import {
   toHandRow,
   type HandSession,
 } from './build';
+import { withBlindLevels } from '@/lib/sessions/structure';
+import { summarize, type ListHand } from './list';
 import { applyLevel, currentLevel, levelLabel, sessionLevels, stepLevel, withBb } from './level';
 
 const levelsJson = [
@@ -272,5 +274,91 @@ describe('saving and reading back a hand with a level', () => {
       pot_winners: row.pot_winners,
     } as never);
     expect(back.anteMode).toBe('');
+  });
+});
+
+describe('editing the blind structure after hands are saved', () => {
+  const played = () => {
+    const d = applyLevel(emptyDraft(base, null), sessionLevels(base)[2]!); // Lv 3: 100/200, BB ante 200
+    d.slots = ['Ah', 'Kd', '', '', '', '', ''];
+    d.heroPos = 'MP';
+    d.villPos = 'BTN';
+    d.heroStack = '20000';
+    d.villStack = '20000';
+    d.outcome = 'fold';
+    d.actions = parseShorthand('H lp V o500 H c / H x V b500 H c', {
+      heroPos: 'MP',
+      villPos: 'BTN',
+    }).actions;
+    return d;
+  };
+  // Lv 3 changes from 100/200 (ante 200) to 150/400 (ante 400) after the hand was saved.
+  const edited: HandSession = {
+    ...base,
+    mtt: withBlindLevels(
+      base.mtt,
+      readBlindLevels(levelsJson).map((l) =>
+        l.level === 3 ? { ...l, sb: 150, bb: 400, ante: 400 } : l,
+      ),
+    ),
+  };
+
+  it('the saved hand keeps level, level_bb and its bb result', () => {
+    const row = toHandRow(base, played(), 1);
+    expect(row.level_bb).toBe(200);
+    expect(row.result).toBeLessThan(0);
+    const asRow = {
+      ...row,
+      actions: row.actions,
+      opponents: row.opponents,
+      pot_winners: row.pot_winners,
+    } as never;
+
+    const before = fromHandRow(base, asRow);
+    const after = fromHandRow(edited, asRow);
+    expect(after).toMatchObject({ level: '3', levelBb: '200', anteMode: 'bb', ante: '200' });
+    expect(after.levelBb).toBe(before.levelBb);
+    expect(deriveHand(edited, after).bb).toBe(200);
+    expect(deriveHand(edited, after).result).toBe(row.result);
+    expect(deriveHand(edited, after).resultBb).toBe(deriveHand(base, before).resultBb);
+  });
+
+  it('opening and saving the hand again writes the same level_bb and result', () => {
+    const row = toHandRow(base, played(), 1);
+    const asRow = {
+      ...row,
+      actions: row.actions,
+      opponents: row.opponents,
+      pot_winners: row.pot_winners,
+    } as never;
+    const again = toHandRow(edited, fromHandRow(edited, asRow), 1);
+    expect(again).toMatchObject({
+      level: 3,
+      level_bb: 200,
+      ante: 200,
+      ante_mode: 'bb',
+      result: row.result,
+    });
+  });
+
+  it('session totals in bb do not move', () => {
+    const row = toHandRow(base, played(), 1);
+    const hand: ListHand = {
+      id: 'h1',
+      num: 1,
+      hero_cards: row.hero_cards,
+      board: row.board,
+      hero_pos: row.hero_pos,
+      villain_pos: row.villain_pos,
+      eff_stack: row.eff_stack,
+      result: row.result,
+      level_bb: row.level_bb,
+      flagged: false,
+      missing_data: row.missing_data,
+      reviewed: false,
+    };
+    // `summarize` reads the hand's own level_bb; the session BB (now 400 for Lv 3) is not used.
+    expect(summarize([hand], 50).totalBb).toBe(summarize([hand], 400).totalBb);
+    expect(summarize([hand], 400).totalBb).toBeCloseTo((row.result ?? 0) / 200, 2);
   });
 });

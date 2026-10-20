@@ -2,8 +2,9 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { blindLevelsToJson, readBlindLevels } from 'poker-core';
+import { readBlindLevels } from 'poker-core';
 import type { Json } from '@/lib/supabase/database.types';
+import { withBlindLevels } from '@/lib/sessions/structure';
 import { createClient } from '@/lib/supabase/server';
 import {
   parseSessionForm,
@@ -61,12 +62,7 @@ export async function saveBlindStructure(
     .maybeSingle();
   if (!session || session.kind !== 'mtt') return { ok: false };
 
-  const current =
-    session.mtt && typeof session.mtt === 'object' && !Array.isArray(session.mtt)
-      ? session.mtt
-      : {};
-  const rest = Object.fromEntries(Object.entries(current).filter(([k]) => k !== 'blind_levels'));
-  const mtt = levels.length > 0 ? { ...rest, blind_levels: blindLevelsToJson(levels) } : rest;
+  const mtt = withBlindLevels(session.mtt, levels);
 
   const { error } = await supabase
     .from('sessions')
