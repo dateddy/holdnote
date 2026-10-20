@@ -136,7 +136,7 @@ Không có bước thiết lập riêng và không có nút "Bắt đầu ghi": 
 - Bài đối thủ: tùy chọn.
 - Kết quả của mình = phần nhận về từ các pot − tổng đã bỏ vào (chip và bb). Không trừ rake. Cho sửa tay con số cuối, gắn cờ "đã sửa tay".
 - **Pot theo mức đóng góp** (`buildPots`): mỗi mức đóng góp của người chưa fold tạo một pot (Pot chính, Pot phụ 1…). Người đủ điều kiện = chưa fold và đã đóng tới mức đó. Tiền người fold (kể cả blind, ante, tiền chết) vẫn vào các pot họ đã góp tới; phần người fold góp vượt mức cao nhất của người còn chơi vào pot cuối.
-- **Cược không ai theo** (phần vượt mức lớn thứ hai) trả lại cho người cược cuối mỗi street, cả heads-up lẫn multiway; không thành pot.
+- **Cược không ai theo**: cuối mỗi street, phần vượt mức đóng lớn thứ hai (tính cả tiền của người đã fold) trả lại cho người đóng nhiều nhất, **chỉ khi người đó còn trong hand**. Người đã fold (và ghế không được chọn, coi như đã fold) không bao giờ nhận lại tiền: blind hoặc straddle của họ ở lại pot. Walk (mọi người fold tới BB): BB còn trong hand nên nhận lại phần vượt SB, thắng +SB. Mình open, mọi người fold: +SB+BB. Ante là tiền chết, người thắng nhận cả ante.
 - **Người thắng từng pot** (`showdown`): một người đủ điều kiện → người đó thắng; đủ bài của mọi người đủ điều kiện và đủ 5 lá board → hand evaluator (`evaluate`, `compareRanks`) xác định, hòa thì chia; thiếu bài → người dùng chọn theo từng pot. Người dùng chọn khác bài đã nhập vẫn tính được tiền (để xem thử) nhưng `mismatch = true`: UI cảnh báo và khóa Lưu.
 - **Chip lẻ**: đơn vị chia = 1 khi blind và mọi khoản đóng góp là số nguyên, ngược lại 0.01; phần dư chia từng đơn vị cho người thắng theo thứ tự từ gần bên trái BTN nhất.
 - Mình đã fold: kết quả = −tổng đã bỏ vào, không cần chọn người thắng.

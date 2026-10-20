@@ -118,15 +118,15 @@ describe('showdown: missing cards need a choice per pot', () => {
 });
 
 describe('showdown: hands that end without cards', () => {
-  it('everyone folds to hero: the matched blinds are hers, one pot', () => {
+  it('everyone folds to hero: both blinds are hers, one pot', () => {
     const s = setup({ heroPos: 'BTN', villPos: 'CO', listedOnly: true });
     const r = play(s, [{ seat: 'CO', act: 'fold' }]);
     expect(r.state.phase.kind).toBe('won');
     const res = showdown(s, r.actions, { cards: [] }, { hole: {} });
     expect(res?.pots).toHaveLength(1);
     expect(res?.pots[0]?.by).toBe('fold');
-    // SB's 25 and the matched 25 of the BB; the rest of the BB comes back to the BB.
-    expect(res?.heroResult).toBe(50);
+    // Both blinds stay in the pot: the BB folded, so nothing of it comes back.
+    expect(res?.heroResult).toBe(75);
   });
 
   it('hero folds: the result is minus what she put in', () => {

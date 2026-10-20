@@ -17,6 +17,7 @@
     "db:types": "supabase gen types typescript --linked --schema public > apps/web/src/lib/supabase/database.types.ts && prettier --write apps/web/src/lib/supabase/database.types.ts",
     "test:rls": "pnpm --filter web test:rls",
     "bench:ai": "pnpm --filter web bench:ai",
+    "recheck:results": "pnpm --filter web recheck:results",
     "screens": "node scripts/screens.mjs"
   },
   "devDependencies": {

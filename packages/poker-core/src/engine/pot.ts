@@ -91,6 +91,25 @@ export function computePot(input: HandInput): PotResult {
   // Forced bets recorded as actions (DEC-045) replace the ones derived from `blinds`.
   const hasPosts = input.actions.some((a) => isPostAct(a.act));
 
+  // A seat is out of the hand once it folds; a seat that only posted forced bets and never chose
+  // to act (and is neither hero nor villain) is out too, as long as somebody else is still in.
+  // Chips are never returned to a seat that is out. When nobody known is left (a lone "H f"), the
+  // unknown seat that takes the pot is the one holding the biggest forced bet: a walk.
+  const folded = new Set<string>();
+  const acted = new Set<string>();
+  for (const a of input.actions) {
+    const key = keyOf(a);
+    if (!key || isPostAct(a.act) || a.act === 'dead') continue;
+    acted.add(key);
+    if (a.act === 'fold') folded.add(key);
+  }
+  const known = new Set(acted);
+  if (heroPos || input.actions.some((a) => a.actor === 'hero')) known.add(HERO);
+  if (villPos || input.actions.some((a) => a.actor === 'villain')) known.add(VILLAIN);
+  const someoneLeft = [...known].some((k) => !folded.has(k));
+  const inHand = (key: string) =>
+    !folded.has(key) && (key === HERO || key === VILLAIN || acted.has(key) || !someoneLeft);
+
   // Dead antes.
   let pot = 0;
   const ante = blinds.ante;
@@ -233,7 +252,7 @@ export function computePot(input: HandInput): PotResult {
     // Return the uncalled part of the largest bet.
     const sorted = Object.entries(bets).sort((a, b) => b[1] - a[1]);
     const top = sorted[0];
-    if (top) {
+    if (top && inHand(top[0])) {
       const second = sorted[1]?.[1] ?? 0;
       if (top[1] > second) bets[top[0]] = second;
     }

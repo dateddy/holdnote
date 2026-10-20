@@ -359,3 +359,11 @@ Append-only. Không sửa, không xóa mục cũ. Muốn đảo một quyết đ
 - Lý do: Kết quả multiway sai khi có all-in lệch stack; người dùng phải tự chọn người thắng dù đã nhập đủ bài.
 - Supersedes: DEC-048 mục (5) (đối thủ chính = người chọn đầu chưa fold); spec mục 1 ("side pot ngoài phạm vi").
 - Ai quyết: Đạt (duyệt kế hoạch ngày 2026-10-20)
+
+## DEC-051 — Không trả cược không ai theo cho người đã fold (task 5.1c-6a-fix)
+
+- Ngày: 2026-10-20
+- Quyết định: Lúc đóng street, `computePot` và state machine (`closeStreet`) chỉ trả phần vượt mức đóng lớn thứ hai cho người đóng nhiều nhất khi người đó còn trong hand. Người đã fold và ghế không được chọn (coi như fold) không nhận lại tiền. Lỗi cũ xảy ra khi người đóng nhiều nhất là ghế đã fold bằng cược bắt buộc (BB, straddle): hand kết thúc mà mình chưa bỏ thêm tiền vượt cược bắt buộc đó (mọi đối thủ fold trước lượt mình ở bất kỳ ghế nào, hoặc straddle của người ngoài hand) làm mất phần vượt SB của BB (+50 thay vì +75) hoặc phần straddle vượt BB. Ca mình open/3bet rồi đối thủ fold, walk tới BB còn trong hand, và mọi hand có người theo (ca vàng) không bị ảnh hưởng. Với ghi tắt chỉ có "H f" (không ai khác action), ghế giữ cược bắt buộc lớn nhất vẫn được coi là người thắng walk.
+- Lý do: Người đã fold không thể nhận tiền; kết quả và `pot_final` phải khớp luật.
+- Supersedes: cách đóng street trong 5.1c-1 (spec mục 11).
+- Ai quyết: Đạt

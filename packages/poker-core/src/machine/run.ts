@@ -164,7 +164,9 @@ export function run(
   const closeStreet = () => {
     const withBets = seatList.filter((s) => s.bet > 0).sort((a, b) => b.bet - a.bet);
     const top = withBets[0];
-    if (top) top.bet = Math.min(top.bet, withBets[1]?.bet ?? 0);
+    // Only a seat still in the hand gets the uncalled part back; a folded seat (or one that is not
+    // followed, which counts as folded) never does: its blind stays in the pot.
+    if (top && top.tracked && !top.folded) top.bet = Math.min(top.bet, withBets[1]?.bet ?? 0);
     for (const s of seatList) {
       s.committed = roundMoney(s.committed + s.bet);
       potClosed = roundMoney(potClosed + s.bet);
