@@ -23,8 +23,11 @@ const enabled = Boolean(process.env.SUPABASE_SECRET_KEY && process.env.NEXT_PUBL
 const same = (a: number | null, b: number | null) =>
   a === b || (a !== null && b !== null && Math.abs(a - b) < 0.005);
 
-describe.skipIf(!enabled)('recheck saved results', () => {
+describe('recheck saved results', () => {
   it('lists the hands whose result or pot changes', async () => {
+    if (!enabled) {
+      throw new Error('NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SECRET_KEY missing: nothing scanned.');
+    }
     const db = createAdminClient();
 
     const sessions = new Map<string, HandSession & { date: string }>();
@@ -82,11 +85,15 @@ describe.skipIf(!enabled)('recheck saved results', () => {
       });
     }
 
-    console.log(
-      `\nHands read: ${hands.length}, compared: ${compared}, manual result: ${manual.length}`,
+    // Always printed, also when nothing differs, so a silent run is never mistaken for a clean one.
+    process.stdout.write(
+      `\nĐã quét ${compared} hand · ${changed.length} hand lệch` +
+        ` (đọc ${hands.length}, kết quả sửa tay không so: ${manual.length})\n`,
     );
+    if (compared === 0) {
+      throw new Error('Scanned 0 hands: no hand was compared (empty database or no session).');
+    }
     if (manual.length) console.log('Manual results (not compared):', manual.join(', '));
-    console.log(changed.length ? `Changed: ${changed.length}` : 'No hand changes.');
     if (changed.length) {
       console.table(changed.map(({ _fix, ...shown }) => shown));
     }
@@ -100,6 +107,6 @@ describe.skipIf(!enabled)('recheck saved results', () => {
       }
       console.log(`Written: ${changed.length} hand(s).`);
     }
-    expect(compared).toBeGreaterThanOrEqual(0);
+    expect(compared).toBeGreaterThan(0);
   });
 });
