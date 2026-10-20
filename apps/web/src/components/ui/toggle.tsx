@@ -11,12 +11,17 @@ export function Toggle({ checked, className, type = 'button', ...rest }: Props) 
       type={type}
       role="switch"
       aria-checked={checked}
-      className={`flex h-11 w-14 shrink-0 items-center rounded-md border px-1 ${
-        checked ? 'justify-end border-accent bg-accent/15' : 'justify-start border-line bg-surface'
-      } ${className ?? ''}`.trim()}
+      className={`flex h-11 w-14 shrink-0 items-center justify-center disabled:opacity-40 ${className ?? ''}`.trim()}
       {...rest}
     >
-      <span aria-hidden className={`h-7 w-6 rounded ${checked ? 'bg-accent' : 'bg-muted'}`} />
+      <span
+        aria-hidden
+        className={`flex h-7 w-12 items-center rounded-full border px-1 transition-colors motion-reduce:transition-none ${
+          checked ? 'justify-end border-accent bg-accent' : 'justify-start border-line bg-surface'
+        }`}
+      >
+        <span className={`h-5 w-5 rounded-full ${checked ? 'bg-accent-foreground' : 'bg-muted'}`} />
+      </span>
     </button>
   );
 }

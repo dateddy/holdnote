@@ -2,9 +2,10 @@
 
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   act,
+  canonPos,
   edit as editAction,
   forcedBets,
   formatShorthand,
@@ -33,6 +34,7 @@ import {
   canSave,
   deriveHand,
   emptyDraft,
+  opponentCards,
   pickedOpponents,
   stripForced,
   toHandRow,
@@ -40,14 +42,17 @@ import {
   type HandSession,
   type PreviousHand,
 } from '@/lib/hands/build';
+import { opponentLabel } from '@/lib/hands/labels';
 import { boardInput, draftToSetup } from '@/lib/hands/setup';
 import { applyShorthand } from '@/lib/hands/shorthand';
 import {
   nameOpponent,
   pickHero,
   playersOf,
+  setOpponentCards,
   setOpponentStack,
   setPlayers,
+  setPotWinners,
   setStraddleCount,
   toggleOpponent,
   type OpponentOption,
@@ -55,15 +60,15 @@ import {
 import { isOneOf } from '@/lib/sessions/form';
 import { formatMoney } from '@/lib/sessions/format';
 import { createClient } from '@/lib/supabase/client';
-import { saveHand, undoHand } from '@/lib/offline/sync';
+import { pendingOpponents, saveHand, saveOpponent, undoHand } from '@/lib/offline/sync';
 import { ActionCard } from './action-card';
 import { AmountPad, type AmountKind } from './amount-pad';
 import { CardsCard } from './cards-card';
 import { ContextBar } from './context-bar';
-import { EditActionSheet } from './edit-action-sheet';
+import { EditRow } from './edit-row';
 import { SaveBar } from './save-bar';
 import { ShorthandInput } from './shorthand-input';
-import { ShowdownBlock } from './showdown-block';
+import { ShowdownBlock, type ShowdownOpponent } from './showdown-block';
 import { TablePanel, type PanelRole } from './table-panel';
 import type { PillData } from './pill-data';
 import { UndoToast } from './undo-toast';
@@ -78,6 +83,8 @@ type Props = {
   previous: PreviousHand | null;
   /** Every saved opponent, same venue first. */
   opponents: OpponentOption[];
+  /** Venue of the session: new opponents made here belong to it. */
+  venue?: string | null;
   /** Last villain stack seen against each opponent. */
   opponentStacks?: Record<string, number>;
   entryMode: 'buttons' | 'shorthand';
@@ -95,7 +102,8 @@ export function HandForm({
   locale,
   lastNum,
   previous,
-  opponents,
+  opponents: savedOpponents,
+  venue = null,
   opponentStacks = {},
   entryMode,
   edit,
@@ -135,6 +143,41 @@ export function HandForm({
   const [chosen, setChosen] = useState<{ street: Street; from: Street } | null>(null);
   const locked = useRef(false);
   const closePanel = useCallback(() => setPanel(null), []);
+  // Opponents made on this screen, or offline earlier and not sent yet, join the saved ones.
+  const [made, setMade] = useState<OpponentOption[]>([]);
+  useEffect(() => {
+    let alive = true;
+    pendingOpponents()
+      .then((list) => {
+        if (!alive) return;
+        const here = (venue ?? '').trim().toLowerCase();
+        setMade(
+          list.map((o) => ({
+            id: o.id,
+            name: o.name,
+            sameVenue: here !== '' && (o.venue ?? '').trim().toLowerCase() === here,
+          })),
+        );
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [venue]);
+  const opponents = useMemo(
+    () => [...made.filter((m) => !savedOpponents.some((o) => o.id === m.id)), ...savedOpponents],
+    [made, savedOpponents],
+  );
+
+  async function createOpponent(pos: string, name: string) {
+    try {
+      const item = await saveOpponent({ name, venue: venue?.trim() || null });
+      setMade((list) => [...list, { id: item.id, name, sameVenue: Boolean(venue?.trim()) }]);
+      setDraft((d) => nameOpponent(d, pos, item.id));
+    } catch {
+      // Not signed in on this device: the name just stays unattached.
+    }
+  }
 
   const set = <K extends keyof HandDraft>(key: K, value: HandDraft[K]) =>
     setDraft((d) => ({ ...d, [key]: value }));
@@ -173,7 +216,8 @@ export function HandForm({
   const players = playersOf(session, draft);
   const picked = pickedOpponents(draft);
   const buttonsMode = mode === 'buttons' && setup !== null;
-  const decided = Boolean(machine) && derived.outcome !== '' && derived.outcome !== draft.outcome;
+  const decided = derived.decided;
+  const mismatch = buttonsMode && Boolean(derived.showdown?.mismatch);
   const bbForStraddle = bb ?? toNumber(draft.levelBb) ?? 0;
 
   function switchMode(next: 'buttons' | 'shorthand') {
@@ -257,6 +301,8 @@ export function HandForm({
     [setup, editing, full, board],
   );
 
+  const closeEdit = useCallback(() => setEditing(null), []);
+
   function applyEdit(input: ActInput) {
     if (!setup || editing === null) return;
     const r = editAction(setup, full, editing, input, board);
@@ -267,12 +313,26 @@ export function HandForm({
   }
 
   const toneOf = (a: Action['actor']): SeatTone => a;
+  // Every opponent picked is "Đối thủ"; from two on the seat is added (spec 13). "Người khác" is
+  // only for a seat that was not picked.
+  const heroSeat = machine?.players.find((p) => p.actor === 'hero')?.pos;
+  const opponentSeats = new Set(
+    (machine?.players ?? []).filter((p) => p.tracked && p.actor !== 'hero').map((p) => p.pos),
+  );
+  const nameOfSeat = (seat: string): string =>
+    seat === heroSeat
+      ? tr('roleHero')
+      : opponentSeats.has(seat as Position)
+        ? opponentLabel(tr('roleVillain'), seat, opponentSeats.size)
+        : seat;
   const whoOf = (a: Action) =>
     a.actor === 'hero'
       ? tr('roleHero')
-      : a.actor === 'villain'
-        ? tr('roleVillain')
-        : (a.pos ?? '?');
+      : a.pos
+        ? nameOfSeat(a.pos)
+        : a.actor === 'villain'
+          ? tr('roleVillain')
+          : '?';
   const whatOf = (a: Action) =>
     a.act === 'raise' && a.verb === 'open' ? tr('act_open') : t(`act_${a.act}`);
 
@@ -305,7 +365,10 @@ export function HandForm({
     chosen && chosen.from === current && tabs && tabs[chosen.street] !== 'locked'
       ? chosen.street
       : current;
-  const selectStreet = (street: Street) => setChosen({ street, from: current });
+  const selectStreet = (street: Street) => {
+    setEditing(null);
+    setChosen({ street, from: current });
+  };
 
   // A seat that is no longer picked stops the replay at its first action.
   const stopAt = machine?.warnings.find((w) => w.code === 'not_in_hand')?.index;
@@ -339,7 +402,7 @@ export function HandForm({
           : undefined;
 
   async function save() {
-    if (locked.current || !canSave(draft) || lineErrors.length > 0) return;
+    if (locked.current || !canSave(draft) || lineErrors.length > 0 || mismatch) return;
     if (practice) {
       practice.onCheck(draft);
       return;
@@ -424,24 +487,32 @@ export function HandForm({
   ].filter((w, i, all) => all.indexOf(w) === i);
 
   const toActPos = machine?.phase.kind === 'act' ? machine.phase.toAct : null;
-  const toActActor = machine?.players.find((p) => p.pos === toActPos)?.actor;
+  const toActPlayer = machine?.players.find((p) => p.pos === toActPos);
   const toActWho =
-    toActActor === 'hero'
+    toActPlayer?.actor === 'hero'
       ? tr('roleHero')
-      : toActActor === 'villain'
+      : toActPlayer?.tracked
         ? tr('roleVillain')
         : tr('roleOther');
   const callText = machine ? both(machine.toCall) : '';
-  const heroSeat = machine?.players.find((p) => p.actor === 'hero')?.pos;
   const wonText =
     machine?.phase.kind === 'won'
       ? machine.phase.winner === heroSeat
         ? tr('wonHeroFold')
-        : machine.players.find((p) => p.pos === (machine.phase as { winner: string }).winner)
-              ?.actor === 'villain'
-          ? tr('wonVillFold')
+        : opponentSeats.has(machine.phase.winner)
+          ? opponentSeats.size > 1
+            ? tr('wonOther', { pos: nameOfSeat(machine.phase.winner) })
+            : tr('wonVillFold')
           : tr('wonOther', { pos: machine.phase.winner })
       : undefined;
+  const seatCount = setup?.seats ?? 9;
+  const showdownOpponents: ShowdownOpponent[] = picked.flatMap((o) => {
+    const seat = canonPos(seatCount, o.pos as Position);
+    const live = machine?.players.find((p) => p.pos === seat);
+    return live && !live.folded
+      ? [{ key: o.pos, seat, name: nameOfSeat(seat), cards: opponentCards(o) }]
+      : [];
+  });
   const deadSeats = (machine?.players ?? []).filter((p) => !p.tracked).map((p) => p.pos);
   const showShowdown =
     mode === 'shorthand' ||
@@ -508,6 +579,7 @@ export function HandForm({
           onOpponentName={(pos, id) =>
             setDraft((d) => nameOpponent(d, pos, id, id ? opponentStacks[id] : undefined))
           }
+          {...(!practice && { onOpponentCreate: createOpponent })}
           onStraddles={(count) =>
             setDraft((d) => setStraddleCount(session, d, players, count, bbForStraddle))
           }
@@ -522,7 +594,7 @@ export function HandForm({
       <CardsCard
         slots={draft.slots}
         check={buttonsMode ? (derived.board ?? null) : null}
-        blocked={draft.villCards}
+        blocked={picked.flatMap((o) => opponentCards(o).filter(Boolean))}
         highlight={buttonsMode ? selected : null}
         onChange={(slots) => set('slots', slots)}
         onPicking={(open) => {
@@ -543,7 +615,29 @@ export function HandForm({
           expanded={expanded}
           onToggleExpanded={() => setExpanded((e) => !e)}
           pillsOf={pillsOf}
-          onPill={setEditing}
+          onPill={(i) => setEditing((e) => (e === i ? null : i))}
+          edit={
+            editing !== null && machine?.actions[editing] && editState
+              ? {
+                  index: editing,
+                  node: (
+                    <EditRow
+                      key={editing}
+                      action={machine.actions[editing]}
+                      before={editState}
+                      bb={bb ?? 1}
+                      money={money}
+                      onApply={applyEdit}
+                      onDeleteFrom={() => {
+                        set('actions', stripForced(full.slice(0, editing)));
+                        setEditing(null);
+                      }}
+                      onClose={closeEdit}
+                    />
+                  ),
+                }
+              : null
+          }
           who={toActWho}
           toCallText={callText}
           canUndo={draft.actions.length > 0}
@@ -573,7 +667,13 @@ export function HandForm({
       ) : mode === 'buttons' ? (
         <Panel tight>
           <p role="status" className="text-sm text-muted">
-            {tr(draft.heroPos ? 'needOpponent' : 'needHero')}
+            {tr(
+              draft.heroPos
+                ? 'needOpponent'
+                : draft.actions.length > 0
+                  ? 'pickHeroAgain'
+                  : 'needHero',
+            )}
           </p>
         </Panel>
       ) : (
@@ -604,6 +704,12 @@ export function HandForm({
             resultBb={derived.resultBb}
             money={money}
             {...(wonText && { wonText })}
+            showdown={buttonsMode ? derived.showdown : null}
+            heroSeat={heroSeat ?? ''}
+            opponents={showdownOpponents}
+            nameOf={nameOfSeat}
+            onCards={(key, cards) => setDraft((d) => setOpponentCards(d, key, cards))}
+            onPick={(i, winners) => setDraft((d) => setPotWinners(d, i, winners))}
           />
           <section className="space-y-2">
             <label className="flex flex-col gap-1 text-sm">
@@ -626,29 +732,19 @@ export function HandForm({
         pot={potNow == null ? null : both(potNow)}
         stack={stackNow == null ? null : both(stackNow)}
         label={
-          practice
-            ? practice.label
-            : status === 'saving'
-              ? t('saving')
-              : edit
-                ? t('saveChanges')
-                : t('save')
+          mismatch
+            ? tr('saveMismatch')
+            : practice
+              ? practice.label
+              : status === 'saving'
+                ? t('saving')
+                : edit
+                  ? t('saveChanges')
+                  : t('save')
         }
-        disabled={!canSave(draft) || lineErrors.length > 0 || status === 'saving'}
+        disabled={!canSave(draft) || lineErrors.length > 0 || mismatch || status === 'saving'}
         {...(hint && { hint })}
         onSave={save}
-      />
-
-      <EditActionSheet
-        action={editing !== null ? (machine?.actions[editing] ?? null) : null}
-        before={editState}
-        onApply={applyEdit}
-        onDeleteFrom={() => {
-          if (editing === null) return;
-          set('actions', stripForced(full.slice(0, editing)));
-          setEditing(null);
-        }}
-        onClose={() => setEditing(null)}
       />
     </div>
   );

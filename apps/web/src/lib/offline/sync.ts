@@ -2,13 +2,16 @@
 
 import type { Database } from '@/lib/supabase/database.types';
 import { createClient } from '@/lib/supabase/client';
-import { idbStore } from './idb-store';
+import { idbOpponents, idbStore } from './idb-store';
 import {
   classifyError,
+  flushOpponents,
   flushQueue,
   undoHand as undoQueued,
   type FlushResult,
+  type InsertOutcome,
   type QueuedHand,
+  type QueuedOpponent,
   type RemoteHands,
 } from './queue';
 
@@ -60,6 +63,20 @@ function remote(): RemoteHands {
   };
 }
 
+async function insertOpponent(item: QueuedOpponent): Promise<InsertOutcome> {
+  try {
+    const { error, status } = await createClient()
+      .from('opponents')
+      .insert({ id: item.id, name: item.name, venue: item.venue });
+    if (!error) return { kind: 'ok' };
+    // The same id is already there: an earlier attempt got through.
+    if (error.code === '23505') return { kind: 'dup_id' };
+    return classifyError({ ...error, status });
+  } catch {
+    return { kind: 'retry' };
+  }
+}
+
 /** How many of this account's hands wait for the network, and how many the server refused. */
 export async function getCounts(): Promise<SyncCounts> {
   const userId = await currentUserId();
@@ -87,6 +104,9 @@ export function flush(): Promise<FlushResult | null> {
     try {
       const userId = await currentUserId();
       if (!userId) return null;
+      // New opponents first: a hand points at its opponent by id.
+      const sent = await flushOpponents(idbOpponents, userId, insertOpponent);
+      if (sent === 'retry') return null;
       const result = await flushQueue(idbStore, userId, remote());
       await notify(result);
       return result;
@@ -145,4 +165,32 @@ export function startAutoSync() {
     if ((await getCounts().catch(() => ({ pending: 0, failed: 0 }))).pending > 0) run();
   }, FLUSH_EVERY_MS);
   run();
+}
+
+/**
+ * Make an opponent of the session venue. Stored on this device first, so it works offline and the
+ * hand that uses it can be saved at once; the queue sends it before that hand.
+ */
+export async function saveOpponent(input: {
+  name: string;
+  venue: string | null;
+}): Promise<QueuedOpponent> {
+  const userId = await currentUserId();
+  if (!userId) throw new Error('not signed in');
+  const item: QueuedOpponent = {
+    id: crypto.randomUUID(),
+    userId,
+    name: input.name,
+    venue: input.venue,
+    createdAt: Date.now(),
+  };
+  await idbOpponents.put(item);
+  void flush();
+  return item;
+}
+
+/** Opponents made on this device that the server has not got yet, for the name boxes. */
+export async function pendingOpponents(): Promise<QueuedOpponent[]> {
+  const userId = await currentUserId();
+  return (await idbOpponents.getAll()).filter((o) => o.userId === userId);
 }

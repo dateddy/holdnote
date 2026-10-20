@@ -92,7 +92,7 @@ describe('deriveHand showdown (5.1c-6b)', () => {
 
   it('without cards the typed outcome decides, like hands saved before', () => {
     const d = deriveHand(cash, headsUp(['', ''], 'lose'));
-    expect(d.showdown?.by).toBeUndefined();
+    expect(d.showdown?.pots[0]?.by).toBe('choice');
     expect(d.result).toBe(-18000);
     expect(deriveHand(cash, headsUp(['', ''])).result).toBeNull();
   });

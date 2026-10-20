@@ -23,6 +23,8 @@ type Props = {
   onToggleExpanded: () => void;
   pillsOf: (street: Street) => PillData[];
   onPill: (index: number) => void;
+  /** The chip being edited and its edit row, drawn right under that street chips. */
+  edit: { index: number; node: ReactNode } | null;
   /** Who is to act: "Mình" or "Đối thủ". */
   who: string;
   /** Amount to call as "450 (9bb)". */
@@ -49,6 +51,7 @@ export function ActionCard({
   onToggleExpanded,
   pillsOf,
   onPill,
+  edit,
   who,
   toCallText,
   canUndo,
@@ -89,11 +92,16 @@ export function ActionCard({
         what={p.what}
         {...(p.amount && { amount: p.amount })}
         invalid={p.invalid}
+        active={edit?.index === p.index}
         onClick={() => onPill(p.index)}
         aria-label={`${p.who} ${p.what} ${p.amount ?? ''}${p.invalid ? ` · ${t('invalidAction')}` : ''}`}
       />
     ));
   const selectedChips = chips(selected);
+  const editStreet = edit
+    ? STREETS.find((s) => pillsOf(s).some((p) => p.index === edit.index))
+    : undefined;
+  const editNode = (s: Street) => (edit && editStreet === s ? edit.node : null);
 
   return (
     <Card tight>
@@ -123,13 +131,19 @@ export function ActionCard({
               {open.map((s) => (
                 <div key={s} className="flex items-start gap-2">
                   <span className="w-14 shrink-0 pt-2 text-xs text-muted">{name(s)}</span>
-                  <div className="flex flex-wrap gap-1.5">{chips(s)}</div>
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <div className="flex flex-wrap gap-1.5">{chips(s)}</div>
+                    {editNode(s)}
+                  </div>
                 </div>
               ))}
             </div>
           ) : (
             selectedChips.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">{selectedChips}</div>
+              <div className="space-y-2">
+                <div className="flex flex-wrap gap-1.5">{selectedChips}</div>
+                {editNode(selected)}
+              </div>
             )
           )}
 

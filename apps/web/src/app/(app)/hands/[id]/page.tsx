@@ -133,6 +133,7 @@ export default async function HandDetailPage({ params, searchParams }: PageProps
             sessionId={hand.session_id}
             session={session}
             locale={locale}
+            venue={session.venue}
             lastNum={hand.num - 1}
             previous={null}
             opponents={sortOpponents(

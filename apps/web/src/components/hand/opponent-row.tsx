@@ -2,11 +2,11 @@
 
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
 import { Input } from '@/components/ui/input';
 import { PosTag } from '@/components/ui/pos-tag';
 import type { DraftOpponent } from '@/lib/hands/build';
+import { hasName, matchNames } from '@/lib/hands/labels';
 import type { OpponentOption } from '@/lib/hands/table';
 
 type Props = {
@@ -16,18 +16,28 @@ type Props = {
   onStack: (stack: string) => void;
   /** Empty id = detach. */
   onName: (id: string) => void;
+  /** Make a new opponent of this venue and attach him to the seat; absent = cannot create (practice). */
+  onCreate?: (name: string) => void;
 };
 
-/** More saved opponents than this: the list gets a search box. */
-const SEARCH_FROM = 8;
+/** Matches shown under the box; typing narrows them. */
+const SHOWN = 5;
 
-/** One picked opponent under the mini table: seat, stack, and the saved opponent he is. */
-export function OpponentRow({ opponent, options, onStack, onName }: Props) {
+/** One picked opponent under the mini table: seat, stack, and a box that names him. */
+export function OpponentRow({ opponent, options, onStack, onName, onCreate }: Props) {
   const t = useTranslations('record');
-  const [listing, setListing] = useState(false);
-  const [query, setQuery] = useState('');
   const named = options.find((o) => o.id === opponent.opponentId);
-  const shown = options.filter((o) => o.name.toLowerCase().includes(query.trim().toLowerCase()));
+  const [typed, setTyped] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
+  const text = typed ?? named?.name ?? '';
+  const query = typed ?? '';
+  const matches = matchNames(options, query).slice(0, SHOWN);
+  const canCreate = Boolean(onCreate) && query.trim() !== '' && !hasName(options, query);
+
+  const done = () => {
+    setTyped(null);
+    setOpen(false);
+  };
 
   return (
     <div className="space-y-1.5">
@@ -43,42 +53,46 @@ export function OpponentRow({ opponent, options, onStack, onName }: Props) {
           value={opponent.stack}
           onChange={(e) => onStack(e.target.value)}
         />
-        <Button
-          variant="secondary"
-          full={false}
-          className="max-w-32 shrink-0 truncate px-3 text-sm"
-          aria-expanded={listing}
-          onClick={() => setListing((v) => !v)}
-        >
-          {named?.name ?? t('nameLink')}
-        </Button>
       </div>
-      {listing && (
-        <div className="space-y-1.5">
-          {options.length > SEARCH_FROM && (
-            <Input
-              autoComplete="off"
-              aria-label={t('searchName')}
-              placeholder={t('searchName')}
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
+      <Input
+        autoComplete="off"
+        aria-label={`${t('nameField')} ${opponent.pos}`}
+        placeholder={t('namePlaceholder')}
+        value={text}
+        onFocus={() => setOpen(true)}
+        // A tap on a suggestion lands after the blur: give it a moment before closing.
+        onBlur={() => setTimeout(done, 150)}
+        onChange={(e) => {
+          setTyped(e.target.value);
+          setOpen(true);
+          if (named) onName('');
+        }}
+      />
+      {open && (matches.length > 0 || canCreate) && (
+        <div className="flex flex-wrap gap-1.5">
+          {matches.map((o) => (
+            <Chip
+              key={o.id}
+              on={o.id === opponent.opponentId}
+              onClick={() => {
+                onName(o.id);
+                done();
+              }}
+            >
+              {o.name}
+            </Chip>
+          ))}
+          {canCreate && (
+            <Chip
+              on={false}
+              onClick={() => {
+                onCreate?.(query.trim());
+                done();
+              }}
+            >
+              {t('nameCreate', { name: query.trim() })}
+            </Chip>
           )}
-          <div className="flex flex-wrap gap-1.5">
-            {shown.map((o) => (
-              <Chip
-                key={o.id}
-                on={o.id === opponent.opponentId}
-                onClick={() => {
-                  onName(o.id === opponent.opponentId ? '' : o.id);
-                  setListing(false);
-                }}
-              >
-                {o.name}
-              </Chip>
-            ))}
-            {options.length === 0 && <p className="text-sm text-muted">{t('noSavedOpponents')}</p>}
-          </div>
         </div>
       )}
     </div>

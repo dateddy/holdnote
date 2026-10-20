@@ -50,6 +50,24 @@ export function toggleOpponent(draft: HandDraft, pos: Position): HandDraft {
   );
 }
 
+/** Cards an opponent showed (`['', '']` = not shown). Without a picked list they go to `villCards`. */
+export function setOpponentCards(draft: HandDraft, pos: string, cards: string[]): HandDraft {
+  if (draft.opponents.length === 0) return { ...draft, villCards: cards };
+  return withOpponents(
+    draft,
+    pickedOpponents(draft).map((o) => (o.pos === pos ? { ...o, cards } : o)),
+  );
+}
+
+/** Pick (or clear, `null`) the winners of one pot. */
+export function setPotWinners(draft: HandDraft, pot: number, winners: string[] | null): HandDraft {
+  const next = [...draft.potWinners];
+  while (next.length <= pot) next.push(null);
+  next[pot] = winners;
+  while (next.length > 0 && next[next.length - 1] === null) next.pop();
+  return { ...draft, potWinners: next };
+}
+
 export function setOpponentStack(draft: HandDraft, pos: string, stack: string): HandDraft {
   return withOpponents(
     draft,

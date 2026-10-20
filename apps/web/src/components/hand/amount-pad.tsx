@@ -25,6 +25,8 @@ type Props = {
   deadSeats: Position[];
   onConfirm: (kind: AmountKind, to: number, seat?: Position) => void;
   onClose: () => void;
+  /** Amount to start from when editing an action. */
+  initial?: string;
 };
 
 const SHORT: Record<string, string> = { '1/3': '⅓', '1/2': '½', '2/3': '⅔' };
@@ -42,9 +44,10 @@ function AmountBody({
   deadSeats,
   onConfirm,
   onClose,
+  initial = '',
 }: Props & { kind: AmountKind }) {
   const t = useTranslations('record');
-  const [text, setText] = useState('');
+  const [text, setText] = useState(initial);
   const [seat, setSeat] = useState<Position | null>(deadSeats[0] ?? null);
 
   const value = parseAmount(text.replace(/k$/i, 'k'));

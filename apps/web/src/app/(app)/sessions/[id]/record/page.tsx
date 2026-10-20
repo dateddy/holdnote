@@ -80,6 +80,7 @@ export default async function RecordPage({ params }: PageProps<'/sessions/[id]/r
         sessionId={id}
         session={session}
         locale={locale}
+        venue={session.venue}
         lastNum={last?.num ?? 0}
         previous={last ? { ...last, straddles } : null}
         opponents={sortOpponents(options)}

@@ -27,6 +27,7 @@ type Props = {
   onPlayers: (n: number) => void;
   onOpponentStack: (pos: string, stack: string) => void;
   onOpponentName: (pos: string, id: string) => void;
+  onOpponentCreate?: (pos: string, name: string) => void;
   onStraddles: (count: number) => void;
   set: <K extends keyof HandDraft>(key: K, value: HandDraft[K]) => void;
   mode: 'buttons' | 'shorthand';
@@ -54,6 +55,7 @@ export function TablePanel({
   onPlayers,
   onOpponentStack,
   onOpponentName,
+  onOpponentCreate,
   onStraddles,
   set,
   mode,
@@ -71,11 +73,7 @@ export function TablePanel({
   const pickedPos = new Set(opponents.map((o) => o.pos));
 
   return (
-    <div
-      role="region"
-      aria-label={t('tablePanel')}
-      className="max-h-[calc(100dvh-12rem)] space-y-3 overflow-y-auto pb-3 pt-1"
-    >
+    <div role="region" aria-label={t('tablePanel')} className="space-y-3 pb-3">
       <div className="grid grid-cols-2 gap-1.5" role="group" aria-label={t('tableHint')}>
         <Chip on={role === 'hero'} onClick={() => onRole('hero')}>
           {t('roleHero')}
@@ -129,6 +127,7 @@ export function TablePanel({
           options={options.filter((x) => x.id === o.opponentId || !opponentTaken(opponents, x.id))}
           onStack={(stack) => onOpponentStack(o.pos, stack)}
           onName={(id) => onOpponentName(o.pos, id)}
+          {...(onOpponentCreate && { onCreate: (name: string) => onOpponentCreate(o.pos, name) })}
         />
       ))}
 

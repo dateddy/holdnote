@@ -11,6 +11,8 @@ type Props = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'> & {
   amount?: string;
   /** The action no longer fits the betting (after an edit). */
   invalid?: boolean;
+  /** The chip whose edit row is open. */
+  active?: boolean;
 };
 
 /** One chip of the street timeline. Tap to edit. */
@@ -20,6 +22,7 @@ export function ActionPill({
   what,
   amount,
   invalid = false,
+  active = false,
   className,
   type = 'button',
   ...rest
@@ -27,9 +30,11 @@ export function ActionPill({
   return (
     <button
       type={type}
+      data-pill=""
+      aria-pressed={active}
       className={`flex h-9 items-center gap-1 rounded-md border px-2 text-sm tabular-nums ${
         invalid ? 'border-loss bg-loss/10 text-loss' : TONE_CLASS[tone]
-      } ${className ?? ''}`.trim()}
+      } ${active ? 'ring-2 ring-accent' : ''} ${className ?? ''}`.trim()}
       {...rest}
     >
       {invalid && <span aria-hidden>⚠</span>}

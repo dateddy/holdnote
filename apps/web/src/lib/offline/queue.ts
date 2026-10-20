@@ -17,6 +17,22 @@ export interface QueueStore {
   remove(id: string): Promise<void>;
 }
 
+/** An opponent made on the Ghi nhanh screen that may not have reached the server yet. */
+export type QueuedOpponent = {
+  /** Also the `opponents.id`: hands saved after it point at this id. */
+  id: string;
+  userId: string;
+  name: string;
+  venue: string | null;
+  createdAt: number;
+};
+
+export interface OpponentStore {
+  put(item: QueuedOpponent): Promise<void>;
+  getAll(): Promise<QueuedOpponent[]>;
+  remove(id: string): Promise<void>;
+}
+
 export type InsertOutcome =
   | { kind: 'ok' }
   /** Same id already on the server: an earlier attempt got through. */
@@ -123,4 +139,25 @@ export async function undoHand(
   }
   await deleteRemote(id);
   return 'deleted';
+}
+
+/**
+ * Send this user's new opponents, oldest first, before any hand: a hand points at its opponent by
+ * id, so it must not arrive first. Returns 'retry' at the first network failure (the hands wait).
+ */
+export async function flushOpponents(
+  store: OpponentStore,
+  userId: string,
+  insert: (item: QueuedOpponent) => Promise<InsertOutcome>,
+): Promise<'done' | 'retry'> {
+  const queue = (await store.getAll())
+    .filter((o) => o.userId === userId)
+    .sort((a, b) => a.createdAt - b.createdAt);
+  for (const item of queue) {
+    const outcome = await insert(item);
+    if (outcome.kind === 'retry') return 'retry';
+    // Sent, already there, or never acceptable (the hands that use it will say so): done either way.
+    await store.remove(item.id);
+  }
+  return 'done';
 }

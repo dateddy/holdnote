@@ -133,21 +133,19 @@ export function SessionForm({ initial }: { initial: SessionFormValues }) {
       </Segment>
       {anteMode !== 'none' && text('ante', t('anteAmount'), { numeric: true })}
 
-      {!isMtt && (
-        <div className="flex items-center justify-between gap-3 text-sm">
-          <span>{t('seats')}</span>
-          <input type="hidden" name="seats" value={seats} />
-          <Stepper
-            value={seats}
-            min={2}
-            max={10}
-            onChange={setSeats}
-            text={t('seatsCount', { n: seats })}
-            minusLabel={t('seatsLess')}
-            plusLabel={t('seatsMore')}
-          />
-        </div>
-      )}
+      <div className="flex items-center justify-between gap-3 text-sm">
+        <span>{t('seats')}</span>
+        <input type="hidden" name="seats" value={seats} />
+        <Stepper
+          value={seats}
+          min={2}
+          max={10}
+          onChange={setSeats}
+          text={t('seatsCount', { n: seats })}
+          minusLabel={t('seatsLess')}
+          plusLabel={t('seatsMore')}
+        />
+      </div>
       {text('buyin', t('buyin'), { numeric: true })}
       {!isMtt && text('stopLoss', t('stopLoss'), { numeric: true })}
 

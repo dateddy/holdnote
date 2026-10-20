@@ -147,7 +147,7 @@ export function parseSessionForm(v: SessionFormValues): ParseResult {
   if (anteMode !== 'none' && ante == null) fail('ante', 'required');
 
   let seats: number | null = null;
-  if (kind === 'cash' && v.seats.trim()) {
+  if (v.seats.trim()) {
     const n = Number(v.seats.trim());
     if (Number.isInteger(n) && n >= 2 && n <= 10) seats = n;
     else fail('seats', 'seatsRange');

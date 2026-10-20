@@ -33,6 +33,14 @@ const mtt = (over: Partial<SessionFormValues> = {}): SessionFormValues => ({
   ...over,
 });
 
+describe('parseSessionForm — head count', () => {
+  it('an MTT keeps the number of players too', () => {
+    const r = parseSessionForm(mtt({ seats: '8' }));
+    expect(r.ok && r.insert.seats).toBe(8);
+    expect(parseSessionForm(mtt({ seats: '11' }))).toMatchObject({ ok: false });
+  });
+});
+
 describe('parseSessionForm — cash', () => {
   it('builds the insert row with amounts parsed by poker-core', () => {
     const r = parseSessionForm(cash());

@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
   classifyError,
+  flushOpponents,
   flushQueue,
   undoHand,
   type InsertOutcome,
+  type OpponentStore,
+  type QueuedOpponent,
   type QueuedHand,
   type QueueStore,
   type RemoteHands,
@@ -166,5 +169,56 @@ describe('undoHand', () => {
     const deleted: string[] = [];
     expect(await undoHand(store, 'a', async (id) => void deleted.push(id))).toBe('deleted');
     expect(deleted).toEqual(['a']);
+  });
+});
+
+describe('flushOpponents', () => {
+  const pending = (id: string, createdAt: number, userId = 'u1'): QueuedOpponent => ({
+    id,
+    userId,
+    name: id,
+    venue: 'Club',
+    createdAt,
+  });
+  const opponentStore = (items: QueuedOpponent[]): OpponentStore & { ids: () => string[] } => {
+    const map = new Map(items.map((i) => [i.id, i]));
+    return {
+      put: async (i) => void map.set(i.id, i),
+      getAll: async () => [...map.values()],
+      remove: async (id) => void map.delete(id),
+      ids: () => [...map.keys()],
+    };
+  };
+
+  it('sends one user in the order made and clears them', async () => {
+    const store = opponentStore([pending('b', 2), pending('a', 1), pending('x', 1, 'u2')]);
+    const sent: string[] = [];
+    const r = await flushOpponents(store, 'u1', async (o) => {
+      sent.push(o.id);
+      return { kind: 'ok' };
+    });
+    expect(r).toBe('done');
+    expect(sent).toEqual(['a', 'b']);
+    expect(store.ids()).toEqual(['x']);
+  });
+
+  it('a repeated id counts as sent', async () => {
+    const store = opponentStore([pending('a', 1)]);
+    expect(await flushOpponents(store, 'u1', async () => ({ kind: 'dup_id' }))).toBe('done');
+    expect(store.ids()).toEqual([]);
+  });
+
+  it('stops at the first network failure and keeps the rest, so hands are held back', async () => {
+    const store = opponentStore([pending('a', 1), pending('b', 2)]);
+    const r = await flushOpponents(store, 'u1', async () => ({ kind: 'retry' }));
+    expect(r).toBe('retry');
+    expect(store.ids()).toEqual(['a', 'b']);
+  });
+
+  it('drops an opponent the server will never accept', async () => {
+    const store = opponentStore([pending('a', 1)]);
+    const r = await flushOpponents(store, 'u1', async () => ({ kind: 'fatal', message: 'x' }));
+    expect(r).toBe('done');
+    expect(store.ids()).toEqual([]);
   });
 });
