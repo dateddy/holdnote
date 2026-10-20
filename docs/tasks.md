@@ -29,8 +29,8 @@ Mỗi task cỡ một phiên làm việc. Làm theo thứ tự trừ khi chủ d
 - [ ] **3.5** Sửa chất lượng AI review (DEC-053):
   - [x] 3.5-1 Prompt v1 làm mặc định, giữ v2 (`prompt.ts`, `AI_PROMPT_VERSION`).
   - [x] 3.5-2 Cột `reviews.prompt_version` (migration), nhãn "Prompt cũ (v2)" cho review cũ.
-  - [ ] 3.5-3 Ngữ cảnh mới: straddle, ante, level/giai đoạn MTT, multiway, side pot, loại pot, cược không ai theo; test.
-  - [ ] 3.5-4 Prompt v1 mô tả trường mới (tối thiểu, không đổi cách chấm).
+  - [x] 3.5-3 Ngữ cảnh mới: straddle, ante, level/giai đoạn MTT, multiway, side pot, loại pot, cược không ai theo; test.
+  - [x] 3.5-4 Prompt v1 mô tả trường mới (tối thiểu, không đổi cách chấm).
   - [ ] 3.5-5 Benchmark v1 cũ / v1 + ngữ cảnh mới / v2, báo bảng so sánh.
   - [ ] 3.5-6 Ghi DEC-053.
 

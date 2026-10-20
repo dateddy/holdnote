@@ -93,20 +93,33 @@ export async function POST(request: Request) {
     .slice(0, 3)
     .map(([tag]) => tag);
 
+  // The main opponent and every other one picked on the hand: type and notes only, never names.
+  const picked = Array.isArray(hand.opponents) ? hand.opponents : [];
+  const ids = [
+    ...new Set(
+      [hand.opponent_id, ...picked.map((o) => (o as { opponent_id?: string }).opponent_id)].filter(
+        (id): id is string => typeof id === 'string' && id !== '',
+      ),
+    ),
+  ];
+  const opponentInfo: Record<string, { player_type: string | null; notes: string | null }> = {};
   let opponent = null;
-  if (hand.opponent_id) {
+  if (ids.length > 0) {
     const { data } = await supabase
       .from('opponents')
-      .select('name, player_type, notes')
-      .eq('id', hand.opponent_id)
-      .maybeSingle();
-    opponent = data;
+      .select('id, name, player_type, notes')
+      .in('id', ids);
+    for (const o of data ?? []) {
+      opponentInfo[o.id] = { player_type: o.player_type, notes: o.notes };
+      if (o.id === hand.opponent_id) opponent = o;
+    }
   }
 
   const userMessage = buildReviewContext({
     session,
     hand,
     opponent,
+    opponentInfo,
     topLeaks,
     locale,
     rebuttal: rebuttal && current ? { reason: rebuttal, previous: current } : null,

@@ -1,0 +1,234 @@
+import { forcedBets, type Action, type HandSetup, type Position } from 'poker-core';
+import { describe, expect, it } from 'vitest';
+import { buildReviewContext, type ReviewHand, type ReviewSession } from './context';
+
+const cash: ReviewSession = {
+  kind: 'cash',
+  mode: 'live',
+  sb: 25,
+  bb: 50,
+  straddle: null,
+  ante_mode: 'none',
+  ante: null,
+  buyin: 10000,
+  seats: 9,
+  mtt: null,
+  stake_label: '25/50',
+};
+
+const step = (
+  street: Action['street'],
+  pos: Position,
+  actor: Action['actor'],
+  act: Action['act'],
+  amount?: number,
+): Action => ({ street, pos, actor, act, ...(amount !== undefined && { amount }) });
+
+/** A hand saved in the DEC-045 way: forced bets first, then the player's actions. */
+function row(setup: HandSetup, actions: Action[], over: Partial<ReviewHand> = {}): ReviewHand {
+  return {
+    num: 1,
+    hero_cards: ['Ah', 'Kd'],
+    board: ['7c', '8d', '2s'],
+    villain_cards: null,
+    hero_pos: setup.heroPos,
+    villain_pos: setup.villPos,
+    opponent_id: null,
+    raw_line: null,
+    outcome: 'win',
+    result: 0,
+    hero_stack: 10000,
+    villain_stack: 10000,
+    level_bb: null,
+    players_dealt: setup.seats,
+    ante: null,
+    stage: null,
+    thought: null,
+    flagged: false,
+    actions: [...forcedBets(setup), ...actions],
+    ...over,
+  };
+}
+
+const ctx = (session: ReviewSession, hand: ReviewHand) =>
+  buildReviewContext({ session, hand, topLeaks: [], locale: 'en' });
+
+const NO_WINNER = /winner|wins|takes the pot/i;
+
+describe('table facts in the review context (task 3.5)', () => {
+  it('heads-up: pot type, players per street, uncalled bet, no multiway lines', () => {
+    const setup: HandSetup = {
+      seats: 2,
+      sb: 25,
+      bb: 50,
+      ante: { mode: 'none' },
+      heroPos: 'BTN',
+      villPos: 'BB',
+    };
+    const text = ctx(
+      cash,
+      row(
+        setup,
+        [
+          step('preflop', 'BTN', 'hero', 'raise', 150),
+          step('preflop', 'BB', 'villain', 'call'),
+          step('flop', 'BB', 'villain', 'check'),
+          step('flop', 'BTN', 'hero', 'bet', 200),
+          step('flop', 'BB', 'villain', 'fold'),
+        ],
+        { opponents: [{ pos: 'BB', stack: 10000 }] },
+      ),
+    );
+    expect(text).toContain('Pot type: single-raised pot.');
+    expect(text).toContain('Players at the start of each street: flop 2.');
+    expect(text).toContain(
+      'Uncalled bet returned to its owner, not in the pot: flop Hero (BTN) 4bb.',
+    );
+    expect(text).not.toContain('Opponents (');
+    expect(text).not.toContain('Pots:');
+    expect(text).not.toContain('Straddle');
+    expect(text).not.toMatch(NO_WINNER);
+    // Forced bets are not Hero decisions.
+    expect(text).not.toMatch(/\d\. preflop: .*posts/);
+  });
+
+  it('straddle: size in bb', () => {
+    const setup: HandSetup = {
+      seats: 6,
+      sb: 25,
+      bb: 50,
+      ante: { mode: 'none' },
+      straddles: [100],
+      heroPos: 'CO',
+      villPos: 'BTN',
+    };
+    const text = ctx(
+      cash,
+      row(
+        setup,
+        [step('preflop', 'CO', 'hero', 'raise', 300), step('preflop', 'BTN', 'villain', 'call')],
+        { opponents: [{ pos: 'BTN', stack: 10000 }] },
+      ),
+    );
+    expect(text).toContain('Straddle: 2bb.');
+    expect(text).toContain('Pot type: single-raised pot.');
+  });
+
+  it('multiway with a side pot: every opponent, cards shown, pots and who can win them', () => {
+    const setup: HandSetup = {
+      seats: 3,
+      sb: 25,
+      bb: 50,
+      ante: { mode: 'none' },
+      heroPos: 'BTN',
+      villPos: 'SB',
+      tracked: ['BB'],
+      listedOnly: true,
+      stacks: { BTN: 1000, SB: 3000, BB: 5000 },
+    };
+    const text = ctx(
+      cash,
+      row(
+        setup,
+        [
+          step('preflop', 'BTN', 'hero', 'all-in', 1000),
+          step('preflop', 'SB', 'villain', 'all-in', 3000),
+          step('preflop', 'BB', 'other', 'call', 3000),
+        ],
+        {
+          hero_stack: 1000,
+          villain_pos: 'BB',
+          villain_stack: 5000,
+          opponents: [
+            { pos: 'SB', stack: 3000, cards: ['Qh', 'Qd'] },
+            { pos: 'BB', stack: 5000 },
+          ],
+          board: ['2c', '7d', '9h', 'Js', '3c'],
+        },
+      ),
+    );
+    expect(text).toContain('Opponents (2), main opponent first:');
+    expect(text).toContain('- BB: main opponent, shown as Villain; stack 100bb');
+    expect(text).toContain('- SB: stack 60bb; showed QhQd');
+    // 1000 from each of three, then 2000 from two: 60bb main pot, 80bb side pot.
+    expect(text).toContain(
+      'Pots: main pot 60bb (can be won by Hero (BTN), SB, Villain (BB)); side pot 1 80bb (can be won by SB, Villain (BB)).',
+    );
+    expect(text).toContain('Pot type: 3-bet pot.');
+    expect(text).not.toMatch(NO_WINNER);
+  });
+
+  it('MTT: ante kind and size, level blinds, stage', () => {
+    const setup: HandSetup = {
+      seats: 9,
+      sb: 100,
+      bb: 200,
+      ante: { mode: 'bb', amount: 200 },
+      heroPos: 'CO',
+      villPos: 'BB',
+    };
+    const text = ctx(
+      {
+        ...cash,
+        kind: 'mtt',
+        mode: 'online',
+        sb: null,
+        bb: 200,
+        ante_mode: 'bb',
+        stake_label: null,
+      },
+      row(
+        setup,
+        [step('preflop', 'CO', 'hero', 'raise', 500), step('preflop', 'BB', 'villain', 'call')],
+        {
+          level_bb: 200,
+          stage: 'bubble',
+          players_left: 12,
+          hero_stack: 8000,
+          villain_stack: 9000,
+          opponents: [{ pos: 'BB', stack: 9000 }],
+        },
+      ),
+    );
+    expect(text).toContain('Tournament spot: stage bubble, 12 players left.');
+    expect(text).toContain('Big-blind ante: 1bb, posted by the big blind.');
+    expect(text).toContain('Level: blinds 100/200 chips, ante 200.');
+  });
+
+  it('hands without forced-bet actions (shorthand, old hands) get no table lines', () => {
+    const old = row(
+      { seats: 9, sb: 25, bb: 50, ante: { mode: 'none' }, heroPos: 'MP', villPos: 'BTN' },
+      [step('preflop', 'BTN', 'villain', 'raise', 500), step('preflop', 'MP', 'hero', 'call', 500)],
+    );
+    const text = ctx(cash, {
+      ...old,
+      actions: (old.actions as Action[]).filter((a) => !a.act.startsWith('post_')),
+    });
+    expect(text).not.toContain('Pot type');
+    expect(text).not.toContain('Uncalled');
+  });
+
+  it('raise multiples are measured against the bet that was faced', () => {
+    const setup: HandSetup = {
+      seats: 2,
+      sb: 25,
+      bb: 50,
+      ante: { mode: 'none' },
+      heroPos: 'BTN',
+      villPos: 'BB',
+    };
+    const text = ctx(
+      cash,
+      row(
+        setup,
+        [
+          step('preflop', 'BTN', 'hero', 'call'),
+          step('preflop', 'BB', 'villain', 'raise', 150),
+          step('preflop', 'BTN', 'hero', 'raise', 450),
+        ],
+        { opponents: [{ pos: 'BB', stack: 10000 }] },
+      ),
+    );
+    expect(text).toContain('raises to 9bb; 3x the bet it faces');
+  });
+});

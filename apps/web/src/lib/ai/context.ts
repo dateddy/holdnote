@@ -1,5 +1,6 @@
 import {
   computePot,
+  isPostAct,
   computeSpr,
   potOddsAtDecisions,
   toBb,
@@ -11,6 +12,7 @@ import {
 import { deriveHand, fromHandRow, type HandRowIn, type HandSession } from '@/lib/hands/build';
 import { ERROR_TAGS } from '@/lib/review/review';
 import { languagePack } from './languages';
+import { buildTableFacts, type OpponentInfo, type TableFacts } from './table-facts';
 
 export type ReviewHand = HandRowIn & {
   num: number;
@@ -35,6 +37,8 @@ export type ReviewContextInput = {
   session: ReviewSession;
   hand: ReviewHand;
   opponent?: { player_type: string | null; notes: string | null; name: string } | null;
+  /** Type and notes of the other opponents picked on the hand, by saved opponent id. */
+  opponentInfo?: OpponentInfo;
   /** Most frequent error tags of the student, most frequent first. */
   topLeaks: string[];
   locale: string;
@@ -69,6 +73,10 @@ export type ReviewFacts = {
   topLeaks: string[];
   locale: string;
   rebuttal?: { reason: string; previous: PreviousReview } | null;
+  /** Straddle, ante, level, multiway, side pots (task 3.5). Null for hands without a state machine. */
+  table?: TableFacts | null;
+  /** Benchmark only: the context of before task 3.5 (no table facts, no sizing notes). */
+  legacyContext?: boolean;
 };
 
 const ACT_WORD: Record<Action['act'], string> = {
@@ -109,14 +117,74 @@ export function sizingNote(steps: readonly ActionStep[], step: ActionStep): stri
       const limpers = earlier.filter((s) => s.action.act === 'call').length;
       return limpers > 0 ? `; isolates ${limpers} limper${limpers > 1 ? 's' : ''}` : '';
     }
-    return `; ${Math.round((action.amount / step.level) * 10) / 10}x the bet it faces`;
+    // `level` is the bet on the table after this raise; the bet it faces is the one before.
+    const faced = steps.find((s) => s.index === step.facingIndex)?.action.amount;
+    return faced ? `; ${Math.round((action.amount / faced) * 10) / 10}x the bet it faces` : '';
   }
   return '';
 }
 
+const POT_TYPE_WORD: Record<TableFacts['potType'], string> = {
+  limped: 'limped pot (no preflop raise)',
+  single_raised: 'single-raised pot',
+  three_bet: '3-bet pot',
+  four_bet_plus: '4-bet+ pot',
+};
+
+/** Lines for the table setup, the opponents, pot type, side pots and returned bets (task 3.5). */
+export function tableLines(t: TableFacts, bb: number, f: Pick<ReviewFacts, 'kind'>): string[] {
+  const inBb = (n: number) => `${fmt(toBb(n, bb))}bb`;
+  const out: string[] = [];
+  if (t.straddles.length) out.push(`Straddle: ${t.straddles.map(inBb).join(', ')}.`);
+  if (t.ante.mode === 'each' && t.ante.amount > 0) {
+    out.push(`Ante: ${inBb(t.ante.amount)} from every player.`);
+  } else if (t.ante.mode === 'bb' && t.ante.amount > 0) {
+    out.push(`Big-blind ante: ${inBb(t.ante.amount)}, posted by the big blind.`);
+  }
+  if (f.kind === 'mtt') {
+    const ante = t.ante.mode !== 'none' && t.ante.amount > 0 ? `, ante ${fmt(t.ante.amount)}` : '';
+    out.push(`Level: blinds ${fmt(t.blinds.sb)}/${fmt(t.blinds.bb)} chips${ante}.`);
+  }
+  out.push(`Pot type: ${POT_TYPE_WORD[t.potType]}.`);
+  if (t.streetPlayers.length) {
+    out.push(
+      `Players at the start of each street: ${t.streetPlayers.map((s) => `${s.street} ${s.count}`).join(', ')}.`,
+    );
+  }
+  if (t.opponents.length > 1) {
+    out.push(`Opponents (${t.opponents.length}), main opponent first:`);
+    for (const o of t.opponents) {
+      const bits = [
+        o.main ? 'main opponent, shown as Villain' : null,
+        o.stack != null ? `stack ${inBb(o.stack)}` : 'stack unknown',
+        o.player_type ? `type ${o.player_type}` : null,
+        o.notes ? `notes "${clean(o.notes, 200)}"` : null,
+        o.cards.length ? `showed ${o.cards.join('')}` : null,
+      ].filter(Boolean);
+      out.push(`- ${o.pos}: ${bits.join('; ')}`);
+    }
+  }
+  if (t.pots.length > 1) {
+    out.push(
+      `Pots: ${t.pots
+        .map(
+          (p, i) =>
+            `${i === 0 ? 'main pot' : `side pot ${i}`} ${inBb(p.amount)} (can be won by ${p.eligible.join(', ')})`,
+        )
+        .join('; ')}.`,
+    );
+  }
+  if (t.uncalled.length) {
+    out.push(
+      `Uncalled bet returned to its owner, not in the pot: ${t.uncalled.map((u) => `${u.street} ${u.who} ${inBb(u.amount)}`).join('; ')}.`,
+    );
+  }
+  return out;
+}
+
 /** The user message for one hand, from database rows. */
 export function buildReviewContext(input: ReviewContextInput): string {
-  const { session, hand, opponent, topLeaks, locale, rebuttal } = input;
+  const { session, hand, opponent, opponentInfo, topLeaks, locale, rebuttal } = input;
   const draft = fromHandRow(session, hand);
   const d = deriveHand(session, draft);
   return renderReviewContext({
@@ -140,6 +208,7 @@ export function buildReviewContext(input: ReviewContextInput): string {
     topLeaks,
     locale,
     rebuttal,
+    table: buildTableFacts(session, draft, d, opponentInfo),
   });
 }
 
@@ -207,6 +276,8 @@ export function renderReviewContext(f: ReviewFacts): string {
           : ''
       }`;
 
+    if (f.table && !f.legacyContext) lines.push(...tableLines(f.table, bb, f));
+
     lines.push('Actions (pot after each action):');
     let street = '';
     for (const s of steps) {
@@ -218,7 +289,8 @@ export function renderReviewContext(f: ReviewFacts): string {
     }
 
     const odds = new Map(potOddsAtDecisions(f.input).map((o) => [o.index, o]));
-    const heroSteps = steps.filter((s) => s.action.actor === 'hero');
+    // Forced bets are not decisions.
+    const heroSteps = steps.filter((s) => s.action.actor === 'hero' && !isPostAct(s.action.act));
     if (heroSteps.length) {
       lines.push('Hero decisions, in order (pot odds and MDF are computed):');
       heroSteps.forEach((s, i) => {
@@ -230,7 +302,7 @@ export function renderReviewContext(f: ReviewFacts): string {
             }`
           : '';
         lines.push(
-          `${i + 1}. ${s.action.street}: facing ${faced ? describe(faced.action) : 'no bet'} -> ${describe(s.action)}${sizingNote(steps, s)}${price}`,
+          `${i + 1}. ${s.action.street}: facing ${faced ? describe(faced.action) : 'no bet'} -> ${describe(s.action)}${f.legacyContext ? '' : sizingNote(steps, s)}${price}`,
         );
       });
     }
