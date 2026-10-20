@@ -35,6 +35,8 @@ export interface StreetSummary {
   potEnd: number;
   heroInvestedAtStart: number;
   villainInvestedAtStart: number;
+  /** The part of the largest bet nobody called, handed back to its owner (`hero`, `villain` or a seat). */
+  uncalled?: { key: string; amount: number };
 }
 
 export interface PotResult {
@@ -254,7 +256,10 @@ export function computePot(input: HandInput): PotResult {
     const top = sorted[0];
     if (top && inHand(top[0])) {
       const second = sorted[1]?.[1] ?? 0;
-      if (top[1] > second) bets[top[0]] = second;
+      if (top[1] > second) {
+        summary.uncalled = { key: top[0], amount: roundMoney(top[1] - second) };
+        bets[top[0]] = second;
+      }
     }
     for (const [key, amount] of Object.entries(bets)) add(key, amount);
     pot = roundMoney(pot + streetSum());

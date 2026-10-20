@@ -15,6 +15,8 @@ export {
   remapSeats,
   tableOrder,
 } from './seats';
+export { playersByStreet } from './streets';
+export type { StreetPlayers } from './streets';
 export { showdown } from './showdown';
 export type { PotOutcome, ShowdownInput, ShowdownResult } from './showdown';
 export type * from './types';
