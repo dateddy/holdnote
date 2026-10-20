@@ -367,3 +367,11 @@ Append-only. Không sửa, không xóa mục cũ. Muốn đảo một quyết đ
 - Lý do: Người đã fold không thể nhận tiền; kết quả và `pot_final` phải khớp luật.
 - Supersedes: cách đóng street trong 5.1c-1 (spec mục 11).
 - Ai quyết: Đạt
+
+## DEC-052 — Showdown theo bài và từng pot, sửa action inline, panel trong luồng trang (task 5.1c-6b)
+
+- Ngày: 2026-10-20
+- Quyết định: (1) Một nguồn tính kết quả: `settlePots` (poker-core) xây và chia pot; `showdown`, `computeResult` (ghi tắt, hand cũ) và `settle` đều gọi nó; `deriveHand` dùng `showdown` ở chế độ nút. Bỏ cảnh báo `side_pot`. (2) Thêm cột `hands.pot_winners jsonb` (người thắng từng pot khi người dùng chọn) và khóa `cards` trong từng phần tử `hands.opponents` (bài đối thủ phụ); `villain_cards` vẫn là bài đối thủ chính. (3) Chọn khác bài đã nhập thì tiền vẫn tính nhưng khóa nút Lưu ("Kết quả không khớp bài"); "Sửa tay" không mở khóa. (4) Bỏ `Sheet`: sửa action bằng hàng trượt ngay dưới chip (`EditRow`). (5) Khối sticky chỉ chứa dòng tóm tắt; panel thiết lập là phần tử đứng sau, trôi theo trang. (6) Ô nhập tên đối thủ có gợi ý bỏ dấu và "+ Tạo"; đối thủ tạo offline vào hàng đợi IndexedDB (store `opponents`, DB version 2) và được gửi trước hand. (7) Mọi đối thủ đã chọn ghi "Đối thủ", từ 2 người thêm vị trí. (8) Phiên MTT cũng có số người (cột `seats` đã có). Hand lưu trước đây không có `pot_winners` thì pot chưa có người thắng đọc theo `outcome` đã lưu.
+- Lý do: Kết quả multiway/side pot phải đúng không cần người dùng tự tính; sheet phủ màn và nhiều nơi tính kết quả riêng gây lệch.
+- Supersedes: DEC-049 mục (4) "chỉ giữ Sheet cho sửa action", mục (7) "MTT chưa có số người"; DEC-050 mục (5) "UI chuyển sang showdown ở 5.1c-6b" (đã làm).
+- Ai quyết: Đạt (duyệt kế hoạch ngày 2026-10-20)

@@ -116,7 +116,7 @@ export function ShowdownBlock({
             <div key={o.key} className="space-y-1.5">
               <Button
                 variant="secondary"
-                className="justify-between px-3 text-sm"
+                className="justify-between gap-2 px-3 text-sm"
                 aria-expanded={cardsFor === o.key}
                 onClick={() => setCardsFor((k) => (k === o.key ? null : o.key))}
               >

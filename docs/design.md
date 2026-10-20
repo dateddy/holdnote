@@ -82,7 +82,7 @@ Không dùng `gap-5`, margin lẻ (`mt-*`, `mb-*`) để căn; dùng gap của c
 | Bàn phím chọn bài (`CardPicker`) | phím cao **48px**, khe **4px**; hàng 1: A K Q J T 9 8 (7 phím chia đều, ≈44px); hàng 2: 7 6 5 4 3 2 (6 phím cùng cỡ, thụt 24px mỗi bên); hàng 3: ♥ ♦ ♣ ♠ ? ⌫ (6 phím chia đều) |
 | Chữ phím                    | rank 17px mono đậm; chất 20px; bộ 4 màu (♥ `suit-heart`, ♦ `suit-diamond`, ♣ `suit-club`, ♠ `foreground`) |
 | Bàn phím số (`NumPad`)      | 4 cột × 4 hàng, phím cao 44px, khe 6px                                                          |
-| Bàn mini                    | cao 192px (`h-48`), ghế 44px, xếp đều theo N, BTN ở đáy; panel cao tối đa `100dvh − 12rem` rồi cuộn trong |
+| Bàn mini                    | cao 192px (`h-48`), ghế 44px, xếp đều theo N, BTN ở đáy; panel là phần tử trong luồng trang đứng sau dòng tóm tắt dính, không có chiều cao tối đa, trôi lên khi cuộn |
 
 Bộ chọn bài, bàn phím số và bàn mini **trượt ra trong luồng trang** (`Collapse`), không dùng `Sheet`, không làm tối màn. Phần đang dùng phải nằm trọn trên thanh Lưu ở 375×550 (`revealAboveBar` cuộn trang khi mở).
 
@@ -94,7 +94,7 @@ Bộ chọn bài, bàn phím số và bàn mini **trượt ra trong luồng tran
 | `md` | `h-11` (44px) | `text-base` | Mặc định: nút, `Input`, `Chip`                                                    |
 | `lg` | `h-14` (56px) | `text-lg`   | Hành động chính của màn: Lưu hand, Vào bàn, Kết thúc phiên                        |
 
-- Bo góc: `rounded-md` cho mọi thứ; `rounded-full` chỉ cho chấm/vạch chỉ báo; lá bài `rounded`.
+- Bo góc: `rounded-md` cho mọi thứ; `rounded-full` chỉ cho chấm/vạch chỉ báo và `Toggle`; lá bài `rounded`.
 - Tắt: `disabled:opacity-40`.
 - Mỗi màn tối đa một nút `lg` `primary`.
 
@@ -113,13 +113,12 @@ Bộ chọn bài, bàn phím số và bàn mini **trượt ra trong luồng tran
 | `CardKey` / `CardSlot`     | Phím hạng/chất và ô lá bài của bộ chọn bài                                                                                |
 | `Seat`                     | Ghế trên bàn mini: chỉ có tên vị trí; `selected` = tô đặc theo tone (mình `accent`, đối thủ `villain`), chưa chọn = chỉ viền; nghĩa nằm ở `aria-label` |
 | `PosTag`                   | Chip vị trí nhỏ màu (`[MP]` xanh, `[BTN]` cam) trên thanh ngữ cảnh                                                         |
-| `BarButton`                | Cả một thanh là một nút, căn trái (thanh ngữ cảnh)                                                                         |
+| `BarButton`                | Cả một thanh là một nút, căn trái (dòng tóm tắt dính; panel thiết lập là phần tử riêng đứng sau nó)                          |
 | `Stepper`                  | `[−] N người [+]`, hai nút 44px, có min/max                                                                                |
 | `Collapse`                 | Vùng mở ra trong luồng trang (panel bàn mini, bộ chọn bài, bàn phím số); đóng thì `inert`                                   |
-| `ActionPill`               | Chip action trong timeline của street; chạm để sửa; `invalid` tô đỏ (`loss`)                                                  |
-| `Sheet`                    | Panel trượt lên từ đáy, phủ màn (chỉ còn dùng để sửa action)                                                              |
+| `ActionPill`               | Chip action trong timeline của street; chạm để mở hàng sửa ngay dưới (`active` = viền `accent`); `invalid` tô đỏ (`loss`)        |
 | `NumPad`                   | Phím số 0–9, `.`, `k`, xóa                                                                                                |
-| `Toggle`                   | Công tắc bật/tắt                                                                                                          |
+| `Toggle`                   | Công tắc bật/tắt: rãnh bo tròn, núm tròn trượt (ngoại lệ `rounded-full` cùng chấm/vạch chỉ báo), vùng chạm 44px             |
 | `StickyBar`                | Thanh dính đáy duy nhất của màn làm việc (Ghi nhanh): nền đặc, viền trên, safe-area                                       |
 | `Tab` / `IconButton`       | Hàng tab street (xanh = xong hoặc đang tới lượt, đỏ nét đứt = có action không hợp lệ, mờ = chưa tới; tab đang chọn tô đặc) và nút vuông 44px một ký tự (`<>`, `‹`, `›`) |
 | `CardSlot` (trạng thái)    | `size="card"` (41×57px) hoặc `fill`; `missing` (nhấp nháy viền `warn`), `need` (nhấp nháy viền `accent`: bài mình còn trống), `extra` (viền `warn` nét đứt), `duplicate` (viền `loss`), `highlight` (viền `accent`); ô khóa dùng `disabled` |

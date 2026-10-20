@@ -1,13 +1,13 @@
-# STATUS — cập nhật 2026-10-05
+# STATUS — cập nhật 2026-10-20 19:10
 
 ## Đã xong
 
-- Giai đoạn 1 (1.1–1.7) và giai đoạn 2 hết (2.1–2.8); 22 commit trên `main`, chưa push.
-- 2.2–2.6 (03/10): Ghi nhanh (lưới bài, vị trí, kết quả, stack, chế độ nút, ghi tắt), danh sách hand + bộ lọc, chi tiết hand + review tay. poker-core thêm `previewNext`, `suggestAmount`, `formatShorthand`.
-- 2.7: hàng đợi hand trong IndexedDB (`lib/offline/`): Lưu = ghi máy trước, đồng bộ sau; id hand do client sinh; xung đột `num` tự dời sang số kế; lỗi server từ chối thì đánh dấu `failed`; chỉ đồng bộ hand của tài khoản đang đăng nhập. Toast Hoàn tác 10 giây (gỡ khỏi hàng đợi hoặc xóa trên DB). Dải "n hand chờ đồng bộ" ở màn Ghi nhanh, trang phiên, danh sách.
-- 2.8: `manifest.webmanifest`, icon 192/512/maskable + apple-icon (chữ "H" tạm, sinh bằng code), `public/sw.js` viết tay (chỉ đăng ký ở production), nút/hướng dẫn cài ở trang chủ.
-- Đã thử: `pnpm --filter web build` qua; chạy `next start` thì manifest, icon, apple-icon, sw.js trả 200 không cần đăng nhập, `/` chuyển về `/login`.
-- `brain/` (DEC-001…034), skill `session-compress` + `db-migration`, hook quét secret.
+- Giai đoạn 1–4 xong, 5.1 xong. 5.1b làm dở: 5.1b-1 xong, 5.1b-2…7 chưa.
+- 5.1c-1, 2, 4, 5a/5b xong (state machine, màn Ghi nhanh, bàn mini, multiway, bộ chọn bài).
+- 5.1c-6a + 6a-fix xong: evaluator 7 lá, side pot, `showdown`, trả cược không ai theo (DEC-050, 051).
+- 5.1c-6b xong (DEC-052): một nguồn tính kết quả (`settlePots`), showdown theo bài và từng pot, chọn sai bị khóa Lưu, nhãn "Đối thủ · BTN", sửa action inline (bỏ `Sheet`), panel đứng sau dòng tóm tắt dính, ô gắn tên có "+ Tạo" (offline qua IndexedDB), Toggle thật, số người cho MTT.
+- Migration `20261020180000_hand_pot_winners.sql` đã áp lên DB thật (`hands.pot_winners`); bài đối thủ phụ ở `hands.opponents[].cards`.
+- Ảnh kiểm tra: `screens/5.1c-6b/` (33 ảnh, 375×667 và 375×550; ngoài git).
 
 ## Đang làm
 
@@ -15,18 +15,18 @@
 
 ## Bước tiếp theo (tối đa 3, theo thứ tự)
 
-1. Đạt thử tay (production: `pnpm --filter web build` rồi `pnpm --filter web start`): ghi hand khi tắt mạng (DevTools → Offline), bật lại thấy tự đồng bộ; Hoàn tác; cài lên màn hình chính.
-2. Task 3.1: `/api/review` (dựng ngữ cảnh, OpenRouter, Zod, lưu `reviews` + `ai_usage`).
-3. Task 3.2: quota gói miễn phí, ngân sách cứng, gói tự mang key (Vault).
+1. Đạt thử tay showdown multiway, sửa chip inline, tạo đối thủ từ ô nhập trên điện thoại thật.
+2. Task 5.1c-3 (blind MTT) hoặc 5.2 migrate `legacy/data` (sau đó chạy lại `pnpm recheck:results`).
+3. Dọn control style tay còn lại (5.1b-4/5/7): `shorthand-input`, `undo-toast`, `review-form`, `session-form`.
 
 ## Vướng / cần Đạt quyết
 
-- Chưa thử tay offline/PWA trên trình duyệt thật (cần đăng nhập). Điều hướng offline chỉ hoạt động với trang đã mở trước đó khi còn mạng.
-- DEC-032 (trừ điểm 2) và DEC-033 đã được Đạt xác nhận; điểm 2 sửa bằng DEC-034 (ante MTT theo level).
-- Icon là chữ "H" tạm; cần logo thật trước beta.
-- Trước beta cần SMTP riêng (email mặc định Supabase chỉ vài mail/giờ).
-- `pnpm test:rls` chưa chạy lại (không đổi schema).
+- Panel thiết lập không còn chiều cao tối đa nên không còn kiểm "vừa trên thanh Lưu" cho panel (vẫn kiểm cho bộ chọn bài, bàn phím số, hàng sửa).
+- Hand lưu trước 5.1c-6b không có `pot_winners`: pot chưa rõ người thắng đọc theo `outcome` đã lưu; sửa hand cũ có bài đối thủ mà `outcome` trái bài sẽ bị khóa Lưu cho tới khi sửa.
+- Chưa thử tay: server action lưu tổng kết, gọi AI thật, đồng bộ offline mất mạng thật (kể cả hàng đợi đối thủ).
+- Trước beta: chính sách quyền riêng tư, tắt huấn luyện trên dữ liệu ở OpenRouter, SMTP riêng, logo thật.
+- `CLAUDE.md` có thay đổi chưa commit từ trước phiên (không đụng tới).
 
 ## Sức khỏe repo
 
-- test: 458 pass / 0 fail (core 365, web 93) - typecheck: ok - lint: ok
+- test: 758 pass / 0 fail (core 538, web 220) - typecheck: ok - lint: ok (1 cảnh báo cũ `_fix` ở recheck-results.test.ts)

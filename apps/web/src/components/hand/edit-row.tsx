@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { Action, ActInput, ButtonKind, HandState, Position } from 'poker-core';
 import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
+import { revealAboveBar } from '@/lib/hands/reveal';
 import { AmountPad } from './amount-pad';
 
 type Props = {
@@ -51,6 +52,13 @@ export function EditRow({ action, before, bb, money, onApply, onDeleteFrom, onCl
     return () => document.removeEventListener('pointerdown', away);
   }, [onClose]);
 
+  // Bring the row (and the pad, once it opens) above the save bar, after layout has settled.
+  const padOpen = kind === 'dead' || SIZED.includes(kind);
+  useEffect(() => {
+    const timer = setTimeout(() => revealAboveBar(root.current), 200);
+    return () => clearTimeout(timer);
+  }, [padOpen]);
+
   const options: ButtonKind[] =
     current === 'dead' ? [] : [...new Set<ButtonKind>(['fold', ...before.buttons])];
   const sized = kind === 'dead' || SIZED.includes(kind);
@@ -58,7 +66,12 @@ export function EditRow({ action, before, bb, money, onApply, onDeleteFrom, onCl
     k === 'open' ? t('act_open') : k === 'dead' ? t('deadMoney') : th(`act_${k}`);
 
   return (
-    <div ref={root} className="space-y-2 rounded-md border border-line bg-background p-2">
+    <div
+      ref={root}
+      role="group"
+      aria-label={t('editAction')}
+      className="space-y-2 rounded-md border border-line bg-background p-2"
+    >
       <div className="flex flex-wrap gap-1.5">
         {(current === 'dead' ? (['dead'] as const) : options).map((k) => (
           <Chip key={k} on={kind === k} onClick={() => setKind(k)}>

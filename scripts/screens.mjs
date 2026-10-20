@@ -6,7 +6,7 @@
  *
  * Creates a throwaway user with two sessions through the Supabase secret key, signs in by writing
  * the session cookie, plays the golden hand (-360bb), saves it, checks the stored row and deletes
- * the user (cascade). Start the app with HOLDNOTE_SCREENS=1 so no dev badge is in the pictures. Pictures land in screens/5.1c-5/ (ignored by git).
+ * the user (cascade). Start the app with HOLDNOTE_SCREENS=1 so no dev badge is in the pictures. Pictures land in screens/5.1c-6b/ (ignored by git).
  */
 import { mkdirSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
@@ -28,7 +28,7 @@ const env = Object.fromEntries(
 );
 const URL_ = env.NEXT_PUBLIC_SUPABASE_URL;
 const BASE = process.env.BASE_URL ?? 'http://localhost:3100';
-const OUT = process.env.SCREENS_DIR ?? 'screens/5.1c-5';
+const OUT = process.env.SCREENS_DIR ?? 'screens/5.1c-6b';
 const OPTS = { auth: { persistSession: false, autoRefreshToken: false } };
 const chrome = join(homedir(), 'AppData/Local/ms-playwright/chromium-1200/chrome-win64/chrome.exe');
 mkdirSync(OUT, { recursive: true });
@@ -233,7 +233,6 @@ async function main() {
   await page.getByRole('button', { name: 'Mình 1', exact: true }).waitFor();
   await page.waitForTimeout(400);
   await shot('01-new-hand-table-open');
-  await fits(page, 'new hand, table panel', page.getByRole('region', { name: 'Bàn' }));
 
   // ---- hand 1, the golden hand: -360bb ----
   await setupHand(gold);
@@ -373,8 +372,13 @@ async function main() {
     .getByRole('button', { name: /^Mình Call/ })
     .first()
     .click();
-  await page.getByRole('dialog').getByRole('button', { name: 'Fold', exact: true }).click();
-  await page.getByRole('dialog').getByRole('button', { name: 'Xác nhận' }).click();
+  const editRow = page.getByRole('group', { name: 'Sửa hành động' });
+  await editRow.waitFor();
+  await page.waitForTimeout(300);
+  await shot('15a-inline-edit-row');
+  await fits(page, 'inline edit row (667)', editRow);
+  await editRow.getByRole('button', { name: 'Fold', exact: true }).click();
+  await editRow.getByRole('button', { name: 'Xác nhận' }).click();
   await shot('15-edit-makes-street-invalid');
 
   // ---- all-in called before the flop: the whole board opens ----
@@ -383,6 +387,123 @@ async function main() {
   await tap('Call');
   await page.getByText(/chọn nốt các lá board/).waitFor();
   await shot('16-allin-runout');
+
+  // ---- 5.1c-6b: showdown by the cards ----
+  const showdownCard = () => page.locator('section').filter({ hasText: /Ai thắng\?|Showdown/ });
+  await setupHand(small);
+  await tap('All-in');
+  await tap('Call');
+  await board('Flop 1', [
+    ['Q', 'h'],
+    ['7', 'd'],
+    ['2', 'c'],
+    ['9', 's'],
+    ['3', 'h'],
+  ]);
+  await page.getByRole('button', { name: /^Bài Đối thủ/ }).click();
+  await pickIn(showdownCard(), 'T', 'h');
+  await pickIn(showdownCard(), 'T', 'd');
+  await page
+    .getByText('Mình: Mậu thầu · Đối thủ: Đôi')
+    .waitFor({ timeout: 8000 })
+    .catch(async (e) => {
+      await page.screenshot({ path: `${OUT}/fail.png`, fullPage: true });
+      throw e;
+    });
+  await page.getByText('-100bb').first().waitFor();
+  await showdownCard().first().scrollIntoViewIfNeeded();
+  await shot('22-showdown-auto-picked');
+
+  // a pick against the cards: priced, warned, and Lưu is locked with the reason in the button
+  await showdownCard().getByRole('button', { name: 'Mình thắng', exact: true }).click();
+  await page.getByText(/Theo bài đã nhập, Đối thủ thắng \(Đôi\)/).waitFor();
+  const locked = page.getByRole('button', { name: 'Kết quả không khớp bài' });
+  await locked.waitFor();
+  if (!(await locked.isDisabled())) throw new Error('save should be locked on a mismatch');
+  await showdownCard().first().scrollIntoViewIfNeeded();
+  await shot('23-showdown-mismatch-locked');
+  await showdownCard().getByRole('button', { name: 'Mình thắng', exact: true }).click();
+  await page.getByRole('button', { name: /^Lưu hand/ }).waitFor();
+
+  // ---- three players, a short all-in: two pots; no cards, so a winner per pot ----
+  await page.goto(gold.record);
+  await page.getByRole('button', { name: 'Mình 1', exact: true }).waitFor();
+  await seatUp(page, {
+    players: 9,
+    hero: 'MP',
+    villains: ['CO', 'BTN'],
+    stacks: { CO: '3000', BTN: '5000' },
+    heroStack: '1000',
+  });
+  await closePanel(page);
+  await page.getByRole('button', { name: 'Mình 1', exact: true }).click();
+  await pickIn(picker(), 'A', 's');
+  await pickIn(picker(), 'K', 'd');
+  await picker().waitFor({ state: 'detached' });
+  await tap('All-in');
+  await tap('All-in');
+  await tap('Call');
+  await board('Flop 1', [
+    ['Q', 'h'],
+    ['7', 'd'],
+    ['2', 'c'],
+    ['9', 's'],
+    ['3', 'h'],
+  ]);
+  await page.getByText('Pot phụ 1').waitFor();
+  await showdownCard().first().scrollIntoViewIfNeeded();
+  await shot('24-three-way-side-pot-choose');
+  await showdownCard().getByRole('button', { name: 'Mình', exact: true }).click();
+  await showdownCard().getByRole('button', { name: 'Đối thủ · CO thắng' }).click();
+  await shot('25-three-way-per-pot-picked');
+  // split the main pot with the short stack
+  await showdownCard().getByRole('button', { name: 'Đối thủ · CO', exact: true }).click();
+  await shot('26-three-way-split-main-pot');
+
+  // ---- the table panel is a flow element: only the summary line sticks ----
+  await page.goto(gold.record);
+  await page.getByRole('button', { name: 'Mình 1', exact: true }).waitFor();
+  await seatUp(page, { players: 9, hero: 'MP', villains: ['BTN'], heroStack: '5000' });
+  await page.waitForTimeout(400);
+  await page.mouse.wheel(0, 260);
+  await page.waitForTimeout(400);
+  await shot('27-panel-open-scrolled');
+  const stuck = await panelBar(page).boundingBox();
+  if (!stuck || stuck.y > 2) throw new Error('summary line should stay at the top');
+  await panelBar(page).click(); // closes
+  await page.waitForTimeout(300);
+  await panelBar(page).click(); // opens again and returns to the top
+  await page.waitForTimeout(700);
+  if ((await page.evaluate(() => window.scrollY)) > 2) throw new Error('should scroll to the top');
+
+  // ---- name an opponent from the box, creating him ----
+  const nameBox = page.getByLabel('Tên đối thủ BTN');
+  await nameBox.scrollIntoViewIfNeeded();
+  await nameBox.fill('Áo đỏ');
+  await page.getByRole('button', { name: '+ Tạo "Áo đỏ"' }).waitFor();
+  await page.getByRole('button', { name: '+ Tạo "Áo đỏ"' }).scrollIntoViewIfNeeded();
+  await shot('28-create-opponent-from-box');
+  await page.getByRole('button', { name: '+ Tạo "Áo đỏ"' }).click();
+  await page.waitForTimeout(500);
+  await nameBox.scrollIntoViewIfNeeded();
+  await shot('29-opponent-created-and-named');
+  let made = null;
+  for (let i = 0; i < 20 && !made; i++) {
+    const { data } = await admin.from('opponents').select('id, name, venue').eq('name', 'Áo đỏ');
+    made = data?.[0] ?? null;
+    if (!made) await new Promise((r) => setTimeout(r, 500));
+  }
+  if (made?.venue !== 'Screens') throw new Error('new opponent should reach the database');
+  await nameBox.fill('ao');
+  await page.getByRole('button', { name: 'Áo đỏ', exact: true }).waitFor();
+
+  // ---- Straddle is a real switch ----
+  const straddle = page.getByRole('switch', { name: 'Straddle' });
+  await straddle.scrollIntoViewIfNeeded();
+  await shot('30-straddle-toggle-off');
+  await straddle.click();
+  await page.waitForTimeout(300);
+  await shot('31-straddle-toggle-on');
 
   // ---- the saved hand opens as a read view, edit form saves ----
   await page.goto(gold.record); // lets the offline queue send hand 1
@@ -414,7 +535,6 @@ async function main() {
   const low = await open(550);
   await low.goto(gold.record);
   await low.getByRole('button', { name: 'Mình 1', exact: true }).waitFor();
-  await fits(low, 'new hand, table panel (550)', low.getByRole('region', { name: 'Bàn' }));
   await low.screenshot({ path: `${OUT}/19-550-table-open.png` });
   await seatUp(low, { players: 9, hero: 'MP', villains: ['BTN'], heroStack: '5000' });
   await closePanel(low);

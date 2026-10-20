@@ -26,9 +26,9 @@ Chốt ngày 19/10/2026. Áp dụng chung cho Cash và MTT live. Chế độ ghi
 
 Không có bước thiết lập riêng và không có nút "Bắt đầu ghi": vào màn Ghi hand là nhập được ngay (task 5.1c-5).
 
-**Thanh ngữ cảnh** (dính ở đầu màn): chip vị trí màu `[MP] vs [LJ] [BTN]`, "N người", stack của mình, straddle (cash) hoặc level/blind/giai đoạn (MTT). Điền sẵn theo hand trước; chạm thanh để mở **bàn mini** trượt ra ngay dưới thanh (không phủ màn, không làm tối). Bàn mini tự thu khi chạm ô bài, nút action hoặc chạm ra ngoài. Hand mới: vị trí mình điền sẵn, đối thủ trống, bàn mini tự mở ở thanh Đối thủ.
+**Thanh ngữ cảnh** (dính ở đầu màn): chip vị trí màu `[MP] vs [LJ] [BTN]`, "N người", stack của mình, straddle (cash) hoặc level/blind/giai đoạn (MTT). Điền sẵn theo hand trước; chỉ dòng tóm tắt này dính; chạm nó thì **panel thiết lập** (bàn mini, bộ đếm, dòng đối thủ, stack, straddle/level, chế độ nhập) mở ra như một thẻ trong luồng trang, đứng ngay sau dòng tóm tắt: đẩy các thẻ dưới xuống, cuộn thì trôi lên như thẻ thường (không phủ màn, không làm tối). Chạm dòng tóm tắt khi trang đã cuộn xa thì cuộn về đầu và mở panel. Bàn mini tự thu khi chạm ô bài, nút action hoặc chạm ra ngoài. Hand mới: vị trí mình điền sẵn, đối thủ trống, bàn mini tự mở ở thanh Đối thủ.
 
-**Bàn mini** có hai thanh: Mình (màu `accent`) và Đối thủ (màu cam). Ghế chỉ tô màu, không ghi chữ "Mình"/"Đối thủ" (nghĩa nằm ở nhãn thanh và `aria-label`); ghế chọn tô đặc, ghế trống chỉ viền. Thanh Mình chọn 1 ghế, chạm ghế khác để chuyển, chọn xong tự sang thanh Đối thủ. Thanh Đối thủ chạm để chọn, chạm lại để bỏ, chọn nhiều (multiway); ghế của mình không chọn được. Mỗi đối thủ đã chọn có một dòng dưới bàn mini: vị trí, stack (điền theo lần gặp gần nhất), gắn tên (danh sách hiện tất cả đối thủ đã lưu, người trùng địa điểm phiên xếp lên đầu; mỗi người chỉ gắn được một ghế). Bộ đếm "N người [−][+]" nằm ngay trên bàn mini, bên phải.
+**Bàn mini** có hai thanh: Mình (màu `accent`) và Đối thủ (màu cam). Ghế chỉ tô màu, không ghi chữ "Mình"/"Đối thủ" (nghĩa nằm ở nhãn thanh và `aria-label`); ghế chọn tô đặc, ghế trống chỉ viền. Thanh Mình chọn 1 ghế, chạm ghế khác để chuyển, chọn xong tự sang thanh Đối thủ. Thanh Đối thủ: "Chạm để chọn đối thủ, chạm lại để bỏ", chọn nhiều (multiway); ghế của mình không chọn được. Mỗi đối thủ đã chọn có một dòng dưới bàn mini: vị trí, stack (điền theo lần gặp gần nhất), ô nhập tên có gợi ý (khớp không phân biệt dấu, hoa thường; người trùng địa điểm phiên lên đầu; mỗi người chỉ gắn được một ghế). Không khớp thì có "+ Tạo '<tên>'": tạo hồ sơ đối thủ ngay (địa điểm = địa điểm phiên), dùng được ở hand khác; offline thì vào hàng đợi IndexedDB và được gửi trước hand. Bộ đếm "N người [−][+]" nằm ngay trên bàn mini, bên phải.
 
 | Trường | Mặc định | Ghi chú |
 |---|---|---|
@@ -41,7 +41,7 @@ Không có bước thiết lập riêng và không có nút "Bắt đầu ghi": 
 | Level, SB/BB, ante (chỉ MTT) | Theo hand trước | Nút "Lên level" |
 | Giai đoạn giải (chỉ MTT) | Theo hand trước | Tùy chọn |
 
-**Số người chơi N (2–10)** = số người được chia bài (người sit out không tính). Mặc định theo phiên, sau đó nhớ theo hand trước; lưu theo từng hand (`players_dealt`). Tên vị trí theo N (bỏ dần ghế đầu, BTN/SB/BB luôn có):
+**Số người chơi N (2–10)** = số người được chia bài (người sit out không tính). Phiên cash và MTT đều có số người; mặc định theo phiên, sau đó nhớ theo hand trước; lưu theo từng hand (`players_dealt`). Tên vị trí theo N (bỏ dần ghế đầu, BTN/SB/BB luôn có):
 
 | N | Vị trí theo thứ tự hành động preflop |
 |---|---|
@@ -61,7 +61,7 @@ Không có bước thiết lập riêng và không có nút "Bắt đầu ghi": 
 
 **Chọn ghế:** Mình chọn đúng 1 ghế (chạm ghế khác để chuyển). Đối thủ chọn nhiều ghế, chạm lại để bỏ; không chọn được ghế của mình. **Đối thủ chính** = đối thủ chưa fold có action cuối cùng trong hand (`primaryOpponent`); nếu mọi đối thủ đều đã fold thì là người fold cuối cùng; chưa ai có action thì là người chọn đầu tiên. Hand lưu `villain_pos`, `villain_stack`, `opponent_id` của đối thủ chính và `opponents` cho tất cả.
 
-**Đổi lựa chọn khi đã có action:** bỏ chọn một đối thủ, đổi vị trí mình, hoặc giảm N làm mất ghế → replay dừng ở action đầu tiên của ghế không còn được theo dõi; action đó và mọi action sau tô đỏ (`invalid`, cảnh báo `not_in_hand`), không xóa. Chọn lại ghế thì hết đỏ.
+**Đổi lựa chọn khi đã có action:** bỏ chọn một đối thủ, đổi vị trí mình, hoặc giảm N làm mất ghế (thẻ Action hiện "Chọn lại ghế của mình để tiếp tục") → replay dừng ở action đầu tiên của ghế không còn được theo dõi; action đó và mọi action sau tô đỏ (`invalid`, cảnh báo `not_in_hand`), không xóa. Chọn lại ghế thì hết đỏ.
 
 ## 4. Straddle
 
@@ -137,18 +137,20 @@ Không có bước thiết lập riêng và không có nút "Bắt đầu ghi": 
 - Kết quả của mình = phần nhận về từ các pot − tổng đã bỏ vào (chip và bb). Không trừ rake. Cho sửa tay con số cuối, gắn cờ "đã sửa tay".
 - **Pot theo mức đóng góp** (`buildPots`): mỗi mức đóng góp của người chưa fold tạo một pot (Pot chính, Pot phụ 1…). Người đủ điều kiện = chưa fold và đã đóng tới mức đó. Tiền người fold (kể cả blind, ante, tiền chết) vẫn vào các pot họ đã góp tới; phần người fold góp vượt mức cao nhất của người còn chơi vào pot cuối.
 - **Cược không ai theo**: cuối mỗi street, phần vượt mức đóng lớn thứ hai (tính cả tiền của người đã fold) trả lại cho người đóng nhiều nhất, **chỉ khi người đó còn trong hand**. Người đã fold (và ghế không được chọn, coi như đã fold) không bao giờ nhận lại tiền: blind hoặc straddle của họ ở lại pot. Walk (mọi người fold tới BB): BB còn trong hand nên nhận lại phần vượt SB, thắng +SB. Mình open, mọi người fold: +SB+BB. Ante là tiền chết, người thắng nhận cả ante.
-- **Người thắng từng pot** (`showdown`): một người đủ điều kiện → người đó thắng; đủ bài của mọi người đủ điều kiện và đủ 5 lá board → hand evaluator (`evaluate`, `compareRanks`) xác định, hòa thì chia; thiếu bài → người dùng chọn theo từng pot. Người dùng chọn khác bài đã nhập vẫn tính được tiền (để xem thử) nhưng `mismatch = true`: UI cảnh báo và khóa Lưu.
+- **Người thắng từng pot** (`showdown`): một người đủ điều kiện → người đó thắng; đủ bài của mọi người đủ điều kiện và đủ 5 lá board → hand evaluator (`evaluate`, `compareRanks`) xác định, hòa thì chia; thiếu bài → người dùng chọn theo từng pot. Người dùng chọn khác bài đã nhập vẫn tính được tiền (để xem thử) nhưng `mismatch = true`: UI cảnh báo "Theo bài đã nhập, <ai> thắng (<bộ bài>)" và khóa nút Lưu, lý do ghi trong nút ("Kết quả không khớp bài"); "Sửa tay" không mở khóa.
+- **Một nguồn tính kết quả**: `settlePots` xây và chia pot; `showdown`, `computeResult` (ghi tắt, hand cũ không có ghế) và `settle` đều đi qua nó. `deriveHand` dùng `showdown` ở chế độ nút; pot chưa có người thắng (hand lưu trước 5.1c-6b) lấy theo `outcome` đã lưu (thắng = mình, thua = đối thủ chính, chia = cả hai).
+- **UI showdown**: ô "Bài <đối thủ>" cho mỗi đối thủ chưa fold (lưu trong `opponents[].cards`); đủ bài thì hiện tên bộ bài ("Mình: Cù lũ · Đối thủ · BTN: Tứ quý") và chọn sẵn người thắng; mỗi pot một dòng (Pot chính, Pot phụ 1…: số tiền, người đủ điều kiện, người thắng); một pot hai người thì ba chip Mình thắng / Đối thủ thắng / Chia pot; nhiều người thì mỗi người một chip (bật nhiều chip = chia). Lựa chọn của người dùng lưu ở `hands.pot_winners`; `outcome` suy ra từ tiền nhận.
 - **Chip lẻ**: đơn vị chia = 1 khi blind và mọi khoản đóng góp là số nguyên, ngược lại 0.01; phần dư chia từng đơn vị cho người thắng theo thứ tự từ gần bên trái BTN nhất.
 - Mình đã fold: kết quả = −tổng đã bỏ vào, không cần chọn người thắng.
 
 ## 12. Sửa và hoàn tác
 
 - Hoàn tác action gần nhất.
-- Chạm một chip action cũ để sửa → tính lại toàn bộ phía sau. Action phía sau trở thành không hợp lệ thì tô cảnh báo, không tự xóa.
+- Chạm một chip action cũ để sửa: hàng sửa trượt ra ngay dưới chip trong thẻ Action (không sheet, không làm tối): các nút hợp lệ tại thời điểm đó, bàn phím số khi cần, "Xác nhận", "Xóa từ đây"; chạm ra ngoài thì đóng, không đổi gì → tính lại toàn bộ phía sau. Action phía sau trở thành không hợp lệ thì tô cảnh báo, không tự xóa.
 
 ## 13. Hiển thị
 
-- Mình: màu `accent`. Đối thủ: màu cam. Người khác: màu trung tính. Trong timeline chip vẫn ghi chữ "Mình"/"Đối thủ"; trên bàn mini ghế chỉ tô màu và nghĩa nằm ở nhãn thanh + `aria-label`.
+- Mình: màu `accent`. Đối thủ: màu cam, mọi đối thủ đã chọn ghi "Đối thủ"; từ 2 đối thủ trở lên thêm vị trí ("Đối thủ · BTN Raise 9bb"). Người khác (màu trung tính) chỉ dành cho ghế không được chọn. Trong timeline chip vẫn ghi chữ "Mình"/"Đối thủ"; trên bàn mini ghế chỉ tô màu và nghĩa nằm ở nhãn thanh + `aria-label`.
 - Bộ bài 4 màu: ♠ trắng/đen, ♥ đỏ, ♦ xanh dương, ♣ xanh lục.
 - Thẻ bài 7 ô: Bài mình (2) | Flop (3) | Turn | River, một `CardPicker` dùng chung. Chạm ô thì bộ chọn trượt ra trong thẻ (không sheet, không làm tối); chọn xong tự sang ô trống kế (hết bài mình thì sang flop); chọn đủ lá hoặc chạm ra ngoài thì đóng, lúc mở thẻ Action thu còn hàng tab. Chọn rank xong, chất đã có trong bài mình/board bị mờ; lá trùng không chọn được (`takenSuits`, `duplicateCards`). Hai ô bài mình nhấp nháy khi còn trống; ô board thiếu nhắc bằng màu `warn`. Dòng nhắc: "Không nhớ board thì để trống".
 - Thẻ Action: bàn phím số trượt ra trong thẻ; Hoàn tác là nút nhỏ cùng hàng với ‹ › và ⋯ ("+ Tiền khác" nằm trong ⋯); "Chưa có cược" thay "Không phải theo"; tab chưa có action không chiếm chỗ.
@@ -180,7 +182,7 @@ Không có bước thiết lập riêng và không có nút "Bắt đầu ghi": 
 16. Raise dưới mức tối thiểu → có cảnh báo, vẫn lưu được.
 17. Bet vượt stack → tự thành all-in.
 18. Ghế không được chọn tự fold; chọn thêm đối thủ thứ ba giữa preflop → thứ tự đúng.
-19. 3 người, có all-in stack lệch → hai pot (3000 + 4000), người thắng từng pot theo bài hoặc theo lựa chọn; `side_pot` vẫn còn như cảnh báo cho tới khi UI hiện từng pot.
+19. 3 người, có all-in stack lệch → hai pot (3000 + 4000), người thắng từng pot theo bài hoặc theo lựa chọn; không còn cảnh báo `side_pot`.
 20. "+ tiền khác" (limper fold sau đó) → pot đúng.
 21. Chia pot: kết quả đúng cho mình.
 22. Sửa action cũ → action phía sau không hợp lệ bị đánh dấu.
