@@ -201,6 +201,94 @@ describe('table facts in the review context (task 3.5)', () => {
     expect(text).toContain('Level: blinds 100/200 chips, ante 200.');
   });
 
+  describe('MTT level and stacks (task: MTT review context)', () => {
+    const setup: HandSetup = {
+      seats: 9,
+      sb: 300,
+      bb: 600,
+      ante: { mode: 'bb', amount: 600 },
+      heroPos: 'CO',
+      villPos: 'BB',
+    };
+    const mtt = (blindLevels: unknown): ReviewSession => ({
+      ...cash,
+      kind: 'mtt',
+      mode: 'online',
+      sb: null,
+      bb: 600,
+      ante_mode: 'bb',
+      stake_label: null,
+      mtt: blindLevels ? { blind_levels: blindLevels } : { start_stack: 30000 },
+    });
+    const play = [
+      step('preflop', 'CO', 'hero', 'raise', 1500),
+      step('preflop', 'BB', 'villain', 'call'),
+    ];
+    const hand = (over: Partial<ReviewHand> = {}) =>
+      row(setup, play, {
+        level_bb: 600,
+        stage: 'bubble',
+        players_left: 12,
+        hero_stack: 27000,
+        villain_stack: 18000,
+        opponents: [{ pos: 'BB', stack: 18000 }],
+        ...over,
+      });
+    const structure = [
+      { level: 8, sb: 300, bb: 600, ante: 600, ante_mode: 'bb', minutes: 20 },
+      { level: 9, sb: 400, bb: 800, ante: 800, ante_mode: 'bb', minutes: 20 },
+    ];
+
+    it('with a structure: level number, blinds, ante, stage, stacks in bb', () => {
+      const text = ctx(mtt(structure), hand({ level: 8, ante: 600, ante_mode: 'bb' }));
+      expect(text).toContain('Level 8: blinds 300/600 chips, ante 600.');
+      expect(text).toContain('Tournament spot: stage bubble, 12 players left.');
+      expect(text).toContain('Stacks: Hero 45bb, Villain 30bb.');
+    });
+
+    it('without a structure: blinds from the hand, no level number, stacks in bb', () => {
+      const text = ctx(mtt(null), hand({ level: null }));
+      expect(text).toContain('Level: blinds 300/600 chips, ante 600.');
+      expect(text).not.toMatch(/Level \d/);
+      expect(text).toContain('Stacks: Hero 45bb, Villain 30bb.');
+    });
+
+    it('an unknown stack is said to be unknown', () => {
+      const text = ctx(mtt(null), hand({ hero_stack: null, villain_stack: null, opponents: [] }));
+      expect(text).toContain('Stacks: Hero unknown, Villain unknown.');
+    });
+
+    it('editing the structure afterwards does not change what a saved hand says', () => {
+      const edited = structure.map((l) => (l.level === 8 ? { ...l, sb: 500, bb: 1000 } : l));
+      const text = ctx(mtt(edited), hand({ level: 8, ante: 600, ante_mode: 'bb' }));
+      expect(text).toContain('Level 8: blinds 300/600 chips, ante 600.');
+      expect(text).toContain('Stacks: Hero 45bb, Villain 30bb.');
+    });
+
+    it('cash hands have no Level or Stacks line', () => {
+      const cashSetup: HandSetup = {
+        seats: 9,
+        sb: 25,
+        bb: 50,
+        ante: { mode: 'none' },
+        heroPos: 'CO',
+        villPos: 'BB',
+      };
+      const text = ctx(cash, row(cashSetup, play, { opponents: [{ pos: 'BB', stack: 10000 }] }));
+      expect(text).not.toMatch(/^Level/m);
+      expect(text).not.toContain('Stacks:');
+    });
+
+    it('hands without a state machine get neither line', () => {
+      const old = hand({ level: 8, ante: 600, ante_mode: 'bb' });
+      const text = ctx(mtt(structure), {
+        ...old,
+        actions: (old.actions as Action[]).filter((a) => !a.act.startsWith('post_')),
+      });
+      expect(text).not.toContain('Stacks:');
+    });
+  });
+
   it('hands without forced-bet actions (shorthand, old hands) get no table lines', () => {
     const old = row(
       { seats: 9, sb: 25, bb: 50, ante: { mode: 'none' }, heroPos: 'MP', villPos: 'BTN' },

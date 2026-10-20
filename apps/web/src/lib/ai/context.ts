@@ -144,7 +144,10 @@ export function tableLines(t: TableFacts, bb: number, f: Pick<ReviewFacts, 'kind
   }
   if (f.kind === 'mtt') {
     const ante = t.ante.mode !== 'none' && t.ante.amount > 0 ? `, ante ${fmt(t.ante.amount)}` : '';
-    out.push(`Level: blinds ${fmt(t.blinds.sb)}/${fmt(t.blinds.bb)} chips${ante}.`);
+    const level = t.level == null ? 'Level' : `Level ${t.level}`;
+    out.push(`${level}: blinds ${fmt(t.blinds.sb)}/${fmt(t.blinds.bb)} chips${ante}.`);
+    const stack = (n: number | null) => (n == null ? 'unknown' : inBb(n));
+    out.push(`Stacks: Hero ${stack(t.stacks.hero)}, Villain ${stack(t.stacks.villain)}.`);
   }
   out.push(`Pot type: ${POT_TYPE_WORD[t.potType]}.`);
   if (t.streetPlayers.length) {

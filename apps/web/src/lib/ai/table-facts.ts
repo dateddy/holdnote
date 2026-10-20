@@ -39,6 +39,10 @@ export type TableFacts = {
   ante: Ante;
   /** Blinds of the level, shown for tournaments. */
   blinds: { sb: number; bb: number };
+  /** MTT level number the hand was saved at; null when it has none (no blind structure). */
+  level: number | null;
+  /** Stacks at the start of the hand, in chips; null when unknown. Hero and the main opponent. */
+  stacks: { hero: number | null; villain: number | null };
   potType: PotType;
   streetPlayers: { street: Street; count: number }[];
   /** Main opponent first. */
@@ -47,6 +51,11 @@ export type TableFacts = {
   pots: { amount: number; eligible: string[] }[];
   uncalled: { street: Street; who: string; amount: number }[];
 };
+
+function levelNumber(raw: string): number | null {
+  const n = Number(raw.trim());
+  return raw.trim() && Number.isInteger(n) && n > 0 ? n : null;
+}
 
 export type OpponentInfo = Record<string, { player_type: string | null; notes: string | null }>;
 
@@ -105,6 +114,11 @@ export function buildTableFacts(
     straddles: setup.straddles ?? [],
     ante: setup.ante,
     blinds: { sb: setup.sb, bb: setup.bb },
+    level: levelNumber(draft.level),
+    stacks: {
+      hero: setup.stacks?.[hero] ?? null,
+      villain: setup.stacks?.[mainPos] ?? null,
+    },
     potType: potType(pot.steps, setup.bb),
     streetPlayers: playersByStreet(setup, d.input.actions).map((s) => ({
       street: s.street,

@@ -22,7 +22,7 @@
 ## Vướng / cần Đạt quyết
 
 - `CLAUDE.md` có luật số 10 (UI chỉ dùng `components/ui`) chưa commit: chờ Đạt quyết commit hay bỏ.
-- Hand MTT lưu trước 5.1c-3 không có `level`: nút Lên level suy ra level theo BB trùng cấu trúc. Sửa cấu trúc giữa phiên không đổi hand đã lưu; ngữ cảnh AI chưa dùng `level`.
+- Hand MTT lưu trước 5.1c-3 không có `level`: nút Lên level suy ra level theo BB trùng cấu trúc. Sửa cấu trúc giữa phiên không đổi hand đã lưu (có test); ngữ cảnh AI hand MTT có level, blind/ante, giai đoạn, stack bb.
 - Hand lưu trước 5.1c-6b không có `pot_winners`: sửa hand cũ có bài đối thủ mà `outcome` trái bài sẽ bị khóa Lưu cho tới khi sửa.
 - Chưa thử tay: server action lưu tổng kết, gọi AI thật, đồng bộ offline mất mạng thật.
 - Trước beta: chính sách quyền riêng tư, tắt huấn luyện trên dữ liệu ở OpenRouter, SMTP riêng, logo thật.
