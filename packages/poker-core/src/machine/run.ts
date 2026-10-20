@@ -1,6 +1,6 @@
 import { roundMoney } from '../amount';
 import { isPostAct, type Action, type Actor, type Position, type Street } from '../types';
-import { actorAt, canonPos, forcedBets, maxStraddles, tableOrder } from './seats';
+import { actorAt, canonPos, forcedBets, maxStraddles, postflopOrder, tableOrder } from './seats';
 import type {
   BoardInput,
   ButtonKind,
@@ -95,8 +95,7 @@ export function run(
 
   const k = Math.min(full.filter((a) => a.act === 'post_straddle').length, maxStraddles(n));
   const preOrder = [...order.slice(k), ...order.slice(0, k)];
-  const postOrder: Position[] =
-    n <= 2 ? ['BB', 'BTN'] : ['SB', 'BB', ...order.slice(0, order.indexOf('BTN')), 'BTN'];
+  const postOrder = postflopOrder(n);
 
   // Cast so TypeScript does not narrow these to their first value; the closures below reassign them.
   let street = 'preflop' as Street;

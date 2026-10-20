@@ -7,9 +7,7 @@ import { hasHeroVillainLine, hasLegacyData, loadLegacy, toCase } from './loader'
 const tolerance = (bb: number) => Math.max(0.05 * bb, 0.005) + 1e-9;
 
 describe.skipIf(!hasLegacyData)('legacy hands: computeResult vs saved result', () => {
-  const { hands, sessions } = hasLegacyData
-    ? loadLegacy()
-    : { hands: [], sessions: new Map() };
+  const { hands, sessions } = hasLegacyData ? loadLegacy() : { hands: [], sessions: new Map() };
   const cases = hands
     .filter((h) => hasHeroVillainLine(h.line))
     .map((h) => {
@@ -29,10 +27,9 @@ describe.skipIf(!hasLegacyData)('legacy hands: computeResult vs saved result', (
       expect(c.computed).toBe(known.expected);
       expect(c.recorded).toBeCloseTo(known.recorded, 6);
     } else {
-      expect(
-        c.matches,
-        `${id}: computed ${c.computed}, saved ${c.recorded} (bb ${c.bb})`,
-      ).toBe(true);
+      expect(c.matches, `${id}: computed ${c.computed}, saved ${c.recorded} (bb ${c.bb})`).toBe(
+        true,
+      );
     }
   });
 
@@ -53,8 +50,6 @@ describe.skipIf(!hasLegacyData)('legacy hands: computeResult vs saved result', (
             : `${(((c.computed - c.recorded) / pot) * 100).toFixed(1)}% pot`;
         return `${c.id}\t${c.input.outcome}\tsaved ${c.recorded}\tcomputed ${c.computed}\tpot ${pot}\tdiff ${diff}`;
       });
-    process.stderr.write(
-      `legacy hands: ${matched}/${cases.length} match\n${rows.join('\n')}\n`,
-    );
+    process.stderr.write(`legacy hands: ${matched}/${cases.length} match\n${rows.join('\n')}\n`);
   });
 });

@@ -5,7 +5,17 @@ import { run, ensureForced } from './run';
 import { actorAt, canonPos, tableOrder } from './seats';
 import type { ActInput, BoardInput, HandSetup, HandState, Notice, Settlement } from './types';
 
-export { canonPos, forcedBets, legacySeat, maxStraddles, remapSeats, tableOrder } from './seats';
+export {
+  canonPos,
+  forcedBets,
+  legacySeat,
+  maxStraddles,
+  postflopOrder,
+  remapSeats,
+  tableOrder,
+} from './seats';
+export { showdown } from './showdown';
+export type { PotOutcome, ShowdownInput, ShowdownResult } from './showdown';
 export type * from './types';
 export { boardCheck, boardNeeded, reachedStreet, streetTabs } from './board';
 export type { BoardCheck, SlotState, TabState } from './board';
@@ -41,12 +51,26 @@ export function replay(
 }
 
 /**
- * The opponent the hand is about: the first one picked who has not folded; when all of them have
- * folded, the first one picked. Null when nobody was picked.
+ * The opponent the hand is about: the one still in who acted last; when all of them have folded,
+ * the one who folded last. Without any action, the first picked. Null when nobody was picked.
  */
 export function primaryOpponent(state: HandState, picked: readonly Position[]): Position | null {
-  const live = picked.find((p) => !state.players.find((x) => x.pos === p)?.folded);
-  return live ?? picked[0] ?? null;
+  const folded = (p: Position) => Boolean(state.players.find((x) => x.pos === p)?.folded);
+  const seatOf = (a: Action): Position | null => {
+    if (!a.pos) return null;
+    if (state.players.some((p) => p.pos === a.pos)) return a.pos;
+    return a.pos === 'SB' ? 'BTN' : null; // heads-up: the old name of the button
+  };
+  // Picked seats by their last action, the latest first.
+  const latest: Position[] = [];
+  state.actions.forEach((a, i) => {
+    if (isPostAct(a.act) || a.act === 'dead' || state.invalid.includes(i)) return;
+    const seat = seatOf(a);
+    if (seat && picked.includes(seat)) latest.unshift(seat);
+  });
+  const byLast = [...new Set(latest)];
+  const live = picked.filter((p) => !folded(p));
+  return byLast.find((p) => !folded(p)) ?? live[0] ?? byLast[0] ?? picked[0] ?? null;
 }
 
 export interface ActResult {

@@ -33,6 +33,7 @@ Mỗi task cỡ một phiên làm việc. Làm theo thứ tự trừ khi chủ d
 - [x] 4.3 Biểu đồ kết quả, thống kê MTT, kỷ luật.
 - [x] 4.4 Đối thủ, luật của bạn, trang chủ.
 - [ ] 4.5 Thống kê vị trí gom nhóm sớm / giữa / muộn / blind để cộng được các hand khác số người (hand lưu `players_dealt` từ 5.1c-5).
+- [ ] 4.6 Đổi tên và gộp hồ sơ đối thủ trùng (tạo nhanh từ màn Ghi hand dễ sinh trùng).
 
 ## Giai đoạn 5 — Beta
 - [x] 5.1 Onboarding 3 bước + hand mẫu.
@@ -51,6 +52,8 @@ Mỗi task cỡ một phiên làm việc. Làm theo thứ tự trừ khi chủ d
   - [x] **5.1c-4 Bố cục màn Ghi nhanh:** luật board mới (nhập lúc nào cũng được, không chặn action; hàm `boardCheck`, `streetTabs` trong poker-core; sửa spec mục 10.4 và ca test 23). Bố cục: thanh ngữ cảnh → thẻ Board (5 ô liền) → một thẻ Action (tab Preflop/Flop/Turn/River, mở rộng dọc, khu nhập trong thẻ) → kết quả → thanh Lưu dính. Thẻ Board và thẻ Action vừa 375×667 khi đang nhập. Ảnh chụp lại bằng `pnpm screens`.
   - [x] **5.1c-5a Số người 2–10 + multiway (core, schema):** `poker-core`: `tableOrder` 2–10 (tên vị trí theo N, `UTG+2`), heads-up (BTN đóng SB, đi trước preflop, đi sau cùng postflop), straddle tối đa min(3, N−3), `legacySeat` (đổi tên vị trí cũ lúc đọc), `remapSeats`, `listedOnly` (chỉ ghế được chọn được theo dõi; action ghế bỏ chọn và phía sau tô đỏ, không xóa), `primaryOpponent`, `duplicateCards`/`takenSuits`. Migration: `hands.opponents jsonb`, CHECK `UTG+2`. Test viết trước cho N = 2, 3, 4, 6, 9, 10. Cập nhật spec.
   - [x] **5.1c-5b Gộp thiết lập vào màn Ghi hand (UI):** bỏ bước thiết lập; thanh ngữ cảnh + bàn mini trượt (Mình / Đối thủ multiway, bộ đếm N người); thẻ bài 7 ô + CardPicker trượt trong thẻ (khóa lá đã dùng); NumPad trong thẻ Action; danh sách đối thủ hiện tất cả (sửa bug chỉ hiện trùng địa điểm); `Stepper`, `Collapse`; cập nhật `docs/design.md` (pixel mục 4–5); ảnh 375×550 và 375×667 bằng `pnpm screens`.
+  - [x] **5.1c-6a Evaluator + side pot (core):** hand evaluator 7 lá (10 loại bộ bài, kicker); side pot theo mức đóng góp (người fold vẫn góp tiền, cược không ai theo trả lại, chip lẻ cho người gần trái BTN nhất theo đơn vị blind); `showdown` xác định người thắng từng pot khi đủ bài, cần chọn khi thiếu; đối thủ chính = đối thủ chưa fold có action cuối. Test viết trước; cập nhật spec.
+  - [ ] **5.1c-6b Sửa lỗi sau thử tay (UI):** showdown tự chọn theo bài (chọn khác thì cảnh báo và khóa Lưu), chọn người thắng theo từng pot khi thiếu bài, hiện từng pot; nhãn "Đối thủ · BTN" khi multiway; sửa chip action inline (bỏ sheet); panel thiết lập đứng sau dòng tóm tắt dính; gắn tên đối thủ bằng ô nhập có gợi ý và "+ Tạo"; Toggle straddle, chữ nhắc, nhắc chọn lại ghế mình, bộ đếm số người cho phiên MTT. Ảnh 375×550.
 - [ ] 5.2 Script migrate `legacy/data` → tài khoản chủ dự án.
 - [ ] 5.3 Hoàn thiện bản tiếng Anh, cài đặt, xuất/xóa dữ liệu.
 - [ ] 5.4 Deploy Vercel + domain holdnote.app.

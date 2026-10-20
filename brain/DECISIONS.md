@@ -351,3 +351,11 @@ Append-only. Không sửa, không xóa mục cũ. Muốn đảo một quyết đ
 - Lý do: Ghi hand tại bàn phải vào là nhập được ngay; chọn bài bằng sheet làm tối màn và che action.
 - Supersedes: DEC-046 mục "bước ① thiết lập", DEC-047 mục "bàn mini chỉ ở bước thiết lập và trong sheet Thêm người", "chọn board qua sheet".
 - Ai quyết: Đạt (duyệt kế hoạch ngày 2026-10-20)
+
+## DEC-050 — Hand evaluator, side pot, đối thủ chính mới (task 5.1c-6a)
+
+- Ngày: 2026-10-20
+- Quyết định: (1) `poker-core` có hand evaluator 7 lá (`evaluate`, `compareRanks`; null khi thiếu lá, trùng lá hoặc lá không rõ chất) và side pot (`buildPots`, `splitPot`, `chipUnit`, `showdown`). Người thắng từng pot theo bài khi đủ bài, chọn theo từng pot khi thiếu; chọn khác bài đã nhập thì `mismatch`. (2) Chip lẻ: đơn vị 1 nếu mọi số nguyên, ngược lại 0.01; phần dư cho người thắng gần bên trái BTN nhất. (3) Đối thủ chính = đối thủ chưa fold có action cuối cùng (thay "người chọn đầu tiên"); mọi đối thủ fold thì người fold cuối. (4) Cược không ai theo đã được trả lại ở `computePot` và state machine; chỉ bổ sung test. (5) `computeResult` giữ cho ghi tắt và hand cũ; UI chuyển sang `showdown` ở 5.1c-6b.
+- Lý do: Kết quả multiway sai khi có all-in lệch stack; người dùng phải tự chọn người thắng dù đã nhập đủ bài.
+- Supersedes: DEC-048 mục (5) (đối thủ chính = người chọn đầu chưa fold); spec mục 1 ("side pot ngoài phạm vi").
+- Ai quyết: Đạt (duyệt kế hoạch ngày 2026-10-20)

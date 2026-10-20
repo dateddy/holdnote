@@ -25,6 +25,14 @@ export function canonPos(seats: number, pos: Position): Position {
   return Math.round(seats) <= 2 && pos === 'SB' ? 'BTN' : pos;
 }
 
+/** Seats in postflop acting order: first left of the button, the button last (heads-up: BB first). */
+export function postflopOrder(seats: number): Position[] {
+  const order = tableOrder(seats);
+  return clampSeats(seats) <= 2
+    ? ['BB', 'BTN']
+    : ['SB', 'BB', ...order.slice(0, order.indexOf('BTN')), 'BTN'];
+}
+
 /** How many straddles the table allows: from the seat left of the BB, never reaching the button. */
 export function maxStraddles(seats: number): number {
   return Math.max(0, Math.min(3, clampSeats(seats) - 3));

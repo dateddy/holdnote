@@ -20,6 +20,14 @@ export {
 } from './engine/pot';
 export { computeResult, nextStack } from './engine/result';
 export { computeEff, computeSpr, type EffStack, type StreetSpr } from './engine/stack';
+export {
+  compareRanks,
+  evaluate,
+  HAND_CATEGORIES,
+  type HandCategory,
+  type HandRank,
+} from './engine/evaluate';
+export { buildPots, chipUnit, splitPot, type Pot, type PotEntry } from './engine/sidepot';
 export { potOddsAtDecisions, type Decision } from './engine/odds';
 export { previewNext, suggestAmount, type NextSpot, type SizedAct } from './engine/sizing';
 export { formatShorthand } from './shorthand/format';
@@ -33,7 +41,9 @@ export {
   legacySeat,
   maxStraddles,
   previewAmount,
+  postflopOrder,
   primaryOpponent,
+  showdown,
   quickSizes,
   reachedStreet,
   remapSeats,
@@ -55,6 +65,9 @@ export {
   type HandSetup,
   type HandState,
   type Notice,
+  type PotOutcome,
+  type ShowdownInput,
+  type ShowdownResult,
   type Phase,
   type SeatState,
   type Settlement,

@@ -9,9 +9,9 @@ Chốt ngày 19/10/2026. Áp dụng chung cho Cash và MTT live. Chế độ ghi
 - Straddle (chuỗi tối đa min(3, N−3), chỉ từ ghế sát bên trái BB), bật/tắt theo hand; công tắc tự khóa khi N không cho phép.
 - MTT: level, SB/BB, ante (mỗi người hoặc BB ante), cấu trúc blind tùy chọn, nhãn giai đoạn giải.
 - Cảnh báo (không chặn) khi raise dưới mức tối thiểu.
+- Side pot: pot theo các mức đóng góp (mục 11), hand evaluator 7 lá để xác định người thắng khi đủ bài.
 
 **Ngoài v1**
-- Side pot: không tính. Hand có all-in với stack lệch và từ 3 người trở lên → hiện cảnh báo "kết quả có thể chưa chính xác".
 - Rake / jackpot drop: không tính. Cho sửa tay kết quả cuối.
 - Straddle ở BTN (Mississippi), bomb pot, run it twice, missed blind. Khoản tiền lạ đi qua nút "+ tiền khác".
 
@@ -59,7 +59,7 @@ Không có bước thiết lập riêng và không có nút "Bắt đầu ghi": 
 
 **Hand lưu trước 5.1c-5** dùng tên vị trí cũ (6 người: UTG, MP…). Khi đọc, `legacySeat(N, pos)` đổi sang tên mới (N=6: UTG→LJ, MP→HJ; N=5: UTG→HJ; N=7/8: MP→LJ). Không sửa dữ liệu đã lưu.
 
-**Chọn ghế:** Mình chọn đúng 1 ghế (chạm ghế khác để chuyển). Đối thủ chọn nhiều ghế, chạm lại để bỏ; không chọn được ghế của mình. **Đối thủ chính** = người được chọn đầu tiên; nếu người đó fold thì chuyển sang người còn lại tới showdown (`primaryOpponent`). Hand lưu `villain_pos`, `villain_stack`, `opponent_id` của đối thủ chính và `opponents` cho tất cả.
+**Chọn ghế:** Mình chọn đúng 1 ghế (chạm ghế khác để chuyển). Đối thủ chọn nhiều ghế, chạm lại để bỏ; không chọn được ghế của mình. **Đối thủ chính** = đối thủ chưa fold có action cuối cùng trong hand (`primaryOpponent`); nếu mọi đối thủ đều đã fold thì là người fold cuối cùng; chưa ai có action thì là người chọn đầu tiên. Hand lưu `villain_pos`, `villain_stack`, `opponent_id` của đối thủ chính và `opponents` cho tất cả.
 
 **Đổi lựa chọn khi đã có action:** bỏ chọn một đối thủ, đổi vị trí mình, hoặc giảm N làm mất ghế → replay dừng ở action đầu tiên của ghế không còn được theo dõi; action đó và mọi action sau tô đỏ (`invalid`, cảnh báo `not_in_hand`), không xóa. Chọn lại ghế thì hết đỏ.
 
@@ -134,10 +134,12 @@ Không có bước thiết lập riêng và không có nút "Bắt đầu ghi": 
 ## 11. Showdown và kết quả
 
 - Bài đối thủ: tùy chọn.
-- Chọn kết quả: Mình thắng · Đối thủ thắng · Chia.
-- Kết quả của mình = phần nhận về − tổng đã bỏ vào (chip và bb). Chia: chia đều cho những người chia.
-- Không trừ rake. Cho sửa tay con số cuối, gắn cờ "đã sửa tay".
-- Multiway có all-in stack lệch → cảnh báo side pot (mục 1).
+- Kết quả của mình = phần nhận về từ các pot − tổng đã bỏ vào (chip và bb). Không trừ rake. Cho sửa tay con số cuối, gắn cờ "đã sửa tay".
+- **Pot theo mức đóng góp** (`buildPots`): mỗi mức đóng góp của người chưa fold tạo một pot (Pot chính, Pot phụ 1…). Người đủ điều kiện = chưa fold và đã đóng tới mức đó. Tiền người fold (kể cả blind, ante, tiền chết) vẫn vào các pot họ đã góp tới; phần người fold góp vượt mức cao nhất của người còn chơi vào pot cuối.
+- **Cược không ai theo** (phần vượt mức lớn thứ hai) trả lại cho người cược cuối mỗi street, cả heads-up lẫn multiway; không thành pot.
+- **Người thắng từng pot** (`showdown`): một người đủ điều kiện → người đó thắng; đủ bài của mọi người đủ điều kiện và đủ 5 lá board → hand evaluator (`evaluate`, `compareRanks`) xác định, hòa thì chia; thiếu bài → người dùng chọn theo từng pot. Người dùng chọn khác bài đã nhập vẫn tính được tiền (để xem thử) nhưng `mismatch = true`: UI cảnh báo và khóa Lưu.
+- **Chip lẻ**: đơn vị chia = 1 khi blind và mọi khoản đóng góp là số nguyên, ngược lại 0.01; phần dư chia từng đơn vị cho người thắng theo thứ tự từ gần bên trái BTN nhất.
+- Mình đã fold: kết quả = −tổng đã bỏ vào, không cần chọn người thắng.
 
 ## 12. Sửa và hoàn tác
 
@@ -178,7 +180,7 @@ Không có bước thiết lập riêng và không có nút "Bắt đầu ghi": 
 16. Raise dưới mức tối thiểu → có cảnh báo, vẫn lưu được.
 17. Bet vượt stack → tự thành all-in.
 18. Ghế không được chọn tự fold; chọn thêm đối thủ thứ ba giữa preflop → thứ tự đúng.
-19. 3 người, có all-in stack lệch → có cảnh báo side pot.
+19. 3 người, có all-in stack lệch → hai pot (3000 + 4000), người thắng từng pot theo bài hoặc theo lựa chọn; `side_pot` vẫn còn như cảnh báo cho tới khi UI hiện từng pot.
 20. "+ tiền khác" (limper fold sau đó) → pot đúng.
 21. Chia pot: kết quả đúng cho mình.
 22. Sửa action cũ → action phía sau không hợp lệ bị đánh dấu.
@@ -188,6 +190,10 @@ Không có bước thiết lập riêng và không có nút "Bắt đầu ghi": 
 26. Heads-up: BTN đóng SB, đi trước preflop, đi sau cùng postflop; BB có option check sau limp.
 27. Straddle tối đa min(3, N−3) ở N = 3, 4, 5, 6, 9, 10; không tới BTN/SB/BB.
 28. Bỏ chọn đối thủ đã có action / đổi vị trí mình / giảm N → action của ghế đó và phía sau `invalid`, không xóa; chọn lại thì hết đỏ.
-29. Đối thủ chính: người đầu fold → người kế; tất cả fold → người đầu.
+29. Đối thủ chính: đối thủ chưa fold có action cuối; mọi đối thủ fold → người fold cuối; chưa ai action → người chọn đầu.
 30. `legacySeat` đổi tên vị trí cũ theo N; `remapSeats` giữ ghế còn tồn tại, bỏ ghế mất.
 31. Chặn trùng lá: `duplicateCards`, `takenSuits` (lá `?` không tính trùng).
+32. Evaluator: đủ 10 loại bộ bài, kicker, wheel, hòa, bộ bài nằm sẵn trên board; board A♣Q♣Q♦9♠Q♠ — A♥A♦ (cù lũ) thua Q♥A♠ (tứ quý Q); thiếu lá, lá trùng, lá `?` → null.
+33. Side pot: 3 người có 1 all-in ngắn, 4 người có 2 mức all-in, người fold đã bỏ tiền, chia ở pot phụ.
+34. Cược không ai theo trả lại (heads-up và multiway); chip lẻ thuộc người gần trái BTN nhất (đơn vị 1 và 0.01).
+35. `showdown`: tự chọn người thắng theo bài, cần chọn theo từng pot khi thiếu bài, `mismatch` khi chọn khác bài.
