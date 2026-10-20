@@ -420,7 +420,6 @@ export function HandForm({
   const warnings: string[] = [
     ...notes,
     ...(machine?.warnings.some((w) => w.code === 'below_min_raise') ? [tr('warnBelowMin')] : []),
-    ...(machine?.warnings.some((w) => w.code === 'side_pot') ? [tr('warnSidePot')] : []),
     ...(derived.board && derived.board.extra > 0 ? [tr('warnBoardExtra')] : []),
   ].filter((w, i, all) => all.indexOf(w) === i);
 

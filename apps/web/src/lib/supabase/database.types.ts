@@ -66,6 +66,7 @@ export type Database = {
           players_dealt: number | null;
           players_left: number | null;
           pot_final: number | null;
+          pot_winners: Json;
           question: string | null;
           raw_line: string | null;
           result: number | null;
@@ -100,6 +101,7 @@ export type Database = {
           players_dealt?: number | null;
           players_left?: number | null;
           pot_final?: number | null;
+          pot_winners?: Json;
           question?: string | null;
           raw_line?: string | null;
           result?: number | null;
@@ -134,6 +136,7 @@ export type Database = {
           players_dealt?: number | null;
           players_left?: number | null;
           pot_final?: number | null;
+          pot_winners?: Json;
           question?: string | null;
           raw_line?: string | null;
           result?: number | null;
