@@ -1,5 +1,6 @@
 import { roundMoney, toBb } from '../amount';
 import { computePot } from '../engine/pot';
+import { computeResult } from '../engine/result';
 import { isPostAct, type Action, type HandInput, type Position, type Street } from '../types';
 import { run, ensureForced } from './run';
 import { actorAt, canonPos, tableOrder } from './seats';
@@ -209,20 +210,20 @@ export function undo(actions: readonly Action[]): Action[] {
 }
 
 /**
- * Hero result once the winner is known: share of the pot minus what hero put in. No rake, no side
- * pots (the `side_pot` warning says when that matters). `split` divides evenly by `ways`.
+ * Hero result once the winner is known, for the two-sided case (hero vs the main opponent). A thin
+ * wrapper: `computeResult` builds and pays the pots with `settlePots`, like `showdown`.
  */
 export function settle(
   setup: HandSetup,
   actions: readonly Action[],
   winner: 'hero' | 'villain' | 'split',
-  ways = 2,
   board?: BoardInput,
 ): Settlement {
   const state = replay(setup, actions, board);
   const skip = new Set(state.invalid);
   const hero = canonPos(setup.seats, setup.heroPos);
   const vill = canonPos(setup.seats, setup.villPos);
+  const outcome = winner === 'hero' ? 'win' : winner === 'split' ? 'split' : 'lose';
   const input: HandInput = {
     blinds: { sb: setup.sb, bb: setup.bb, ante: setup.ante },
     heroPos: hero,
@@ -231,16 +232,15 @@ export function settle(
     ...(setup.stacks?.[vill] !== undefined && { villStack: setup.stacks[vill] }),
     ...(setup.stacks && { seatStacks: setup.stacks }),
     actions: state.actions.filter((_, i) => !skip.has(i)),
+    outcome,
   };
   const pot = computePot(input);
-  const share = winner === 'hero' ? pot.pot : winner === 'split' ? pot.pot / Math.max(2, ways) : 0;
-  const result = roundMoney(share - pot.heroInvested);
+  const result = roundMoney(computeResult(input) ?? -pot.heroInvested);
   return {
     result,
     resultBb: toBb(result, setup.bb),
     pot: pot.pot,
     heroInvested: pot.heroInvested,
-    outcome: winner === 'hero' ? 'win' : winner === 'split' ? 'split' : 'lose',
-    warnings: state.warnings.filter((w) => w.code === 'side_pot'),
+    outcome,
   };
 }

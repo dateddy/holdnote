@@ -1,6 +1,6 @@
 import { roundMoney } from '../amount';
 import { compareRanks, evaluate, type HandRank } from '../engine/evaluate';
-import { buildPots, chipUnit, splitPot } from '../engine/sidepot';
+import { buildPots, chipUnit, settlePots } from '../engine/sidepot';
 import type { Action, Card, Position } from '../types';
 import { replay } from './index';
 import { canonPos, postflopOrder } from './seats';
@@ -111,15 +111,12 @@ export function showdown(
     ...entries.map((e) => e.invested),
     ...pots.map((p) => p.amount),
   ]);
-  const order = postflopOrder(setup.seats);
-  const payouts: Partial<Record<Position, number>> = {};
-  for (const o of outcomes) {
-    if (!o.winners) continue;
-    const share = splitPot(o.amount, o.winners, order, unit);
-    for (const [seat, chips] of Object.entries(share) as [Position, number][]) {
-      payouts[seat] = roundMoney((payouts[seat] ?? 0) + chips);
-    }
-  }
+  const { payouts } = settlePots(
+    entries,
+    (i) => outcomes[i]?.winners ?? null,
+    postflopOrder(setup.seats),
+    unit,
+  );
 
   const me = state.players.find((p) => p.pos === hero);
   const invested = me?.invested ?? 0;

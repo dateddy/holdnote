@@ -45,7 +45,6 @@ export type WarningCode =
   | 'out_of_turn'
   | 'illegal_act'
   | 'stack_unknown'
-  | 'side_pot'
   | 'not_in_hand';
 
 export interface Notice {
@@ -113,5 +112,4 @@ export interface Settlement {
   pot: number;
   heroInvested: number;
   outcome: 'win' | 'lose' | 'split';
-  warnings: Notice[];
 }

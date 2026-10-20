@@ -27,7 +27,15 @@ export {
   type HandCategory,
   type HandRank,
 } from './engine/evaluate';
-export { buildPots, chipUnit, splitPot, type Pot, type PotEntry } from './engine/sidepot';
+export {
+  buildPots,
+  chipUnit,
+  settlePots,
+  splitPot,
+  type Pot,
+  type PotEntry,
+  type SettledPot,
+} from './engine/sidepot';
 export { potOddsAtDecisions, type Decision } from './engine/odds';
 export { previewNext, suggestAmount, type NextSpot, type SizedAct } from './engine/sizing';
 export { formatShorthand } from './shorthand/format';

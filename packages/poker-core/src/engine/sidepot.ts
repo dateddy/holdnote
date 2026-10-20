@@ -75,3 +75,33 @@ export function splitPot<S extends string>(
   });
   return out;
 }
+
+export interface SettledPot<S extends string = string> extends Pot<S> {
+  /** Null while nobody is known to win it. */
+  winners: S[] | null;
+}
+
+/**
+ * Build the pots and pay each to the winners `winnersOf` names (null = undecided, nobody is paid).
+ * The one place chips are divided, shared by the state machine and the shorthand path.
+ */
+export function settlePots<S extends string>(
+  entries: readonly PotEntry<S>[],
+  winnersOf: (index: number, pot: Pot<S>) => readonly S[] | null,
+  oddOrder: readonly S[],
+  unit: number,
+): { pots: SettledPot<S>[]; payouts: Partial<Record<S, number>> } {
+  const payouts: Partial<Record<S, number>> = {};
+  const pots = buildPots(entries).map((pot, i): SettledPot<S> => {
+    const picked = winnersOf(i, pot);
+    const winners = picked && picked.length > 0 ? [...picked] : null;
+    if (winners) {
+      const share = splitPot(pot.amount, winners, oddOrder, unit);
+      for (const [seat, chips] of Object.entries(share) as [S, number][]) {
+        payouts[seat] = roundMoney((payouts[seat] ?? 0) + chips);
+      }
+    }
+    return { ...pot, winners };
+  });
+  return { pots, payouts };
+}

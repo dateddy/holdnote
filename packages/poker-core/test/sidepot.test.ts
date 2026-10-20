@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildPots, chipUnit, splitPot } from '../src/index';
+import { buildPots, chipUnit, settlePots, splitPot } from '../src/index';
 
 const e = (seat: string, invested: number, folded = false) => ({ seat, invested, folded });
 
@@ -79,5 +79,31 @@ describe('chipUnit and splitPot', () => {
 
   it('one winner takes the pot', () => {
     expect(splitPot(777, ['B'], ['A', 'B'], 1)).toEqual({ B: 777 });
+  });
+});
+
+describe('settlePots', () => {
+  const order = ['A', 'B', 'C'];
+
+  it('pays each pot to its winners', () => {
+    const r = settlePots(
+      [e('A', 1000), e('B', 3000), e('C', 3000)],
+      (_, pot) => (pot.eligible.length === 3 ? ['A'] : ['C']),
+      order,
+      1,
+    );
+    expect(r.pots.map((p) => p.winners)).toEqual([['A'], ['C']]);
+    expect(r.payouts).toEqual({ A: 3000, C: 4000 });
+  });
+
+  it('splits a pot and gives the odd chip to the first seat in order', () => {
+    const r = settlePots([e('A', 5), e('B', 5), e('C', 5)], () => ['B', 'A'], order, 1);
+    expect(r.payouts).toEqual({ A: 8, B: 7 });
+  });
+
+  it('leaves a pot without winners unpaid', () => {
+    const r = settlePots([e('A', 100), e('B', 100)], () => null, order, 1);
+    expect(r.pots[0]?.winners).toBeNull();
+    expect(r.payouts).toEqual({});
   });
 });

@@ -11,6 +11,7 @@ import {
   nextStack,
   parseShorthand,
   replay,
+  showdown,
   resolveActions,
   settle,
   tableOrder,
@@ -319,22 +320,17 @@ describe('spec 15: 24 required cases', () => {
     expect(done.state.addable).not.toContain('LJ');
   });
 
-  it('19. three players with uneven all-ins warn about side pots', () => {
-    const shove = [{ act: 'all-in' }, { act: 'all-in' }, { act: 'call' }] as const;
+  it('19. three players with uneven all-ins make two pots (no side_pot warning any more)', () => {
     const uneven = setup({
       heroPos: 'BTN',
       villPos: 'SB',
       tracked: ['BB'],
       stacks: { BTN: 1000, SB: 3000, BB: 5000 },
     });
-    expect(play(uneven, [...shove]).state.warnings.map((n) => n.code)).toContain('side_pot');
-    const even = setup({
-      heroPos: 'BTN',
-      villPos: 'SB',
-      tracked: ['BB'],
-      stacks: { BTN: 1000, SB: 1000, BB: 1000 },
-    });
-    expect(play(even, [...shove]).state.warnings.map((n) => n.code)).not.toContain('side_pot');
+    const r = play(uneven, [{ act: 'all-in' }, { act: 'all-in' }, { act: 'call' }]);
+    expect(r.state.warnings.map((n) => n.code)).not.toContain('side_pot');
+    const sd = showdown(uneven, r.actions, { cards: [] }, { hole: {} });
+    expect(sd?.pots.map((p) => p.amount)).toEqual([3000, 4000]);
   });
 
   it('20. "+ other money": a limper who folds later still adds to the pot', () => {

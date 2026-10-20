@@ -353,13 +353,7 @@ export function run(
   if (!phase)
     phase = toActSeat ? { kind: 'act', street, toAct: toActSeat.pos } : { kind: 'showdown' };
 
-  const live = alive();
   const total = (s: Seat) => s.committed + s.bet;
-  if (live.length >= 3 && live.some((s) => s.allIn)) {
-    const most = Math.max(...live.map(total));
-    if (live.some((s) => s.allIn && total(s) < most)) warnings.push({ code: 'side_pot' });
-  }
-
   const players: SeatState[] = seatList.map((s) => ({
     pos: s.pos,
     actor: s.actor,
