@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { ERROR_TAGS, EV_VERDICTS } from '@/lib/review/review';
+import type { PromptVersion } from './prompt';
 
 /** The JSON the model must return (spec 5.4). Each text field is capped at roughly 80 words. */
 const text = z.string().max(800);
@@ -37,11 +38,13 @@ export function toAiReviewRow(
   model: string,
   isMtt: boolean,
   missingLabel = 'Missing',
+  promptVersion: PromptVersion | null = null,
 ) {
   const missing = r.missing_info.filter((m) => m.trim());
   return {
     source: 'ai' as const,
     model,
+    prompt_version: promptVersion,
     range_text: r.range.trim() || null,
     math_text:
       [r.math.trim(), missing.length ? `${missingLabel}: ${missing.join(', ')}` : '']

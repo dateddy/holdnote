@@ -247,6 +247,7 @@
     "tag_tilt": "Tilt",
     "tag_none": "Không lỗi",
     "aiLabel": "AI",
+    "oldPromptLabel": "Prompt cũ (v2)",
     "aiButton": "AI review",
     "aiRunning": "AI đang review…",
     "aiLeft": "Còn {n} lượt tháng này",

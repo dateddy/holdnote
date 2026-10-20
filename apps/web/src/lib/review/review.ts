@@ -47,7 +47,7 @@ export type ReviewRow = {
 };
 
 export const REVIEW_COLUMNS =
-  'id, source, range_text, math_text, line_text, icm_text, error_tags, ev_verdict, lesson, accepted';
+  'id, source, prompt_version, range_text, math_text, line_text, icm_text, error_tags, ev_verdict, lesson, accepted';
 
 export function emptyReview(): ReviewDraft {
   return {

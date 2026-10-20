@@ -125,6 +125,7 @@ export async function POST(request: Request) {
     model,
     session.kind === 'mtt',
     languagePack(locale).missingLabel,
+    run.promptVersion,
   );
   const { data: reviewId, error: saveError } = await supabase.rpc('replace_current_review', {
     p_hand_id: handId,
@@ -147,6 +148,7 @@ export async function POST(request: Request) {
     review: {
       id: reviewId,
       source: 'ai',
+      prompt_version: row.prompt_version,
       range_text: row.range_text,
       math_text: row.math_text,
       line_text: row.line_text,

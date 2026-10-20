@@ -253,6 +253,7 @@ export type Database = {
           line_text: string | null;
           math_text: string | null;
           model: string | null;
+          prompt_version: string | null;
           range_text: string | null;
           source: string;
           user_id: string;
@@ -270,6 +271,7 @@ export type Database = {
           line_text?: string | null;
           math_text?: string | null;
           model?: string | null;
+          prompt_version?: string | null;
           range_text?: string | null;
           source: string;
           user_id?: string;
@@ -287,6 +289,7 @@ export type Database = {
           line_text?: string | null;
           math_text?: string | null;
           model?: string | null;
+          prompt_version?: string | null;
           range_text?: string | null;
           source?: string;
           user_id?: string;

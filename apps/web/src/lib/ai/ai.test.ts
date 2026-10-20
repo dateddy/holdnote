@@ -10,6 +10,7 @@ import {
 } from './quota';
 import { InvalidOutputError, runReview } from './run-review';
 import { aiStatus } from './status';
+import { configuredPromptVersion, DEFAULT_PROMPT_VERSION, systemPrompt } from './prompt';
 import { aiReviewSchema, normalizeTags, toAiReviewRow } from './schema';
 
 const session: ReviewSession = {
@@ -397,5 +398,27 @@ describe('sizingNote', () => {
     };
     const t = buildReviewContext({ session, hand, topLeaks: [], locale: 'en' });
     expect(t).toContain('isolates 2 limpers');
+  });
+});
+
+describe('prompt versions (DEC-053)', () => {
+  it('v1 is the default and v2 stays available', () => {
+    expect(DEFAULT_PROMPT_VERSION).toBe('v1');
+    expect(configuredPromptVersion(undefined)).toBe('v1');
+    expect(configuredPromptVersion('v2')).toBe('v2');
+    expect(configuredPromptVersion('nonsense')).toBe('v1');
+    expect(systemPrompt('v1')).not.toBe(systemPrompt('v2'));
+    expect(systemPrompt('v2')).toContain('Review the WHOLE hand');
+    expect(systemPrompt('v1')).not.toContain('Review the WHOLE hand');
+  });
+  it('v1 describes the new context fields', () => {
+    for (const word of ['straddle', 'side pots', 'Uncalled bets']) {
+      expect(systemPrompt('v1')).toContain(word);
+    }
+  });
+  it('stores the prompt version on the review row', () => {
+    const row = toAiReviewRow(aiReviewSchema.parse(valid), 'm/x', false, 'Missing', 'v1');
+    expect(row.prompt_version).toBe('v1');
+    expect(toAiReviewRow(aiReviewSchema.parse(valid), 'm/x', false).prompt_version).toBeNull();
   });
 });

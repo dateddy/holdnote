@@ -46,6 +46,8 @@ type Props = {
   reviewId: string | null;
   /** `ai` or `manual`, of the current review. */
   source: string | null;
+  /** Prompt that made the AI review (`v1`/`v2`); null for manual reviews. */
+  promptVersion?: string | null;
   initial: ReviewDraft;
   isMtt: boolean;
   mathHints: MathHint[];
@@ -53,18 +55,28 @@ type Props = {
 };
 
 type AiResponse = {
-  review?: ReviewRow & { id: string };
+  review?: ReviewRow & { id: string; prompt_version?: string | null };
   remaining?: number | null;
   cached?: boolean;
   error?: string;
 };
 
 /** Review block (spec 3.7): manual fields, AI review with an "AI" label, rebuttal. */
-export function ReviewForm({ handId, reviewId, source, initial, isMtt, mathHints, ai }: Props) {
+export function ReviewForm({
+  handId,
+  reviewId,
+  source,
+  promptVersion: initialPrompt = null,
+  initial,
+  isMtt,
+  mathHints,
+  ai,
+}: Props) {
   const t = useTranslations('review');
   const router = useRouter();
   const [draft, setDraft] = useState(initial);
   const [id, setId] = useState(reviewId);
+  const [prompt, setPrompt] = useState(initialPrompt);
   // What the AI wrote, while the review is still the AI's. Fields equal to it carry the "AI" label.
   const [aiText, setAiText] = useState<ReviewDraft | null>(
     source === 'ai' && !initial.accepted ? initial : null,
@@ -117,6 +129,7 @@ export function ReviewForm({ handId, reviewId, source, initial, isMtt, mathHints
       setAiText(next.accepted ? null : next);
       setSaved({ source: 'ai', draft: next });
       setId(data.review.id);
+      setPrompt(data.review.prompt_version ?? null);
       setRemaining(data.remaining ?? null);
       setStatus('idle');
       setRebutOpen(false);
@@ -188,7 +201,14 @@ export function ReviewForm({ handId, reviewId, source, initial, isMtt, mathHints
 
   return (
     <section className="flex flex-col gap-4">
-      <h2 className="text-lg font-semibold">{t('title')}</h2>
+      <h2 className="text-lg font-semibold">
+        {t('title')}
+        {saved.source === 'ai' && prompt === 'v2' && (
+          <span className="ml-2 rounded border border-line px-1.5 py-0.5 text-xs font-normal text-muted">
+            {t('oldPromptLabel')}
+          </span>
+        )}
+      </h2>
 
       <div className="flex flex-col gap-2 rounded-md border border-line bg-surface p-3">
         <button

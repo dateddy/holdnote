@@ -114,6 +114,7 @@ export default async function HandDetailPage({ params, searchParams }: PageProps
         handId={hand.id}
         reviewId={review?.id ?? null}
         source={review?.source ?? null}
+        promptVersion={review?.prompt_version ?? null}
         initial={fromReviewRow(review)}
         ai={{
           plan: status?.plan ?? 'free',

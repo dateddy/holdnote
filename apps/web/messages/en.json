@@ -247,6 +247,7 @@
     "tag_tilt": "Tilt",
     "tag_none": "No mistake",
     "aiLabel": "AI",
+    "oldPromptLabel": "Old prompt (v2)",
     "aiButton": "AI review",
     "aiRunning": "AI is reviewing…",
     "aiLeft": "{n} left this month",

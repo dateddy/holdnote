@@ -1,5 +1,5 @@
 import { languagePack } from './languages';
-import { SYSTEM_PROMPT } from './prompt';
+import { configuredPromptVersion, systemPrompt, type PromptVersion } from './prompt';
 import { parseJson, runJson, type Parsed, type Usage } from './run-json';
 import { aiReviewJsonSchema, aiReviewSchema, type AiReview } from './schema';
 
@@ -9,6 +9,8 @@ export type ReviewRun = Usage & {
   review: AiReview;
   /** 1 = valid at once, 2 = valid after the retry. */
   attempts: 1 | 2;
+  /** The prompt the review was made with; stored in `reviews.prompt_version`. */
+  promptVersion: PromptVersion;
 };
 
 /**
@@ -24,8 +26,11 @@ export async function runReview(opts: {
   locale?: string;
   /** Reasoning effort for models that think. Default `low`. */
   reasoningEffort?: 'low' | 'medium' | 'high';
+  /** Default: `AI_PROMPT_VERSION`, else v1. */
+  promptVersion?: PromptVersion;
   fetchImpl?: typeof fetch;
 }): Promise<ReviewRun> {
+  const promptVersion = opts.promptVersion ?? configuredPromptVersion();
   const pack = languagePack(opts.locale);
   const parse = (content: string): Parsed<AiReview> => {
     const r = parseJson(content, aiReviewSchema);
@@ -40,7 +45,7 @@ export async function runReview(opts: {
   const { value, ...rest } = await runJson({
     apiKey: opts.apiKey,
     model: opts.model,
-    system: SYSTEM_PROMPT,
+    system: systemPrompt(promptVersion),
     userMessage: opts.userMessage,
     schema: aiReviewJsonSchema as Record<string, unknown>,
     schemaName: 'hand_review',
@@ -48,5 +53,5 @@ export async function runReview(opts: {
     reasoningEffort: opts.reasoningEffort,
     fetchImpl: opts.fetchImpl,
   });
-  return { review: value, ...rest };
+  return { review: value, promptVersion, ...rest };
 }
