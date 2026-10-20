@@ -20,7 +20,7 @@ export default async function RulesPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-5 p-6">
-      <TopBar title={t('title')} back={{ href: '/', label: t('home') }} />
+      <TopBar title={t('title')} back={{ href: '/stats', label: t('parent') }} />
       <p className="text-sm text-muted">{t('intro')}</p>
 
       <form action={addRule} className="flex gap-2">

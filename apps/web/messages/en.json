@@ -5,7 +5,8 @@
     "language": "Language",
     "signOut": "Sign out",
     "back": "Back",
-    "save": "Save"
+    "save": "Save",
+    "explain": "Explain"
   },
   "login": {
     "google": "Continue with Google",
@@ -16,28 +17,6 @@
     "sent": "We sent a sign-in link to <b>{email}</b>. Open the email and tap the link.",
     "sendFailed": "Could not send. Check the email address and try again.",
     "authFailed": "Sign-in failed or the link has expired. Please try again."
-  },
-  "home": {
-    "greeting": "Hi {name}",
-    "startSession": "Start a session",
-    "settings": "Settings",
-    "stats": "Stats and leaks",
-    "recordHand": "Record hand",
-    "handsCount": "{n} hands",
-    "unreviewed": "Hands not reviewed",
-    "aiLeft": "AI reviews left",
-    "aiOwnKey": "Own key",
-    "aiPaused": "Paused",
-    "leaksTitle": "Your top leaks",
-    "leaksNone": "No leaks yet. Review hands to find them.",
-    "leakRecent": "{n}/{of} recent sessions",
-    "rulesTitle": "Your rules",
-    "rulesNone": "No rules yet. Add them in a session summary or on the rules page.",
-    "editRules": "Edit",
-    "recentTitle": "Recent sessions",
-    "recentNone": "No sessions yet.",
-    "inProgress": "In progress",
-    "opponents": "Opponents"
   },
   "sessions": {
     "newTitle": "New session",
@@ -279,7 +258,6 @@
   },
   "settings": {
     "title": "Settings",
-    "home": "Home",
     "aiTitle": "AI review",
     "planFree": "Free plan.",
     "remaining": "{remaining}/{limit} reviews left this month (a rebuttal counts as 1).",
@@ -302,8 +280,6 @@
     "error_unauthorized": "Your session expired. Sign in again.",
     "error_server_error": "Server error. Try again later.",
     "summaryRemaining": "{remaining}/{limit} session summaries left this month.",
-    "rulesLink": "Your rules",
-    "opponentsLink": "Opponents",
     "accountTitle": "Account",
     "languageTitle": "Language"
   },
@@ -362,7 +338,6 @@
   },
   "stats": {
     "title": "Stats",
-    "home": "Home",
     "leaksTitle": "Leaks",
     "leaksNone": "No leaks yet. They appear once you review hands or tag leaks in a session summary.",
     "leak": "Mistake",
@@ -406,11 +381,12 @@
     "disciplineTitle": "Discipline",
     "disciplineSessions": "Sessions",
     "stopLossBreaches": "Went past the stop-loss",
-    "tiltSessions": "Played while tilted"
+    "tiltSessions": "Played while tilted",
+    "rulesLink": "Your rules",
+    "opponentsLink": "Opponents"
   },
   "opponents": {
     "title": "Opponents",
-    "home": "Home",
     "back": "Back",
     "add": "Add an opponent",
     "newTitle": "New opponent",
@@ -436,11 +412,11 @@
     "type_lag": "LAG (loose-aggressive)",
     "type_station": "Calling station",
     "type_maniac": "Maniac",
-    "type_unknown": "Unknown"
+    "type_unknown": "Unknown",
+    "parent": "Stats"
   },
   "rules": {
     "title": "Your rules",
-    "home": "Home",
     "intro": "Active rules are shown before every session. Rules from a session summary land here too.",
     "placeholder": "New rule, e.g. \"Open 3bb, never min-raise\"",
     "add": "Add",
@@ -452,7 +428,8 @@
     "up": "Move up",
     "down": "Move down",
     "delete": "Delete",
-    "fromSession": "From a session summary"
+    "fromSession": "From a session summary",
+    "parent": "Stats"
   },
   "onboarding": {
     "progress": "Step {step} of {of}",
@@ -549,7 +526,7 @@
   },
   "nav": {
     "label": "Main navigation",
-    "home": "Home",
+    "sessions": "Sessions",
     "record": "Record",
     "stats": "Stats",
     "settings": "Settings"
@@ -678,5 +655,50 @@
     "nameCreate": "+ Create \"{name}\"",
     "nameClear": "Remove name",
     "editHere": "Edit action"
+  },
+  "sessionList": {
+    "title": "Sessions",
+    "newSession": "New session",
+    "search": "Search venue and notes",
+    "filters": "Filters",
+    "kind": "Session type",
+    "kindAll": "All",
+    "kindCash": "Cash",
+    "kindMtt": "MTT",
+    "month": "Month",
+    "venue": "Venue",
+    "all": "All",
+    "win": "Won",
+    "loss": "Lost",
+    "toReview": "To review",
+    "clear": "Clear filters",
+    "tileSessions": "Sessions · hours",
+    "tileNet": "Net (bb)",
+    "tileRate": "bb/hour",
+    "mttNet": "MTT {amount}",
+    "playing": "Playing",
+    "hands": "{n} hands",
+    "reviewCount": "{n} to review",
+    "rank": "Place {place}/{entries}",
+    "rankOnly": "Place {place}",
+    "cashType": "Cash {stake}",
+    "mttType": "MTT {buyin}",
+    "emptyTitle": "No sessions yet",
+    "emptyBody": "Start your first session to record hands.",
+    "noMatch": "No session matches the filters.",
+    "colDate": "Date",
+    "colType": "Type",
+    "colVenue": "Venue",
+    "colBlind": "Blind / Buy-in",
+    "colDuration": "Duration",
+    "colHands": "Hands",
+    "colNet": "Net",
+    "colRate": "bb/hour",
+    "colReview": "To review",
+    "tipSessions": "Number of sessions and total hours of those with a start and end time.",
+    "tipNet": "Total bb won or lost in cash sessions. MTT is counted in money.",
+    "tipRate": "Total bb divided by total hours, cash sessions with start and end time only.",
+    "tipReview": "Flagged hands that have no accepted review yet.",
+    "hoursUnit": "{hours} h"
   }
 }

@@ -1,4 +1,5 @@
 import { getLocale, getTranslations } from 'next-intl/server';
+import Link from 'next/link';
 import { cumulativeSeries, disciplineStats, leakTable, mttStats, type LeakRow } from 'poker-core';
 import { ResultsChart } from '@/components/stats/results-chart';
 import { ERROR_TAGS } from '@/lib/review/review';
@@ -13,6 +14,7 @@ import {
   parseFilters,
   resolveView,
 } from '@/lib/stats/filters';
+import { buttonClass } from '@/components/ui/button';
 import { TopBar } from '@/components/ui/top-bar';
 import { createClient } from '@/lib/supabase/server';
 
@@ -62,7 +64,16 @@ export default async function StatsPage({ searchParams }: PageProps<'/stats'>) {
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-8 p-6">
-      <TopBar title={t('title')} back={{ href: '/', label: t('home') }} />
+      <TopBar title={t('title')} />
+
+      <nav className="grid grid-cols-2 gap-3">
+        <Link href="/opponents" className={buttonClass({ variant: 'secondary' })}>
+          {t('opponentsLink')}
+        </Link>
+        <Link href="/rules" className={buttonClass({ variant: 'secondary' })}>
+          {t('rulesLink')}
+        </Link>
+      </nav>
 
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">{t('leaksTitle')}</h2>

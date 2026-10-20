@@ -1,5 +1,4 @@
 import { getTranslations } from 'next-intl/server';
-import Link from 'next/link';
 import { buttonClass } from '@/components/ui/button';
 import { LocaleSwitcher } from '@/i18n/locale-switcher';
 import { AiKeyForm } from '@/components/settings/ai-key-form';
@@ -19,16 +18,7 @@ export default async function SettingsPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 p-6">
-      <TopBar title={t('title')} back={{ href: '/', label: t('home') }} />
-
-      <nav className="flex gap-4 text-sm">
-        <Link href="/rules" className="underline underline-offset-4">
-          {t('rulesLink')}
-        </Link>
-        <Link href="/opponents" className="underline underline-offset-4">
-          {t('opponentsLink')}
-        </Link>
-      </nav>
+      <TopBar title={t('title')} />
 
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-semibold">{t('languageTitle')}</h2>

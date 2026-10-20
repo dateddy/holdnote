@@ -3,38 +3,23 @@
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { navTabs } from '@/lib/nav';
 
-type Tab = { key: 'home' | 'record' | 'stats' | 'settings'; href: string; active: boolean };
-
-/** Fixed bottom bar with four tabs (DEC-044). Hidden during onboarding. */
+/** Fixed bottom bar with four tabs (DEC-044), phone only. Hidden during onboarding. */
 export function BottomNav({ recordHref }: { recordHref: string }) {
   const t = useTranslations('nav');
   const path = usePathname();
   // Onboarding and the Ghi nhanh screen have their own bottom bar.
   if (path.startsWith('/onboarding') || /^\/sessions\/[^/]+\/record$/.test(path)) return null;
 
-  const tabs: Tab[] = [
-    { key: 'home', href: '/', active: path === '/' },
-    {
-      key: 'record',
-      href: recordHref,
-      active: path.startsWith('/sessions') || path.startsWith('/hands'),
-    },
-    { key: 'stats', href: '/stats', active: path.startsWith('/stats') },
-    {
-      key: 'settings',
-      href: '/settings',
-      active:
-        path.startsWith('/settings') || path.startsWith('/rules') || path.startsWith('/opponents'),
-    },
-  ];
+  const tabs = navTabs(path, recordHref);
 
   return (
     <>
-      <div aria-hidden className="h-20 shrink-0" />
+      <div aria-hidden className="h-20 shrink-0 lg:hidden" />
       <nav
         aria-label={t('label')}
-        className="fixed inset-x-0 bottom-0 z-10 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)]"
+        className="fixed inset-x-0 bottom-0 z-10 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] lg:hidden"
       >
         <ul className="mx-auto grid max-w-md grid-cols-4">
           {tabs.map((tab) => (

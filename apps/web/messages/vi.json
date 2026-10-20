@@ -5,7 +5,8 @@
     "language": "Ngôn ngữ",
     "signOut": "Đăng xuất",
     "back": "Quay lại",
-    "save": "Lưu"
+    "save": "Lưu",
+    "explain": "Giải thích"
   },
   "login": {
     "google": "Đăng nhập bằng Google",
@@ -16,28 +17,6 @@
     "sent": "Đã gửi link đăng nhập tới <b>{email}</b>. Mở email và bấm vào link.",
     "sendFailed": "Không gửi được. Kiểm tra email rồi thử lại.",
     "authFailed": "Đăng nhập không thành công hoặc link đã hết hạn. Thử lại."
-  },
-  "home": {
-    "greeting": "Xin chào {name}",
-    "startSession": "Bắt đầu phiên",
-    "settings": "Cài đặt",
-    "stats": "Thống kê và leak",
-    "recordHand": "Ghi hand",
-    "handsCount": "{n} hand",
-    "unreviewed": "Hand chưa review",
-    "aiLeft": "Lượt AI review còn",
-    "aiOwnKey": "Key riêng",
-    "aiPaused": "Tạm dừng",
-    "leaksTitle": "Leak hay lặp lại",
-    "leaksNone": "Chưa có leak. Review hand để tìm leak.",
-    "leakRecent": "{n}/{of} phiên gần nhất",
-    "rulesTitle": "Luật của bạn",
-    "rulesNone": "Chưa có luật. Thêm trong tổng kết phiên hoặc ở trang Luật.",
-    "editRules": "Sửa",
-    "recentTitle": "Phiên gần đây",
-    "recentNone": "Chưa có phiên nào.",
-    "inProgress": "Đang chơi",
-    "opponents": "Đối thủ"
   },
   "sessions": {
     "newTitle": "Phiên mới",
@@ -279,7 +258,6 @@
   },
   "settings": {
     "title": "Cài đặt",
-    "home": "Trang chủ",
     "aiTitle": "AI review",
     "planFree": "Gói miễn phí.",
     "remaining": "Còn {remaining}/{limit} lượt review tháng này (phản biện tính 1 lượt).",
@@ -302,8 +280,6 @@
     "error_unauthorized": "Phiên đăng nhập hết hạn. Đăng nhập lại.",
     "error_server_error": "Lỗi server. Thử lại sau.",
     "summaryRemaining": "Còn {remaining}/{limit} lượt AI tổng kết phiên tháng này.",
-    "rulesLink": "Luật của bạn",
-    "opponentsLink": "Đối thủ",
     "accountTitle": "Tài khoản",
     "languageTitle": "Ngôn ngữ"
   },
@@ -362,7 +338,6 @@
   },
   "stats": {
     "title": "Thống kê",
-    "home": "Trang chủ",
     "leaksTitle": "Leak",
     "leaksNone": "Chưa có leak. Leak hiện ra khi bạn review hand hoặc gắn leak trong tổng kết phiên.",
     "leak": "Lỗi",
@@ -406,11 +381,12 @@
     "disciplineTitle": "Kỷ luật",
     "disciplineSessions": "Số phiên",
     "stopLossBreaches": "Phiên thua quá stop-loss",
-    "tiltSessions": "Phiên chơi khi tilt"
+    "tiltSessions": "Phiên chơi khi tilt",
+    "rulesLink": "Luật của bạn",
+    "opponentsLink": "Đối thủ"
   },
   "opponents": {
     "title": "Đối thủ",
-    "home": "Trang chủ",
     "back": "Quay lại",
     "add": "Thêm đối thủ",
     "newTitle": "Đối thủ mới",
@@ -436,11 +412,11 @@
     "type_lag": "LAG (rộng, chủ động)",
     "type_station": "Calling station (call mọi thứ)",
     "type_maniac": "Maniac (bet điên)",
-    "type_unknown": "Chưa rõ"
+    "type_unknown": "Chưa rõ",
+    "parent": "Thống kê"
   },
   "rules": {
     "title": "Luật của bạn",
-    "home": "Trang chủ",
     "intro": "Luật đang bật hiện ở màn Trước phiên. Luật từ tổng kết phiên cũng nằm ở đây.",
     "placeholder": "Luật mới, ví dụ \"Open 3bb, không min-raise\"",
     "add": "Thêm",
@@ -452,7 +428,8 @@
     "up": "Lên",
     "down": "Xuống",
     "delete": "Xóa",
-    "fromSession": "Từ tổng kết phiên"
+    "fromSession": "Từ tổng kết phiên",
+    "parent": "Thống kê"
   },
   "onboarding": {
     "progress": "Bước {step}/{of}",
@@ -549,7 +526,7 @@
   },
   "nav": {
     "label": "Điều hướng chính",
-    "home": "Trang chủ",
+    "sessions": "Phiên",
     "record": "Ghi hand",
     "stats": "Thống kê",
     "settings": "Cài đặt"
@@ -678,5 +655,50 @@
     "nameCreate": "+ Tạo \"{name}\"",
     "nameClear": "Bỏ tên",
     "editHere": "Sửa hành động"
+  },
+  "sessionList": {
+    "title": "Phiên",
+    "newSession": "Phiên mới",
+    "search": "Tìm theo địa điểm, ghi chú",
+    "filters": "Bộ lọc",
+    "kind": "Loại phiên",
+    "kindAll": "Tất cả",
+    "kindCash": "Cash",
+    "kindMtt": "MTT",
+    "month": "Tháng",
+    "venue": "Địa điểm",
+    "all": "Tất cả",
+    "win": "Thắng",
+    "loss": "Thua",
+    "toReview": "Cần xem lại",
+    "clear": "Xóa lọc",
+    "tileSessions": "Phiên · giờ",
+    "tileNet": "Net (bb)",
+    "tileRate": "bb/giờ",
+    "mttNet": "MTT {amount}",
+    "playing": "Đang chơi",
+    "hands": "{n} hand",
+    "reviewCount": "{n} cần xem lại",
+    "rank": "Hạng {place}/{entries}",
+    "rankOnly": "Hạng {place}",
+    "cashType": "Cash {stake}",
+    "mttType": "MTT {buyin}",
+    "emptyTitle": "Chưa có phiên nào",
+    "emptyBody": "Bắt đầu phiên đầu tiên để ghi hand.",
+    "noMatch": "Không có phiên nào khớp bộ lọc.",
+    "colDate": "Ngày",
+    "colType": "Loại",
+    "colVenue": "Địa điểm",
+    "colBlind": "Blind / Buy-in",
+    "colDuration": "Thời lượng",
+    "colHands": "Hand",
+    "colNet": "Net",
+    "colRate": "bb/giờ",
+    "colReview": "Xem lại",
+    "tipSessions": "Số phiên và tổng giờ của các phiên có giờ vào và giờ ra.",
+    "tipNet": "Tổng bb thắng thua của phiên cash. MTT tính bằng tiền.",
+    "tipRate": "Tổng bb chia tổng giờ chơi, chỉ tính cash có giờ vào và giờ ra.",
+    "tipReview": "Hand đã gắn cờ mà chưa có review được chấp nhận.",
+    "hoursUnit": "{hours} giờ"
   }
 }
