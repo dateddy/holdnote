@@ -12,6 +12,7 @@ import {
 import { deriveHand, fromHandRow, type HandRowIn, type HandSession } from '@/lib/hands/build';
 import { ERROR_TAGS } from '@/lib/review/review';
 import { languagePack } from './languages';
+import type { PromptFields } from './prompt';
 import { buildTableFacts, type OpponentInfo, type TableFacts } from './table-facts';
 
 export type ReviewHand = HandRowIn & {
@@ -182,12 +183,38 @@ export function tableLines(t: TableFacts, bb: number, f: Pick<ReviewFacts, 'kind
   return out;
 }
 
+/** Which new fields the context of this hand carries, so the prompt describes only those. */
+export function promptFieldsOf(
+  t: TableFacts | null | undefined,
+  kind: string,
+): PromptFields | null {
+  if (!t) return null;
+  return {
+    flow: true,
+    straddle: t.straddles.length > 0,
+    ante: t.ante.mode !== 'none' && t.ante.amount > 0,
+    level: kind === 'mtt',
+    multiway: t.opponents.length > 1,
+    sidePots: t.pots.length > 1,
+    uncalled: t.uncalled.length > 0,
+  };
+}
+
 /** The user message for one hand, from database rows. */
 export function buildReviewContext(input: ReviewContextInput): string {
+  return buildReviewRequest(input).userMessage;
+}
+
+/** The user message and the prompt fields that go with it. */
+export function buildReviewRequest(input: ReviewContextInput): {
+  userMessage: string;
+  promptFields: PromptFields | null;
+} {
   const { session, hand, opponent, opponentInfo, topLeaks, locale, rebuttal } = input;
   const draft = fromHandRow(session, hand);
   const d = deriveHand(session, draft);
-  return renderReviewContext({
+  const table = buildTableFacts(session, draft, d, opponentInfo);
+  const userMessage = renderReviewContext({
     kind: session.kind,
     mode: session.mode,
     stakeLabel: session.stake_label,
@@ -208,8 +235,9 @@ export function buildReviewContext(input: ReviewContextInput): string {
     topLeaks,
     locale,
     rebuttal,
-    table: buildTableFacts(session, draft, d, opponentInfo),
+    table,
   });
+  return { userMessage, promptFields: promptFieldsOf(table, session.kind) };
 }
 
 /**

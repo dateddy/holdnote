@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { buildReviewContext } from '@/lib/ai/context';
+import { buildReviewRequest } from '@/lib/ai/context';
 import { languagePack, reviewInLanguage } from '@/lib/ai/languages';
 import { budgetFromEnv, decideAccess, loadUsage } from '@/lib/ai/quota';
 import { runReview } from '@/lib/ai/run-review';
@@ -115,7 +115,7 @@ export async function POST(request: Request) {
     }
   }
 
-  const userMessage = buildReviewContext({
+  const { userMessage, promptFields } = buildReviewRequest({
     session,
     hand,
     opponent,
@@ -127,7 +127,7 @@ export async function POST(request: Request) {
 
   let run;
   try {
-    run = await runReview({ apiKey, model, userMessage, locale });
+    run = await runReview({ apiKey, model, userMessage, locale, promptFields });
   } catch (e) {
     const failure = modelFailure(e, usage.hasOwnKey);
     return fail(failure.code, failure.status);

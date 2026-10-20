@@ -6,6 +6,7 @@
  *   BENCH_LIMIT=3 pnpm bench:ai        smoke run
  *   BENCH_MODELS=a/b,c/d pnpm bench:ai other models
  *   BENCH_MAX_USD=2                    stop launching calls once this much is spent (default 2)
+ *   BENCH_RUNS=3                       repeat everything n times; the report gives mean and min–max
  *   BENCH_PROMPTS=v1-old,v1,v2         prompt configurations (default v1; v1-old = prompt and context
  *                                      of before task 3.5; v1/v2 = current context, DEC-053)
  *
@@ -25,6 +26,9 @@ import {
 } from '../../../packages/poker-core/test/legacy/loader';
 import {
   compareReviews,
+  formatSpread,
+  runStats,
+  spread,
   verdictErrors,
   evOfOld,
   groupRecall,
@@ -85,6 +89,7 @@ const prompts = (process.env.BENCH_PROMPTS?.split(',').map((m) => m.trim()) ?? [
 const variants: Variant[] = models.flatMap((spec) =>
   prompts.map((prompt) => ({ label: `${spec} [${prompt}]`, spec, prompt })),
 );
+const runs = Math.max(1, Math.floor(Number(process.env.BENCH_RUNS) || 1));
 const limit = Number(process.env.BENCH_LIMIT) || Infinity;
 const maxUsd = Number(process.env.BENCH_MAX_USD) || 2;
 const BATCH = 3; // hands in flight at once (x models requests each)
@@ -154,6 +159,8 @@ function prepare(): Item[] {
 }
 
 type Result = {
+  /** 1-based repetition of the whole benchmark. */
+  run: number;
   hand: string;
   model: string;
   ok: boolean;
@@ -167,11 +174,11 @@ type Result = {
   cmp: Comparison | null;
 };
 
-async function runOne(item: Item, variant: Variant): Promise<Result> {
+async function runOne(item: Item, variant: Variant, run: number): Promise<Result> {
   const t0 = Date.now();
   const [model, effort] = variant.spec.split('@');
   const reasoningEffort = (effort as 'low' | 'medium' | 'high' | undefined) ?? 'low';
-  const base = { hand: item.id, model: variant.label, tokensIn: 0, tokensOut: 0, costUsd: 0 };
+  const base = { run, hand: item.id, model: variant.label, tokensIn: 0, tokensOut: 0, costUsd: 0 };
   try {
     const run: ReviewRun = await runReview({
       apiKey: apiKey!,
@@ -240,7 +247,7 @@ function report(items: Item[], results: Result[], spent: number, stoppedEarly: b
   );
   out.push(
     '',
-    `${items.length} hand, ${variants.length} cấu hình (model × prompt), chi ${money(spent)} (trần ${money(maxUsd)}).`,
+    `${items.length} hand × ${runs} lần chạy, ${variants.length} cấu hình (model × prompt), chi ${money(spent)} (trần ${money(maxUsd)}).`,
   );
   if (stoppedEarly) out.push('', '**Dừng sớm vì chạm trần ngân sách.** Số liệu chưa đủ hand.');
   out.push(
@@ -261,6 +268,32 @@ function report(items: Item[], results: Result[], spent: number, stoppedEarly: b
     );
     out.push(
       `| ${m} | ${s.runs} | ${s.valid} | ${s.validFirstTry} | ${s.groupsExact} | ${s.groupsOverlap} | ${s.errorFlag} | ${s.ev} | ${ratio(e.falseMistake)} | ${ratio(e.missedMistake)} | ${money(s.costPerHand)} | ${s.seconds.toFixed(1)} |`,
+    );
+  }
+  out.push(
+    '',
+    `## Dao động giữa ${runs} lần chạy: trung bình (min–max)`,
+    '',
+    'JSON hỏng (sai sau lần thử lại duy nhất) tính riêng; ba cột còn lại chỉ tính trên các reply hợp lệ.',
+    '',
+    '| Cấu hình | JSON hỏng | Khớp EV | Báo sai nhầm (Đạt: Đúng) | Bỏ sót lỗi (Đạt: Sai) |',
+    '|---|---|---|---|---|',
+  );
+  for (const m of labels) {
+    const per = Array.from({ length: runs }, (_, k) =>
+      runStats(
+        results
+          .filter((r) => r.model === m && r.run === k + 1)
+          .map((r) => ({
+            ok: r.ok,
+            evMatch: r.cmp?.evMatch ?? null,
+            oldEv: oldEvById.get(r.hand) ?? null,
+            aiEv: r.review?.ev_verdict ?? null,
+          })),
+      ),
+    ).filter((_, k) => results.some((r) => r.model === m && r.run === k + 1));
+    out.push(
+      `| ${m} | ${formatSpread(spread(per.map((p) => p.invalidJson)))} | ${formatSpread(spread(per.map((p) => p.evMatch)))} | ${formatSpread(spread(per.map((p) => p.falseMistake)))} | ${formatSpread(spread(per.map((p) => p.missedMistake)))} |`,
     );
   }
   const testIds = new Set(inSplit(items, 'test').map((i) => i.id));
@@ -356,25 +389,28 @@ describe.skipIf(!apiKey || !hasLegacyData)('AI model benchmark', () => {
     const results: Result[] = [];
     let spent = 0;
     let stoppedEarly = false;
-    for (let i = 0; i < items.length; i += BATCH) {
-      if (spent >= maxUsd) {
-        stoppedEarly = true;
-        break;
+    for (let run = 1; run <= runs && !stoppedEarly; run++)
+      for (let i = 0; i < items.length; i += BATCH) {
+        if (spent >= maxUsd) {
+          stoppedEarly = true;
+          break;
+        }
+        const batch = items.slice(i, i + BATCH);
+        const done = await Promise.all(
+          batch.flatMap((it) => variants.map((v) => runOne(it, v, run))),
+        );
+        results.push(...done);
+        spent += done.reduce((n, r) => n + r.costUsd, 0);
+        console.log(
+          `bench: run ${run}/${runs}, ${Math.min(i + BATCH, items.length)}/${items.length} hands, spent ${money(spent)}`,
+        );
       }
-      const batch = items.slice(i, i + BATCH);
-      const done = await Promise.all(batch.flatMap((it) => variants.map((v) => runOne(it, v))));
-      results.push(...done);
-      spent += done.reduce((n, r) => n + r.costUsd, 0);
-      console.log(
-        `bench: ${Math.min(i + BATCH, items.length)}/${items.length} hands, spent ${money(spent)}`,
-      );
-    }
 
     const dir = `${LEGACY_DIR}bench/${new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-')}/`;
     mkdirSync(dir, { recursive: true });
     writeFileSync(
       `${dir}results.json`,
-      JSON.stringify({ models, prompts, spent, results }, null, 2),
+      JSON.stringify({ models, prompts, runs, spent, results }, null, 2),
     );
     writeFileSync(`${dir}report.md`, report(items, results, spent, stoppedEarly));
     console.log(`bench: wrote ${dir}report.md`);

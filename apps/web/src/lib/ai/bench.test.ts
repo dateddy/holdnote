@@ -9,6 +9,9 @@ import {
   styleStats,
   summarize,
   verdictErrors,
+  spread,
+  formatSpread,
+  runStats,
 } from './bench';
 
 describe('bench helpers', () => {
@@ -109,5 +112,25 @@ describe('verdictErrors', () => {
     ]);
     expect(e.falseMistake).toEqual({ n: 1, d: 3 });
     expect(e.missedMistake).toEqual({ n: 1, d: 2 });
+  });
+});
+
+describe('spread and runStats', () => {
+  it('spread: mean and range, ignoring missing values', () => {
+    expect(spread([0.4, null, 0.6])).toEqual({ mean: 0.5, min: 0.4, max: 0.6 });
+    expect(spread([null])).toBeNull();
+    expect(formatSpread(spread([0.4, 0.5, 0.6]))).toBe('50% (40–60)');
+  });
+  it('runStats keeps broken JSON out of the other rates', () => {
+    const r = runStats([
+      { ok: true, evMatch: true, oldEv: 'correct', aiEv: 'correct' },
+      { ok: true, evMatch: false, oldEv: 'correct', aiEv: 'mistake' },
+      { ok: true, evMatch: false, oldEv: 'mistake', aiEv: 'correct' },
+      { ok: false, evMatch: null, oldEv: 'mistake', aiEv: null },
+    ]);
+    expect(r.invalidJson).toBe(0.25);
+    expect(r.evMatch).toBeCloseTo(1 / 3);
+    expect(r.falseMistake).toBe(0.5);
+    expect(r.missedMistake).toBe(1);
   });
 });

@@ -40,8 +40,10 @@ export async function chatJson(opts: {
 }): Promise<ChatResult> {
   const doFetch = opts.fetchImpl ?? fetch;
   let res: Response;
-  try {
-    res = await doFetch(ENDPOINT, {
+  // Structured output first; a model or provider that rejects `response_format` (400/404) is asked
+  // once more with the prompt alone (it already says to return only JSON) and Zod does the checking.
+  const send = (structured: boolean) =>
+    doFetch(ENDPOINT, {
       method: 'POST',
       headers: {
         authorization: `Bearer ${opts.apiKey}`,
@@ -56,17 +58,22 @@ export async function chatJson(opts: {
         max_tokens: 4000,
         reasoning: { effort: opts.reasoningEffort ?? 'low' },
         usage: { include: true },
-        response_format: {
-          type: 'json_schema',
-          json_schema: {
-            name: opts.schemaName ?? 'hand_review',
-            strict: true,
-            schema: opts.schema,
+        ...(structured && {
+          response_format: {
+            type: 'json_schema',
+            json_schema: {
+              name: opts.schemaName ?? 'hand_review',
+              strict: true,
+              schema: opts.schema,
+            },
           },
-        },
+        }),
       }),
       signal: AbortSignal.timeout(opts.timeoutMs ?? 60_000),
     });
+  try {
+    res = await send(true);
+    if (res.status === 400 || res.status === 404) res = await send(false);
   } catch (e) {
     const timeout = e instanceof Error && (e.name === 'TimeoutError' || e.name === 'AbortError');
     throw new OpenRouterError(

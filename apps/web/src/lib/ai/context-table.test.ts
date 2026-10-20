@@ -1,6 +1,12 @@
 import { forcedBets, type Action, type HandSetup, type Position } from 'poker-core';
 import { describe, expect, it } from 'vitest';
-import { buildReviewContext, type ReviewHand, type ReviewSession } from './context';
+import {
+  buildReviewContext,
+  buildReviewRequest,
+  type ReviewHand,
+  type ReviewSession,
+} from './context';
+import { SYSTEM_PROMPT_V1_BASE, systemPrompt } from './prompt';
 
 const cash: ReviewSession = {
   kind: 'cash',
@@ -230,5 +236,52 @@ describe('table facts in the review context (task 3.5)', () => {
       ),
     );
     expect(text).toContain('raises to 9bb; 3x the bet it faces');
+  });
+});
+
+describe('prompt fields follow the hand (task 3.5b)', () => {
+  const heads = (over: Partial<HandSetup> = {}): HandSetup => ({
+    seats: 2,
+    sb: 25,
+    bb: 50,
+    ante: { mode: 'none' },
+    heroPos: 'BTN',
+    villPos: 'BB',
+    ...over,
+  });
+  const play = [
+    step('preflop', 'BTN', 'hero', 'raise', 150),
+    step('preflop', 'BB', 'villain', 'call'),
+  ];
+  const request = (hand: ReviewHand) =>
+    buildReviewRequest({ session: cash, hand, topLeaks: [], locale: 'en' });
+
+  it('a heads-up hand with forced bets: flow only', () => {
+    const { promptFields } = request(
+      row(heads(), play, { opponents: [{ pos: 'BB', stack: 10000 }] }),
+    );
+    expect(promptFields).toEqual({
+      flow: true,
+      straddle: false,
+      ante: false,
+      level: false,
+      multiway: false,
+      sidePots: false,
+      uncalled: false,
+    });
+    const prompt = systemPrompt('v1', promptFields);
+    expect(prompt).toContain('Pot type and players left');
+    expect(prompt).not.toMatch(/straddle|side pot|multiway pot/i);
+  });
+
+  it('a hand without forced bets (shorthand or old) gets the old v1 prompt', () => {
+    const hand = row(heads(), play);
+    const old = {
+      ...hand,
+      actions: (hand.actions as Action[]).filter((a) => !a.act.startsWith('post_')),
+    };
+    const { promptFields } = request(old);
+    expect(promptFields).toBeNull();
+    expect(systemPrompt('v1', promptFields)).toBe(SYSTEM_PROMPT_V1_BASE);
   });
 });

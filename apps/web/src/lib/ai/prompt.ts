@@ -50,8 +50,7 @@ Reference for low stakes (micro online, small live games). Deviate only with a r
 Return ONLY JSON matching the provided schema.`;
 
 /**
- * Review prompt v1 (before DEC-037), the default since DEC-053. Only the "Context you receive"
- * list gained lines for the fields added after task 5.1c; the rules are unchanged.
+ * Review prompt v1 (before DEC-037), the default since DEC-053; see {@link v1Prompt}.
  */
 export const SYSTEM_PROMPT_V1_BASE = `You are a poker coach reviewing ONE hand for a student. Judge decisions by expected value, never by the result.
 
@@ -80,29 +79,60 @@ Rules:
 
 Return ONLY JSON matching the provided schema.`;
 
-/** The context lines added after task 5.1c (DEC-053), kept apart so the benchmark can drop them. */
-export const V1_NEW_FIELDS = `- Table setup when present: straddle, ante (kind and size), tournament level and stage.
-- Every opponent in a multiway pot with stack and any cards shown, and which one is the main opponent.
-- Pot type, players left on each street, and side pots (size and who can win each). Winners are never given.
-- Uncalled bets returned to their owner, so they are not part of the pot.
-`;
+/** Which of the fields added after task 5.1c a hand actually has (DEC-053, task 3.5b). */
+export type PromptFields = {
+  /** Pot type and players left per street: every hand with a state machine. */
+  flow: boolean;
+  straddle: boolean;
+  ante: boolean;
+  /** Tournament level and stage. */
+  level: boolean;
+  multiway: boolean;
+  sidePots: boolean;
+  uncalled: boolean;
+};
+
+/** One context line per field, in the order they appear in the message. */
+const FIELD_LINES: Record<keyof PromptFields, string> = {
+  flow: '- Pot type and players left on each street.',
+  straddle: '- Straddle size.',
+  ante: '- Ante (kind and size).',
+  level: '- Tournament level (blinds and ante) and stage.',
+  multiway:
+    '- Every opponent in a multiway pot with stack and any cards shown, and which one is the main opponent.',
+  sidePots: '- Side pots (size and who can win each). Winners are never given.',
+  uncalled: '- Uncalled bets returned to their owner, so they are not part of the pot.',
+};
 
 const FIELDS_ANCHOR = '- Game type, stakes, live or online, player count.\n';
-export const SYSTEM_PROMPT_V1 = SYSTEM_PROMPT_V1_BASE.replace(
-  FIELDS_ANCHOR,
-  FIELDS_ANCHOR + V1_NEW_FIELDS,
-);
+
+/**
+ * Prompt v1. A hand without the new fields (shorthand, old hands) gets the old text unchanged;
+ * a hand that has some gets one extra line for each of them and nothing else.
+ */
+export function v1Prompt(fields?: PromptFields | null): string {
+  const lines = fields
+    ? (Object.keys(FIELD_LINES) as (keyof PromptFields)[])
+        .filter((k) => fields[k])
+        .map((k) => `${FIELD_LINES[k]}\n`)
+        .join('')
+    : '';
+  return lines
+    ? SYSTEM_PROMPT_V1_BASE.replace(FIELDS_ANCHOR, FIELDS_ANCHOR + lines)
+    : SYSTEM_PROMPT_V1_BASE;
+}
 
 export const PROMPT_VERSIONS = ['v1', 'v2'] as const;
 export type PromptVersion = (typeof PROMPT_VERSIONS)[number];
 export const DEFAULT_PROMPT_VERSION: PromptVersion = 'v1';
 
-const PROMPTS: Record<PromptVersion, string> = { v1: SYSTEM_PROMPT_V1, v2: SYSTEM_PROMPT_V2 };
-
 export const isPromptVersion = (v: unknown): v is PromptVersion =>
   (PROMPT_VERSIONS as readonly unknown[]).includes(v);
 
-export const systemPrompt = (v: PromptVersion = DEFAULT_PROMPT_VERSION) => PROMPTS[v];
+export const systemPrompt = (
+  v: PromptVersion = DEFAULT_PROMPT_VERSION,
+  fields?: PromptFields | null,
+) => (v === 'v1' ? v1Prompt(fields) : SYSTEM_PROMPT_V2);
 
 /** `AI_PROMPT_VERSION` (server env) picks the prompt; anything else falls back to the default. */
 export function configuredPromptVersion(raw = process.env.AI_PROMPT_VERSION): PromptVersion {

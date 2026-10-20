@@ -33,6 +33,11 @@ Mỗi task cỡ một phiên làm việc. Làm theo thứ tự trừ khi chủ d
   - [x] 3.5-4 Prompt v1 mô tả trường mới (tối thiểu, không đổi cách chấm).
   - [x] 3.5-5 Benchmark v1 cũ / v1 + ngữ cảnh mới / v2, báo bảng so sánh.
   - [x] 3.5-6 Ghi DEC-053.
+- [x] **3.5b** Giảm nhiễu AI review và benchmark:
+  - [x] 3.5b-1 Prompt v1 chỉ thêm dòng mô tả cho trường hand có; hand ghi tắt/hand cũ nhận đúng prompt v1 cũ (test cả hai).
+  - [x] 3.5b-2 JSON có cấu trúc (`response_format`), model từ chối thì gọi lại không kèm; Zod lỗi thử lại 1 lần; benchmark tính JSON hỏng riêng.
+  - [x] 3.5b-3 Benchmark `BENCH_RUNS`: trung bình và min–max của khớp EV, báo sai nhầm, bỏ sót lỗi.
+  - [x] 3.5b-4 Chạy v1 và v2, mỗi bản 3 lần trên 69 hand; ghi kết quả vào DEC-054.
 
 ## Giai đoạn 4 — Thống kê
 - [x] 4.1 Tổng kết phiên + AI tổng kết.
@@ -63,5 +68,8 @@ Mỗi task cỡ một phiên làm việc. Làm theo thứ tự trừ khi chủ d
   - [x] **5.1c-6a-fix Trả cược không ai theo:** người đã fold không bao giờ nhận lại tiền (`computePot` và state machine); test viết trước; script dry-run `pnpm recheck:results` quét hand đã lưu (chỉ đọc), chờ Đạt duyệt danh sách trước khi sửa DB.
   - [x] **5.1c-6b Sửa lỗi sau thử tay (UI):** showdown tự chọn theo bài (chọn khác thì cảnh báo và khóa Lưu), chọn người thắng theo từng pot khi thiếu bài, hiện từng pot; nhãn "Đối thủ · BTN" khi multiway; sửa chip action inline (bỏ sheet); panel thiết lập đứng sau dòng tóm tắt dính; gắn tên đối thủ bằng ô nhập có gợi ý và "+ Tạo"; Toggle straddle, chữ nhắc, nhắc chọn lại ghế mình, bộ đếm số người cho phiên MTT. Ảnh 375×550.
 - [ ] 5.2 Script migrate `legacy/data` → tài khoản chủ dự án.
+  - Yêu cầu thêm (DEC-054): hand cũ chỉ có chuỗi ghi tắt (`line`), nên script đổi chuỗi đó thành `actions` qua state machine (kèm blind/ante bắt buộc, vị trí, stack) thay vì chỉ lưu `raw_line`. Mục đích: sau migrate, benchmark đọc hand từ DB và đo được ngữ cảnh mới (straddle, ante, multiway, side pot, loại pot).
+  - Sau 5.2: chạy lại benchmark (`BENCH_RUNS=3`, v1 và v2) trên hand đã migrate và ghi kết quả vào DECISIONS.
+  - Ghi chú: AI review sẽ hiện "ý kiến thứ hai" và nhãn thử nghiệm trước beta (làm ở 5.1d-2, chưa có trong danh sách).
 - [ ] 5.3 Hoàn thiện bản tiếng Anh, cài đặt, xuất/xóa dữ liệu.
 - [ ] 5.4 Deploy Vercel + domain holdnote.app.

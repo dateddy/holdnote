@@ -111,6 +111,49 @@ export function verdictErrors(rows: readonly VerdictPair[]) {
   };
 }
 
+export type Spread = { mean: number; min: number; max: number };
+
+/** Mean and range of the values that exist; null when there are none. */
+export function spread(xs: readonly (number | null)[]): Spread | null {
+  const v = xs.filter((x): x is number => x !== null);
+  if (v.length === 0) return null;
+  return {
+    mean: v.reduce((a, b) => a + b, 0) / v.length,
+    min: Math.min(...v),
+    max: Math.max(...v),
+  };
+}
+
+export const formatSpread = (s: Spread | null) =>
+  s
+    ? `${Math.round(s.mean * 100)}% (${Math.round(s.min * 100)}–${Math.round(s.max * 100)})`
+    : 'n/a';
+
+export type RunRow = {
+  /** The reply was valid JSON of the right shape (after the one retry). */
+  ok: boolean;
+  evMatch: boolean | null;
+  oldEv: string | null;
+  aiEv: string | null;
+};
+
+/**
+ * One run of one configuration. Broken JSON is its own rate and stays out of the other three:
+ * EV match, false alarms and misses are measured on the replies that were valid.
+ */
+export function runStats(rows: readonly RunRow[]) {
+  const ok = rows.filter((r) => r.ok);
+  const ev = ok.filter((r) => r.evMatch !== null);
+  const e = verdictErrors(ok.map((r) => ({ oldEv: r.oldEv, aiEv: r.aiEv ?? '' })));
+  const rate = (n: number, d: number) => (d === 0 ? null : n / d);
+  return {
+    invalidJson: rate(rows.length - ok.length, rows.length),
+    evMatch: rate(ev.filter((r) => r.evMatch).length, ev.length),
+    falseMistake: rate(e.falseMistake.n, e.falseMistake.d),
+    missedMistake: rate(e.missedMistake.n, e.missedMistake.d),
+  };
+}
+
 /** Deterministic halves for tuning the prompt on one and measuring on the other. */
 export function inSplit<T>(items: readonly T[], split: 'tune' | 'test' | 'all'): T[] {
   if (split === 'all') return [...items];

@@ -10,7 +10,12 @@ import {
 } from './quota';
 import { InvalidOutputError, runReview } from './run-review';
 import { aiStatus } from './status';
-import { configuredPromptVersion, DEFAULT_PROMPT_VERSION, systemPrompt } from './prompt';
+import {
+  configuredPromptVersion,
+  DEFAULT_PROMPT_VERSION,
+  SYSTEM_PROMPT_V1_BASE,
+  systemPrompt,
+} from './prompt';
 import { aiReviewSchema, normalizeTags, toAiReviewRow } from './schema';
 
 const session: ReviewSession = {
@@ -217,6 +222,18 @@ describe('runReview', () => {
     expect(r.review.ev_verdict).toBe('mistake');
   });
 
+  it('asks for structured JSON, and drops it when the model rejects response_format', async () => {
+    const f = vi
+      .fn()
+      .mockResolvedValueOnce(new Response('{}', { status: 400 }))
+      .mockResolvedValueOnce(reply(JSON.stringify(valid)));
+    const r = await run(f);
+    expect(f).toHaveBeenCalledTimes(2);
+    expect(JSON.parse(f.mock.calls[0][1].body as string).response_format.type).toBe('json_schema');
+    expect(JSON.parse(f.mock.calls[1][1].body as string).response_format).toBeUndefined();
+    expect(r.attempts).toBe(1);
+  });
+
   it('retries once with the error and adds up usage', async () => {
     const f = vi
       .fn()
@@ -411,10 +428,33 @@ describe('prompt versions (DEC-053)', () => {
     expect(systemPrompt('v2')).toContain('Review the WHOLE hand');
     expect(systemPrompt('v1')).not.toContain('Review the WHOLE hand');
   });
-  it('v1 describes the new context fields', () => {
-    for (const word of ['straddle', 'side pots', 'Uncalled bets']) {
-      expect(systemPrompt('v1')).toContain(word);
-    }
+  it('v1 for a hand without the new fields is the old text, byte for byte', () => {
+    expect(systemPrompt('v1')).toBe(SYSTEM_PROMPT_V1_BASE);
+    expect(systemPrompt('v1', null)).toBe(SYSTEM_PROMPT_V1_BASE);
+    expect(systemPrompt('v1')).not.toMatch(/straddle|side pot|Uncalled|multiway pot/i);
+  });
+  it('v1 describes only the fields the hand has', () => {
+    const none = {
+      flow: false,
+      straddle: false,
+      ante: false,
+      level: false,
+      multiway: false,
+      sidePots: false,
+      uncalled: false,
+    };
+    expect(systemPrompt('v1', none)).toBe(SYSTEM_PROMPT_V1_BASE);
+    const text = systemPrompt('v1', { ...none, flow: true, straddle: true, sidePots: true });
+    expect(text).toContain('- Pot type and players left on each street.');
+    expect(text).toContain('- Straddle size.');
+    expect(text).toContain('- Side pots');
+    expect(text).not.toContain('Ante (kind');
+    expect(text).not.toContain('Tournament level');
+    expect(text).not.toContain('multiway pot');
+    // Only lines were added: the rules are untouched.
+    expect(text.replace(/^- (Pot type|Straddle size|Side pots).*\n/gm, '')).toBe(
+      SYSTEM_PROMPT_V1_BASE,
+    );
   });
   it('stores the prompt version on the review row', () => {
     const row = toAiReviewRow(aiReviewSchema.parse(valid), 'm/x', false, 'Missing', 'v1');

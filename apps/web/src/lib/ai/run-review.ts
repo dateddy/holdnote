@@ -1,5 +1,10 @@
 import { languagePack } from './languages';
-import { configuredPromptVersion, systemPrompt, type PromptVersion } from './prompt';
+import {
+  configuredPromptVersion,
+  systemPrompt,
+  type PromptFields,
+  type PromptVersion,
+} from './prompt';
 import { parseJson, runJson, type Parsed, type Usage } from './run-json';
 import { aiReviewJsonSchema, aiReviewSchema, type AiReview } from './schema';
 
@@ -28,6 +33,8 @@ export async function runReview(opts: {
   reasoningEffort?: 'low' | 'medium' | 'high';
   /** Default: `AI_PROMPT_VERSION`, else v1. */
   promptVersion?: PromptVersion;
+  /** Fields the hand has beyond the old context; v1 describes only those. */
+  promptFields?: PromptFields | null;
   /** Benchmark only: replaces the prompt text of `promptVersion`. */
   system?: string;
   fetchImpl?: typeof fetch;
@@ -47,7 +54,7 @@ export async function runReview(opts: {
   const { value, ...rest } = await runJson({
     apiKey: opts.apiKey,
     model: opts.model,
-    system: opts.system ?? systemPrompt(promptVersion),
+    system: opts.system ?? systemPrompt(promptVersion, opts.promptFields),
     userMessage: opts.userMessage,
     schema: aiReviewJsonSchema as Record<string, unknown>,
     schemaName: 'hand_review',
