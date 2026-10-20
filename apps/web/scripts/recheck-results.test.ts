@@ -3,6 +3,9 @@
  * current poker-core and list the hands that differ from what is stored. Only reads; it never
  * writes to the database. Run: `pnpm recheck:results`.
  *
+ * With `RECHECK_WRITE=1` it writes the new `pot_final` (and `result` when it changes) of the listed
+ * hands, once the list has been approved.
+ *
  * Hands whose result was typed by hand (tag `manual_result`) are listed apart and not compared.
  */
 import { describe, expect, it } from 'vitest';
@@ -69,6 +72,7 @@ describe.skipIf(!enabled)('recheck saved results', () => {
         'result new': d.result,
         'pot old': oldPot,
         'pot new': d.potFinal,
+        _fix: { pot_final: d.potFinal, ...(same(oldResult, d.result) ? {} : { result: d.result }) },
         why:
           oldResult === null && d.result !== null
             ? 'result was missing'
@@ -83,7 +87,19 @@ describe.skipIf(!enabled)('recheck saved results', () => {
     );
     if (manual.length) console.log('Manual results (not compared):', manual.join(', '));
     console.log(changed.length ? `Changed: ${changed.length}` : 'No hand changes.');
-    if (changed.length) console.table(changed);
+    if (changed.length) {
+      console.table(changed.map(({ _fix, ...shown }) => shown));
+    }
+    if (process.env.RECHECK_WRITE === '1') {
+      for (const c of changed) {
+        const { error } = await db
+          .from('hands')
+          .update(c._fix as { pot_final: number | null; result?: number | null })
+          .eq('id', c.id as string);
+        if (error) throw error;
+      }
+      console.log(`Written: ${changed.length} hand(s).`);
+    }
     expect(compared).toBeGreaterThanOrEqual(0);
   });
 });
