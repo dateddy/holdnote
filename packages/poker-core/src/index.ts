@@ -90,7 +90,9 @@ export {
   disciplineStats,
   leakTable,
   mttStats,
+  sessionHours,
   sessionResult,
+  sessionTotals,
   stopLossBreached,
   type Discipline,
   type LeakLine,
@@ -98,6 +100,7 @@ export {
   type MttGroup,
   type SeriesPoint,
   type SessionResult,
+  type SessionTotals,
   type StatsMtt,
   type StatsSession,
 } from './stats';

@@ -5,7 +5,9 @@ import {
   disciplineStats,
   leakTable,
   mttStats,
+  sessionHours,
   sessionResult,
+  sessionTotals,
   stopLossBreached,
   type StatsSession,
 } from '../src/index';
@@ -217,5 +219,91 @@ describe('disciplineStats', () => {
       cash({ id: 'c', selfState: 'tired' }),
     ];
     expect(disciplineStats(list)).toEqual({ sessions: 3, stopLossBreaches: 1, tiltSessions: 1 });
+  });
+});
+
+describe('sessionHours', () => {
+  it('end minus start, in hours', () => {
+    expect(
+      sessionHours(cash({ startAt: '2026-09-29T12:00:00Z', endAt: '2026-09-29T14:30:00Z' })),
+    ).toBe(2.5);
+  });
+  it('past midnight is fine: it is a difference of instants', () => {
+    expect(
+      sessionHours(cash({ startAt: '2026-09-29T22:00:00Z', endAt: '2026-09-30T01:15:00Z' })),
+    ).toBe(3.25);
+  });
+  it('null when either time is missing or the order is wrong', () => {
+    expect(sessionHours(cash({ startAt: '2026-09-29T12:00:00Z' }))).toBeNull();
+    expect(sessionHours(cash({ endAt: '2026-09-29T12:00:00Z' }))).toBeNull();
+    expect(
+      sessionHours(cash({ startAt: '2026-09-29T14:00:00Z', endAt: '2026-09-29T12:00:00Z' })),
+    ).toBeNull();
+    expect(sessionHours(cash({ startAt: 'x', endAt: 'y' }))).toBeNull();
+  });
+});
+
+describe('sessionTotals', () => {
+  // 2 hours, -165 bb
+  const a = cash({ id: 'a', startAt: '2026-09-29T12:00:00Z', endAt: '2026-09-29T14:00:00Z' });
+  // 3 hours, +100 bb (cash-out 2.00 more than buy-in 0.00? use buy-in 1, cash-out 5 => +4 => +200bb)
+  const b = cash({
+    id: 'b',
+    buyin: 1,
+    cashout: 5,
+    startAt: '2026-09-30T12:00:00Z',
+    endAt: '2026-09-30T15:00:00Z',
+  });
+
+  it('counts sessions, adds hours and bb, and divides the two for bb/hour', () => {
+    const t = sessionTotals([a, b]);
+    expect(t.count).toBe(2);
+    expect(t.hours).toBe(5);
+    expect(t.netBb).toBe(35); // -165 + 200
+    expect(t.bbPerHour).toBe(7); // 35 / 5
+  });
+
+  it('bb/hour only uses cash sessions that have both a result and hours', () => {
+    const noTimes = cash({ id: 'c', buyin: 1, cashout: 101 }); // +5000 bb, no hours
+    const t = sessionTotals([a, b, noTimes]);
+    expect(t.netBb).toBe(5035);
+    expect(t.hours).toBe(5);
+    expect(t.bbPerHour).toBe(7);
+  });
+
+  it('a session still open has no result and no hours', () => {
+    const open = cash({ id: 'o', startAt: '2026-10-01T12:00:00Z', cashout: null });
+    const t = sessionTotals([a, open]);
+    expect(t.count).toBe(2);
+    expect(t.hours).toBe(2);
+    expect(t.netBb).toBe(-165);
+  });
+
+  it('MTT: money by currency, no bb, no bb/hour, hours still counted', () => {
+    const m = mtt({ startAt: '2026-10-02T12:00:00Z', endAt: '2026-10-02T18:00:00Z' });
+    const vnd = mtt({
+      id: 'm2',
+      currency: 'VND',
+      buyin: 1000,
+      mtt: { ...m.mtt!, prize: 0, bounty: null },
+    });
+    const t = sessionTotals([m, vnd]);
+    expect(t.netBb).toBe(0);
+    expect(t.bbPerHour).toBeNull();
+    expect(t.hours).toBe(6);
+    expect(t.mttMoney).toEqual([
+      { currency: 'USD', money: 0.93 },
+      { currency: 'VND', money: -1000 },
+    ]);
+  });
+
+  it('empty list', () => {
+    expect(sessionTotals([])).toEqual({
+      count: 0,
+      hours: 0,
+      netBb: 0,
+      bbPerHour: null,
+      mttMoney: [],
+    });
   });
 });

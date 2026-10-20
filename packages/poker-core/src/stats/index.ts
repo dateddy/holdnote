@@ -54,9 +54,60 @@ export function bbPerHour(s: StatsSession): number | null {
   if (s.kind !== 'cash' || !s.startAt || !s.endAt) return null;
   const result = sessionResult(s);
   if (!result || result.bb == null) return null;
+  const hours = sessionHours(s);
+  return hours == null ? null : roundMoney(result.bb / hours);
+}
+
+/** Hours between the start and end times; null when either is missing or the order is wrong. */
+export function sessionHours(s: StatsSession): number | null {
+  if (!s.startAt || !s.endAt) return null;
   const hours = (Date.parse(s.endAt) - Date.parse(s.startAt)) / 3_600_000;
-  if (!Number.isFinite(hours) || hours <= 0) return null;
-  return roundMoney(result.bb / hours);
+  return Number.isFinite(hours) && hours > 0 ? hours : null;
+}
+
+export interface SessionTotals {
+  count: number;
+  /** Hours of the sessions that have both times (cash and MTT). */
+  hours: number;
+  /** Sum of the bb results of cash sessions. MTT has no single bb. */
+  netBb: number;
+  /** Cash only: bb won over hours played, using the sessions that have both a result and hours. */
+  bbPerHour: number | null;
+  /** MTT results in money, one entry per currency. */
+  mttMoney: { currency: string; money: number }[];
+}
+
+/** The three numbers over a list of sessions (home list tiles). */
+export function sessionTotals(sessions: StatsSession[]): SessionTotals {
+  let hours = 0;
+  let netBb = 0;
+  let rateBb = 0;
+  let rateHours = 0;
+  const mttMoney = new Map<string, number>();
+  for (const s of sessions) {
+    const h = sessionHours(s);
+    if (h != null) hours += h;
+    const result = sessionResult(s);
+    if (!result) continue;
+    if (s.kind === 'mtt') {
+      mttMoney.set(s.currency, (mttMoney.get(s.currency) ?? 0) + result.money);
+    } else if (result.bb != null) {
+      netBb += result.bb;
+      if (h != null) {
+        rateBb += result.bb;
+        rateHours += h;
+      }
+    }
+  }
+  return {
+    count: sessions.length,
+    hours: roundMoney(hours),
+    netBb: roundMoney(netBb),
+    bbPerHour: rateHours > 0 ? roundMoney(rateBb / rateHours) : null,
+    mttMoney: [...mttMoney]
+      .sort((x, y) => x[0].localeCompare(y[0]))
+      .map(([currency, money]) => ({ currency, money: roundMoney(money) })),
+  };
 }
 
 /** Cash session whose loss went past the stop-loss (a loss equal to it is not a breach). */
