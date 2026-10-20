@@ -71,6 +71,7 @@ describe.skipIf(!configured)('RLS', () => {
         opponent_id: ids.opponents,
         actions: [{ street: 'preflop', actor: 'hero', act: 'raise', amount: 150 }],
         result: -18000,
+        level: 8,
       })
       .select('id')
       .single();
@@ -114,6 +115,13 @@ describe.skipIf(!configured)('RLS', () => {
       const { data, error } = await a.from('profiles').select('id, locale, plan').single();
       expect(error).toBeNull();
       expect(data).toMatchObject({ id: aId, locale: 'en', plan: 'free' });
+    });
+
+    it('hand level round-trips and must be positive', async () => {
+      const { data } = await a.from('hands').select('level').eq('id', ids.hands).single();
+      expect(data?.level).toBe(8);
+      const bad = await a.from('hands').update({ level: 0 }).eq('id', ids.hands);
+      expect(bad.error).not.toBeNull();
     });
 
     it('session without currency takes the profile currency', async () => {
@@ -208,7 +216,7 @@ describe.skipIf(!configured)('RLS', () => {
       const patches = {
         opponents: { notes: 'x' },
         sessions: { venue: 'x' },
-        hands: { thought: 'x' },
+        hands: { thought: 'x', level: 9 },
         reviews: { lesson: 'x' },
         user_rules: { text: 'x' },
       } as const;

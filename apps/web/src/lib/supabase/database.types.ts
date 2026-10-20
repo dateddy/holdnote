@@ -57,6 +57,7 @@ export type Database = {
           hero_pos: string | null;
           hero_stack: number | null;
           id: string;
+          level: number | null;
           level_bb: number | null;
           missing_data: boolean;
           num: number;
@@ -92,6 +93,7 @@ export type Database = {
           hero_pos?: string | null;
           hero_stack?: number | null;
           id?: string;
+          level?: number | null;
           level_bb?: number | null;
           missing_data?: boolean;
           num: number;
@@ -127,6 +129,7 @@ export type Database = {
           hero_pos?: string | null;
           hero_stack?: number | null;
           id?: string;
+          level?: number | null;
           level_bb?: number | null;
           missing_data?: boolean;
           num?: number;
