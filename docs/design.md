@@ -124,13 +124,28 @@ Bộ chọn bài, bàn phím số và bàn mini **trượt ra trong luồng tran
 | `CardSlot` (trạng thái)    | `size="card"` (41×57px) hoặc `fill`; `missing` (nhấp nháy viền `warn`), `need` (nhấp nháy viền `accent`: bài mình còn trống), `extra` (viền `warn` nét đứt), `duplicate` (viền `loss`), `highlight` (viền `accent`); ô khóa dùng `disabled` |
 | `Card tight` / `Card snug` | Card `p-3` / `p-2` cho màn làm việc phải vừa một màn hình điện thoại (Ghi nhanh)                                          |
 
+| `InfoTip`                  | Dấu `?` cạnh nhãn chỉ số hoặc thuật ngữ. Chạm mở/đóng, chạm ra ngoài đóng, mỗi lúc chỉ một cái mở; chuột: hover; bàn phím: focus. Một câu, tối đa ~15 chữ, nằm trong file ngôn ngữ (ngoại lệ `rounded-full` như chấm chỉ báo; vùng chạm mở rộng 44px) |
+| `StatTile`                 | Nhãn + `InfoTip` + một số lớn (`text-lg`, từ 1024px `text-2xl`) + dòng phụ tùy chọn                                          |
+| `FilterBar`                | Khung xếp các điều khiển lọc: `row` (cuộn ngang, điện thoại) hoặc `column` (cột trái desktop)                                |
+| `Segmented`                | Chọn một trong vài mục đặt cạnh nhau (Tất cả / Cash / MTT), cao 44px                                                         |
+| `ChipMenu`                 | Chip `Tháng ▾` mở danh sách ngắn (vị trí `fixed`, không bị cắt bởi vùng cuộn ngang); mục đầu xóa lựa chọn                      |
+| `SortHeader`               | `<th>` mà tên cột là nút sắp xếp (`aria-sort`); `InfoTip` đặt bên cạnh, ngoài nút                                           |
+| `SideNav`                  | Thanh điều hướng trái từ 1024px, cùng 4 mục với `BottomNav` (`BottomNav` ẩn từ 1024px)                                       |
+
+Chip bật/tắt chọn nhiều dùng `Chip`; ô tìm dùng `Input type="search"`. Danh sách phiên ghép các component trên trong `components/session`.
+
 Sẽ thêm trong các task 5.1b-x: `Icon` (lucide), `TopBar` variant tab/con, `Textarea`, `Field` (nhãn + ô + gợi ý), `Screen` (khung trang).
 
 **Luật:** màn hình và component nghiệp vụ chỉ ghép từ `components/ui`; không viết `<button>`, `<input>`, `<textarea>`, `<select>` có style tay ngoài `components/ui`. Thiếu thì thêm component vào `components/ui` trước và ghi vào bảng trên.
 
 ## 7. Điều hướng
 
-- 4 tab gốc: Trang chủ `/` · Ghi hand · Thống kê `/stats` · Cài đặt `/settings`.
+- 4 tab gốc (DEC-058): **Phiên** `/` · **Ghi hand** · **Thống kê** `/stats` · **Cài đặt** `/settings`. Điện thoại: thanh dưới; từ 1024px: `SideNav` bên trái, cùng 4 mục.
 - Màn gốc của tab: không có nút back.
-- Màn con: back về màn cha trong cùng tab; tab cha vẫn sáng.
-- Chi tiết cây màn chốt ở task 5.1b-2.
+- Màn con: back về màn cha trong cùng tab; tab cha vẫn sáng (`lib/nav.ts`, `activeTab`):
+  - Phiên: `/`, `/sessions/[id]`, `/sessions/[id]/hands`, `/sessions/[id]/summary`, `/hands/[id]`.
+  - Ghi hand: `/sessions/new`, `/sessions/[id]/before`, `record`, `structure`, `end`.
+  - Thống kê: `/stats`; `/rules`, `/opponents`, `/opponents/new`, `/opponents/[id]` (con của Thống kê).
+  - Cài đặt: `/settings`.
+- Ngoại lệ bề rộng: trang Phiên từ 1024px không giới hạn `max-w-md` (cột lọc 16rem + bảng 9 cột); điện thoại vẫn `max-w-md`.
+- Phần còn lại của cây màn chốt ở task 5.1b-2.

@@ -60,8 +60,8 @@ Google hoặc email magic link. Phải đăng nhập mới dùng được.
 2. Chơi chủ yếu: Live/Online · Cash/MTT.
 3. Xem một hand mẫu đã review, rồi thử ghi lại chính hand đó có hướng dẫn.
 
-### 3.3 Trang chủ
-Có phiên đang mở: thẻ phiên (stake, thời gian, số hand, kết quả tạm) + nút lớn **Ghi hand**. Không có: nút **Bắt đầu phiên**. Thêm: 3 leak lặp lại nhiều nhất, luật của bạn, số hand chưa review, số lượt AI còn lại.
+### 3.3 Trang chủ = danh sách phiên (DEC-058)
+Tab **Phiên**. Tiêu đề + nút **Phiên mới**; ô tìm theo địa điểm, ghi chú tổng kết, tên giải; bộ lọc: Tất cả | Cash | MTT, Tháng ▾, Địa điểm ▾, Thắng, Thua, Cần xem lại (chip bật/tắt chọn nhiều; Thắng và Thua cùng bật = một trong hai; phiên có hand ⚑ chưa có review được chấp nhận là cần xem lại); bộ lọc nằm trong địa chỉ trang. Ba ô theo bộ lọc: **Phiên · giờ**, **Net (bb)**, **bb/giờ** (mỗi ô có dấu ? giải thích một câu). bb/giờ = tổng bb ÷ tổng giờ của phiên cash có đủ giờ vào và giờ ra; MTT không tính bb/giờ, net MTT là tiền (theo từng đơn vị tiền). Danh sách nhóm theo tháng (tiêu đề tháng kèm net tháng); phiên chưa kết thúc nằm đầu, viền accent, chữ "Đang chơi", chạm vào thì vào bàn (Ghi hand, hoặc Trước phiên nếu chưa Vào bàn). Hàng phiên: ngày · địa điểm · loại (Cash 25/50, MTT + buy-in); thời lượng · số hand · số cần xem lại; bên phải net bb và tiền (MTT: tiền và hạng). Từ 1024px: cột trái lọc + ba ô, cột phải bảng sắp xếp được (Ngày · Loại · Địa điểm · Blind/Buy-in · Thời lượng · Hand · Net · bb/giờ · Xem lại). Leak lặp lại ở tab Thống kê; Đối thủ và Luật là thẻ trong tab Thống kê; số lượt AI còn lại ở Cài đặt.
 
 ### 3.4 Tạo phiên và Trước phiên
 - Cash: địa điểm/site, stake, BB, straddle, số ghế, buy-in, stop-loss.

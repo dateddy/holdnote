@@ -7,7 +7,8 @@
 - 5.1c-3 (DEC-056): cấu trúc blind MTT trong `sessions.mtt.blind_levels` (`poker-core/src/mtt`, trang `/sessions/[id]/structure`), Lên/Lùi level, gợi ý level theo giờ, SB mang sang hand sau. Migration `20261020210000` (`hands.level`) đã áp lên DB thật; test RLS 22 pass.
 - DEC-055: review/tóm tắt AI hỏng không trừ lượt, chuẩn hóa enum trước Zod (`lib/ai/normalize.ts`), nút Thử lại ở màn review.
 - Ảnh kiểm tra: `screens/5.1c-6b/`, `screens/5.1c-3/` (375×550; ngoài git; `node scripts/screens-mtt.mjs`).
-- Mọi commit đã push (HEAD `686467a`).
+- 5.1d-1 (DEC-058): trang chủ là danh sách phiên, 4 tab Phiên · Ghi hand · Thống kê · Cài đặt, bảng desktop từ 1024px. Ảnh: `screens/5.1d-1/` (`node scripts/screens-home.mjs`).
+- DEC-057: lượt AI hỏng cộng vào ngân sách app (`ai_usage.failed`, migration `20261021100000` đã áp, test RLS 23 pass). Task 3.6 hoãn xuống trước 5.4.
 
 ## Đang làm
 
@@ -16,7 +17,7 @@
 ## Bước tiếp theo (tối đa 3, theo thứ tự)
 
 1. Đạt thử tay trên điện thoại: cấu trúc blind MTT (dán văn bản, Lên level, gợi ý level), showdown multiway, sửa chip inline, tạo đối thủ từ ô nhập.
-2. Task 5.2 migrate `legacy/data` (rồi chạy lại `pnpm recheck:results` và benchmark v1/v2), hoặc 5.1d khi Đạt gửi nội dung.
+2. Task 5.2 migrate `legacy/data` (ghép giờ `HH:MM` thành `start_at`/`end_at`; rồi `pnpm recheck:results` và benchmark v1/v2), hoặc 5.1d-2 khi Đạt gửi nội dung.
 3. Dọn control style tay còn lại (5.1b-4/5/7): `shorthand-input`, `undo-toast`, `review-form`, `session-form`, `end-form`.
 
 ## Vướng / cần Đạt quyết
