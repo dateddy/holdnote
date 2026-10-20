@@ -13,6 +13,7 @@ export type Database = {
           billed_to: string;
           cost_usd: number;
           created_at: string;
+          failed: boolean;
           id: string;
           kind: string;
           model: string;
@@ -24,6 +25,7 @@ export type Database = {
           billed_to?: string;
           cost_usd?: number;
           created_at?: string;
+          failed?: boolean;
           id?: string;
           kind: string;
           model: string;
@@ -35,6 +37,7 @@ export type Database = {
           billed_to?: string;
           cost_usd?: number;
           created_at?: string;
+          failed?: boolean;
           id?: string;
           kind?: string;
           model?: string;

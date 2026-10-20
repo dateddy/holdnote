@@ -191,6 +191,17 @@ describe.skipIf(!configured)('RLS', () => {
       expect(count).toBe(1);
     });
 
+    it('ai_usage.failed defaults to false and the client cannot mark rows failed', async () => {
+      const row = await admin.from('ai_usage').select('failed').eq('user_id', aId).single();
+      expect(row.data?.failed).toBe(false);
+      const upd = await a
+        .from('ai_usage')
+        .update({ failed: true } as never)
+        .eq('user_id', aId)
+        .select('id');
+      expect(upd.data ?? []).toHaveLength(0);
+    });
+
     it('cannot read user_api_keys at all, not even own row', async () => {
       for (const columns of ['vault_secret_id', 'provider', '*']) {
         const { data, error } = await a.from('user_api_keys').select(columns);

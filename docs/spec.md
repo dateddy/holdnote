@@ -112,7 +112,7 @@ Postgres trên Supabase, 8 bảng. Mọi bảng dữ liệu người dùng có `
 | `reviews` | `id`, `user_id`, `hand_id`, `source` (manual/ai), `model`, `prompt_version` (v1/v2, null = tay/không rõ), `range_text`, `math_text`, `line_text`, `icm_text`, `error_tags` text[], `ev_verdict` (correct/mistake/unsure), `lesson`, `accepted`, `is_current`, `created_at` |
 | `opponents` | `id`, `user_id`, `name`, `player_type`, `venue`, `notes`, `updated_at` |
 | `user_rules` | `id`, `user_id`, `text`, `source_session_id`, `active`, `sort` |
-| `ai_usage` | `id`, `user_id`, `kind` (hand_review/rebuttal/session_summary), `model`, `tokens_in`, `tokens_out`, `cost_usd`, `billed_to` (app/user), `created_at` |
+| `ai_usage` | `id`, `user_id`, `kind` (hand_review/rebuttal/session_summary), `model`, `tokens_in`, `tokens_out`, `cost_usd`, `billed_to` (app/user), `failed` (lượt gọi hỏng: cộng ngân sách app, không trừ lượt), `created_at` |
 | `user_api_keys` | `user_id`, `provider`, `model` (null = mặc định), `vault_secret_id` (uuid trỏ tới secret trong Supabase Vault; key không nằm trong bảng), `created_at`. Client không bao giờ đọc lại key. |
 
 Quan hệ: user → nhiều phiên → nhiều hand → nhiều review (chỉ một `is_current = true`). Hand có thể trỏ tới một đối thủ. Xóa phiên thì xóa theo hand và review.
