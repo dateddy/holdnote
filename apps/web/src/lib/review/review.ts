@@ -140,6 +140,8 @@ export const AI_ERRORS = [
   'not_found',
   'nothing_to_summarize',
   'offline',
+  'upstream_error',
+  'save_failed',
   'server_error',
 ] as const;
 
@@ -147,3 +149,16 @@ export const AI_ERRORS = [
 export function aiErrorCode(code: unknown): (typeof AI_ERRORS)[number] {
   return AI_ERRORS.find((c) => c === code) ?? 'server_error';
 }
+
+/** Failures worth another try: nothing was saved and no turn was used (spec 5.1). */
+const RETRYABLE: readonly string[] = [
+  'invalid_output',
+  'timeout',
+  'provider_busy',
+  'upstream_error',
+  'save_failed',
+  'offline',
+  'server_error',
+];
+
+export const isRetryable = (code: string): boolean => RETRYABLE.includes(code);

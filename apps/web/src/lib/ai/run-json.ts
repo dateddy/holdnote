@@ -79,6 +79,8 @@ export function parseJson<T>(
       v: unknown,
     ) => { success: true; data: T } | { success: false; error: { issues: Issue[] } };
   },
+  /** Cleans the parsed JSON before the schema sees it (enum spellings, see normalize.ts). */
+  normalize: (json: unknown) => unknown = (json) => json,
 ): Parsed<T> {
   let json: unknown;
   try {
@@ -86,7 +88,7 @@ export function parseJson<T>(
   } catch {
     return { ok: false, error: 'The reply was not valid JSON.' };
   }
-  const r = schema.safeParse(json);
+  const r = schema.safeParse(normalize(json));
   if (r.success) return { ok: true, value: r.data };
   return {
     ok: false,

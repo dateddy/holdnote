@@ -1,4 +1,5 @@
 import { languagePack } from './languages';
+import { normalizeSummary } from './normalize';
 import { parseJson, runJson, type Parsed, type Usage } from './run-json';
 import { SUMMARY_SYSTEM_PROMPT } from './summary-prompt';
 import {
@@ -24,7 +25,7 @@ export async function runSummary(opts: {
 }): Promise<SummaryRun> {
   const pack = languagePack(opts.locale);
   const parse = (content: string): Parsed<AiSummary> => {
-    const r = parseJson(content, aiSummarySchema);
+    const r = parseJson(content, aiSummarySchema, normalizeSummary);
     if (!r.ok) return r;
     return pack.check(summaryTexts(r.value)) ? r : { ok: false, error: pack.fixRequest };
   };

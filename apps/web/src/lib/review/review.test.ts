@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   aiErrorCode,
+  isRetryable,
   contentChanged,
   emptyReview,
   ERROR_TAGS,
@@ -94,5 +95,13 @@ describe('AI review helpers', () => {
     expect(aiErrorCode('quota_exhausted')).toBe('quota_exhausted');
     expect(aiErrorCode('weird')).toBe('server_error');
     expect(aiErrorCode(undefined)).toBe('server_error');
+    expect(aiErrorCode('upstream_error')).toBe('upstream_error');
+    expect(aiErrorCode('save_failed')).toBe('save_failed');
+  });
+  it('isRetryable: failures that used no turn can be retried, limits cannot', () => {
+    for (const c of ['invalid_output', 'timeout', 'provider_busy', 'upstream_error', 'offline'])
+      expect(isRetryable(c)).toBe(true);
+    for (const c of ['quota_exhausted', 'budget_locked', 'rate_limited', 'key_rejected', 'not_found'])
+      expect(isRetryable(c)).toBe(false);
   });
 });

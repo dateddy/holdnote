@@ -5,6 +5,7 @@ import {
   type PromptFields,
   type PromptVersion,
 } from './prompt';
+import { normalizeReview } from './normalize';
 import { parseJson, runJson, type Parsed, type Usage } from './run-json';
 import { aiReviewJsonSchema, aiReviewSchema, type AiReview } from './schema';
 
@@ -42,7 +43,7 @@ export async function runReview(opts: {
   const promptVersion = opts.promptVersion ?? configuredPromptVersion();
   const pack = languagePack(opts.locale);
   const parse = (content: string): Parsed<AiReview> => {
-    const r = parseJson(content, aiReviewSchema);
+    const r = parseJson(content, aiReviewSchema, normalizeReview);
     if (!r.ok) return r;
     const v = r.value;
     // Right shape, wrong language: ask again rather than show it (spec 5.1 retry).

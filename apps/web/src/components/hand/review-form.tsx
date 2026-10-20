@@ -3,7 +3,8 @@
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/client';
 import {
   aiErrorCode,
@@ -11,6 +12,7 @@ import {
   ERROR_TAGS,
   EV_VERDICTS,
   fromReviewRow,
+  isRetryable,
   sameField,
   toggleTag,
   toReviewRow,
@@ -90,6 +92,8 @@ export function ReviewForm({
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'failed'>('idle');
   const [run, setRun] = useState<'idle' | 'busy'>('idle');
   const [aiError, setAiError] = useState<string | null>(null);
+  /** The last request, so "Try again" repeats it (a rebuttal keeps its text). */
+  const lastBody = useRef<{ rebuttal?: string }>({});
   const [notice, setNotice] = useState<string | null>(null);
   const [rebutOpen, setRebutOpen] = useState(false);
   const [reason, setReason] = useState('');
@@ -110,6 +114,7 @@ export function ReviewForm({
   const outOfTurns = ai.plan === 'free' && (ai.locked || remaining === 0);
 
   async function callAi(body: { rebuttal?: string }) {
+    lastBody.current = body;
     setRun('busy');
     setAiError(null);
     setNotice(null);
@@ -240,6 +245,15 @@ export function ReviewForm({
               </Link>
             )}
           </p>
+        )}
+        {aiError && isRetryable(aiErrorCode(aiError)) && (
+          <Button
+            variant="secondary"
+            onClick={() => callAi(lastBody.current)}
+            disabled={run === 'busy' || outOfTurns}
+          >
+            {t('aiRetry')}
+          </Button>
         )}
       </div>
 

@@ -237,13 +237,41 @@ describe('runReview', () => {
   it('retries once with the error and adds up usage', async () => {
     const f = vi
       .fn()
-      .mockResolvedValueOnce(reply(JSON.stringify({ ...valid, error_tags: ['nope'] })))
+      .mockResolvedValueOnce(reply(JSON.stringify({ ...valid, error_tags: 'nope' })))
       .mockResolvedValueOnce(reply(JSON.stringify(valid)));
     const r = await run(f);
     expect(f).toHaveBeenCalledTimes(2);
     expect(r).toMatchObject({ tokensIn: 200, tokensOut: 100, costUsd: 0.002 });
     const second = JSON.parse(f.mock.calls[1][1].body as string);
     expect(second.messages.at(-1).content).toContain('error_tags');
+  });
+
+  it('accepts enums in the wrong case or a synonym at once, without a retry', async () => {
+    const f = vi.fn(async () =>
+      reply(
+        JSON.stringify({
+          ...valid,
+          ev_verdict: 'Wrong',
+          key_mistake_street: 'River',
+          error_tags: ['Missed Value', 'made-up tag'],
+        }),
+      ),
+    );
+    const r = await run(f);
+    expect(f).toHaveBeenCalledTimes(1);
+    expect(r.review).toMatchObject({
+      ev_verdict: 'mistake',
+      key_mistake_street: 'river',
+      error_tags: ['missed_value'],
+    });
+  });
+
+  it('still retries when an enum cannot be mapped', async () => {
+    const f = vi
+      .fn()
+      .mockResolvedValueOnce(reply(JSON.stringify({ ...valid, ev_verdict: 'maybe good' })))
+      .mockResolvedValueOnce(reply(JSON.stringify(valid)));
+    expect((await run(f)).attempts).toBe(2);
   });
 
   it('gives up after the second bad reply', async () => {

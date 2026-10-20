@@ -392,3 +392,10 @@ Append-only. Không sửa, không xóa mục cũ. Muốn đảo một quyết đ
 - Lý do: 3 lần chạy 69 hand (gemini-3.5-flash-lite, $0.82), trung bình (min–max): v1 khớp EV 51% (46–53), báo sai nhầm 33% (29–42), bỏ sót lỗi 50% (47–53), JSON hỏng 5% (3–7); v2 khớp EV 48% (45–52), báo sai nhầm 50% (47–52), bỏ sót lỗi 25% (17–32), JSON hỏng 7% (4–9). Kết luận: về khớp EV hai bản không phân biệt được (khoảng chồng nhau). v2 báo sai nhầm nhiều hơn rõ (khoảng không chồng) và bỏ sót ít hơn rõ; đây là đánh đổi, không phải bản nào hơn hẳn. JSON hỏng vẫn 5–7% dù có `json_schema`: lỗi nằm ở nội dung (sai ngôn ngữ hoặc enum), không chỉ cú pháp. 69 hand legacy đều ghi tắt nên v1 ở đây chính là prompt cũ; dòng ngữ cảnh mới chưa được đo (chờ 5.2).
 - Supersedes: DEC-053 (1) về 4 dòng cố định.
 - Ai quyết: Đạt
+
+## DEC-055 — Chuẩn hóa enum trước Zod, nút Thử lại cho review hỏng (task 5.1c-3, phần A)
+
+- Ngày: 2026-10-20
+- Quyết định: (1) Review/tóm tắt AI hỏng sau lần thử lại **không trừ lượt**: lượt là số dòng `ai_usage`, chỉ ghi sau khi `runReview`/`runSummary` thành công và review đã lưu; kiểm lại bằng đọc code `/api/review`, `/api/summary`. (2) Thêm `lib/ai/normalize.ts` chạy giữa `JSON.parse` và Zod: enum sai hoa thường/khoảng trắng/gạch nối hoặc đồng nghĩa gần (`wrong`→`mistake`, `pre-flop`→`preflop`, `null`→`none`, `"true"`→`true`, hạng `b+`→`B`) được map về mã chuẩn; tag không map được thì bỏ (không bỏ cả review); giá trị đơn không map được giữ nguyên để Zod báo lỗi và chạy thử lại. (3) Giữ một lần thử lại chung cho Zod và sai ngôn ngữ (DEC-054). (4) Màn review: lỗi có thể thử lại hiện nút "Thử lại" gọi lại đúng request cuối (kể cả phản bác); thông báo ghi rõ "Không trừ lượt"; thêm mã `upstream_error`, `save_failed`.
+- Chưa làm: chi phí hai lần gọi hỏng không cộng vào ngân sách app $20/tháng (~5–7% lần gọi, vài cent). Xem lại trước beta.
+- Ai quyết: Đạt (duyệt kế hoạch 2026-10-20)
