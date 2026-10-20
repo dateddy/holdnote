@@ -75,4 +75,5 @@ Mỗi task cỡ một phiên làm việc. Làm theo thứ tự trừ khi chủ d
   - Sau 5.2: chạy lại benchmark (`BENCH_RUNS=3`, v1 và v2) trên hand đã migrate và ghi kết quả vào DECISIONS.
   - Ghi chú: AI review sẽ hiện "ý kiến thứ hai" và nhãn thử nghiệm trước beta (làm ở 5.1d-2, chưa có trong danh sách).
 - [ ] 5.3 Hoàn thiện bản tiếng Anh, cài đặt, xuất/xóa dữ liệu.
+- [ ] 3.6 Benchmark model Claude — hoãn, làm trước khi chốt gói giá.
 - [ ] 5.4 Deploy Vercel + domain holdnote.app.
