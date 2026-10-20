@@ -28,6 +28,8 @@ export async function runReview(opts: {
   reasoningEffort?: 'low' | 'medium' | 'high';
   /** Default: `AI_PROMPT_VERSION`, else v1. */
   promptVersion?: PromptVersion;
+  /** Benchmark only: replaces the prompt text of `promptVersion`. */
+  system?: string;
   fetchImpl?: typeof fetch;
 }): Promise<ReviewRun> {
   const promptVersion = opts.promptVersion ?? configuredPromptVersion();
@@ -45,7 +47,7 @@ export async function runReview(opts: {
   const { value, ...rest } = await runJson({
     apiKey: opts.apiKey,
     model: opts.model,
-    system: systemPrompt(promptVersion),
+    system: opts.system ?? systemPrompt(promptVersion),
     userMessage: opts.userMessage,
     schema: aiReviewJsonSchema as Record<string, unknown>,
     schemaName: 'hand_review',

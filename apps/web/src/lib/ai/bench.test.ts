@@ -8,6 +8,7 @@ import {
   inSplit,
   styleStats,
   summarize,
+  verdictErrors,
 } from './bench';
 
 describe('bench helpers', () => {
@@ -92,5 +93,21 @@ describe('tune/test split and recall', () => {
       unsure: '50%',
       numberedLessons: '50%',
     });
+  });
+});
+
+describe('verdictErrors', () => {
+  it('counts false alarms against "correct" and misses against "mistake"', () => {
+    const e = verdictErrors([
+      { oldEv: 'correct', aiEv: 'mistake' },
+      { oldEv: 'correct', aiEv: 'correct' },
+      { oldEv: 'correct', aiEv: 'unsure' },
+      { oldEv: 'mistake', aiEv: 'correct' },
+      { oldEv: 'mistake', aiEv: 'mistake' },
+      { oldEv: 'unsure', aiEv: 'mistake' },
+      { oldEv: null, aiEv: 'correct' },
+    ]);
+    expect(e.falseMistake).toEqual({ n: 1, d: 3 });
+    expect(e.missedMistake).toEqual({ n: 1, d: 2 });
   });
 });

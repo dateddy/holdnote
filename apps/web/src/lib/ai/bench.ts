@@ -95,6 +95,22 @@ export function summarize(rows: readonly Row[]) {
   };
 }
 
+export type VerdictPair = { oldEv: string | null; aiEv: string };
+
+/**
+ * Where the AI verdict goes wrong against the old review: a hand Đạt marked correct that the AI
+ * calls a mistake (false alarm), and a hand Đạt marked a mistake that the AI calls correct
+ * (missed). `n` of `d`.
+ */
+export function verdictErrors(rows: readonly VerdictPair[]) {
+  const right = rows.filter((r) => r.oldEv === 'correct');
+  const wrong = rows.filter((r) => r.oldEv === 'mistake');
+  return {
+    falseMistake: { n: right.filter((r) => r.aiEv === 'mistake').length, d: right.length },
+    missedMistake: { n: wrong.filter((r) => r.aiEv === 'correct').length, d: wrong.length },
+  };
+}
+
 /** Deterministic halves for tuning the prompt on one and measuring on the other. */
 export function inSplit<T>(items: readonly T[], split: 'tune' | 'test' | 'all'): T[] {
   if (split === 'all') return [...items];
