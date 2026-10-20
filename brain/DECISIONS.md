@@ -384,3 +384,11 @@ Append-only. Không sửa, không xóa mục cũ. Muốn đảo một quyết đ
 - Chưa làm: tách ảnh hưởng của 4 dòng prompt và `sizingNote` (chạy thêm một cấu hình, ~$0.12); hand multiway thật chưa có bộ chấm của Đạt nên ngữ cảnh mới chỉ kiểm bằng test đơn vị.
 - Supersedes: DEC-037 mục (3) "Prompt v2" làm mặc định.
 - Ai quyết: Đạt (duyệt kế hoạch ngày 2026-10-20)
+
+## DEC-054 — Prompt v1 theo trường của hand, JSON có cấu trúc, benchmark nhiều lần (task 3.5b)
+
+- Ngày: 2026-10-20
+- Quyết định: (1) Prompt v1 là văn bản cũ nguyên vẹn (`SYSTEM_PROMPT_V1_BASE`); chỉ thêm một dòng cho mỗi trường hand có (loại pot và số người mỗi street, straddle, ante, level MTT, multiway, side pot, cược không ai theo). Hand ghi tắt và hand cũ (không có state machine) nhận đúng prompt cũ. Hệ quả: system prompt có vài biến thể thay vì một bản cố định, cache theo biến thể. Sửa DEC-053 (1) "4 dòng cố định". (2) `response_format: json_schema` vốn đã bật; thêm: model/nhà cung cấp trả 400/404 thì gọi lại một lần không kèm `response_format`; Zod lỗi vẫn thử lại 1 lần rồi báo lỗi. (3) Benchmark: `BENCH_RUNS=n`, báo trung bình và min–max; JSON hỏng tính riêng, ba tỉ lệ còn lại chỉ tính trên reply hợp lệ. (4) Yêu cầu cho 5.2: đổi chuỗi ghi tắt của hand cũ thành `actions` qua state machine; chạy lại benchmark sau 5.2. Ghi chú 5.1d-2: "ý kiến thứ hai" và nhãn thử nghiệm trước beta.
+- Lý do: 3 lần chạy 69 hand (gemini-3.5-flash-lite, $0.82), trung bình (min–max): v1 khớp EV 51% (46–53), báo sai nhầm 33% (29–42), bỏ sót lỗi 50% (47–53), JSON hỏng 5% (3–7); v2 khớp EV 48% (45–52), báo sai nhầm 50% (47–52), bỏ sót lỗi 25% (17–32), JSON hỏng 7% (4–9). Kết luận: về khớp EV hai bản không phân biệt được (khoảng chồng nhau). v2 báo sai nhầm nhiều hơn rõ (khoảng không chồng) và bỏ sót ít hơn rõ; đây là đánh đổi, không phải bản nào hơn hẳn. JSON hỏng vẫn 5–7% dù có `json_schema`: lỗi nằm ở nội dung (sai ngôn ngữ hoặc enum), không chỉ cú pháp. 69 hand legacy đều ghi tắt nên v1 ở đây chính là prompt cũ; dòng ngữ cảnh mới chưa được đo (chờ 5.2).
+- Supersedes: DEC-053 (1) về 4 dòng cố định.
+- Ai quyết: Đạt
