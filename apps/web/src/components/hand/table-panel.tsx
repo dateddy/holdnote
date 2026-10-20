@@ -1,12 +1,15 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import Link from 'next/link';
 import { maxStraddles, parseAmount, tableOrder, type Position } from 'poker-core';
+import { Button, buttonClass } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
 import { Input } from '@/components/ui/input';
 import { Stepper } from '@/components/ui/stepper';
 import { Toggle } from '@/components/ui/toggle';
 import { levelAnte, pickedOpponents, type HandDraft, type HandSession } from '@/lib/hands/build';
+import { sessionLevels, stepLevel, withBb } from '@/lib/hands/level';
 import { MAX_PLAYERS, MIN_PLAYERS, STAGES, type OpponentOption } from '@/lib/hands/table';
 import { MiniTable } from './mini-table';
 import { OpponentRow } from './opponent-row';
@@ -30,6 +33,10 @@ type Props = {
   onOpponentCreate?: (pos: string, name: string) => void;
   onStraddles: (count: number) => void;
   set: <K extends keyof HandDraft>(key: K, value: HandDraft[K]) => void;
+  /** Updates the typed draft (a level step fills several fields at once). */
+  onDraft: (update: (d: HandDraft) => HandDraft) => void;
+  /** The blind structure screen of this session; absent in practice mode. */
+  structureHref?: string;
   mode: 'buttons' | 'shorthand';
   onMode: (mode: 'buttons' | 'shorthand') => void;
   /** Hands saved before forced bets were actions can only be edited as a shorthand line. */
@@ -58,6 +65,8 @@ export function TablePanel({
   onOpponentCreate,
   onStraddles,
   set,
+  onDraft,
+  structureHref,
   mode,
   onMode,
   modeLocked,
@@ -70,6 +79,11 @@ export function TablePanel({
   const isMtt = session.kind === 'mtt';
   const maxS = isMtt ? 0 : maxStraddles(players);
   const bbNow = parseAmount(isMtt ? draft.levelBb : String(session.bb ?? '')) ?? 0;
+  const hasStructure = sessionLevels(session).length > 0;
+  const up = hasStructure ? stepLevel(session, draft, 1) : null;
+  const down = hasStructure ? stepLevel(session, draft, -1) : null;
+  // The level's own ante (structure) or the online per-player ante (DEC-034) is typed here.
+  const anteTyped = draft.anteMode !== '' || levelAnte(session) === 'typed';
   const pickedPos = new Set(opponents.map((o) => o.pos));
 
   return (
@@ -195,6 +209,20 @@ export function TablePanel({
       {isMtt && (
         <section className="space-y-3">
           <h3 className="text-base font-medium">{t('levelSection')}</h3>
+          {hasStructure && (
+            <div className="grid grid-cols-2 gap-3">
+              <Button
+                variant="secondary"
+                disabled={!down}
+                onClick={() => onDraft((d) => stepLevel(session, d, -1) ?? d)}
+              >
+                {t('levelDown')}
+              </Button>
+              <Button disabled={!up} onClick={() => onDraft((d) => stepLevel(session, d, 1) ?? d)}>
+                {t('levelUp')}
+              </Button>
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-3">
             <label className="flex flex-col gap-1 text-sm">
               {t('levelSb')}
@@ -212,24 +240,47 @@ export function TablePanel({
                 inputMode="decimal"
                 autoComplete="off"
                 value={draft.levelBb}
-                onChange={(e) => set('levelBb', e.target.value)}
+                onChange={(e) => onDraft((d) => withBb(d, e.target.value))}
               />
             </label>
-            {levelAnte(session) === 'typed' && (
+            {draft.anteMode !== '' && (
+              <div className="col-span-2 flex flex-col gap-1 text-sm">
+                {t('anteType')}
+                <div className="flex gap-1.5" role="group" aria-label={t('anteType')}>
+                  {(['none', 'each', 'bb'] as const).map((m) => (
+                    <Chip
+                      key={m}
+                      on={draft.anteMode === m}
+                      onClick={() => set('anteMode', m)}
+                      className="flex-1"
+                    >
+                      {t(`ante_${m}`)}
+                    </Chip>
+                  ))}
+                </div>
+              </div>
+            )}
+            {anteTyped && draft.anteMode !== 'none' && (
               <label className="flex flex-col gap-1 text-sm">
                 {t('levelAnte')}
                 <Input
                   inputMode="decimal"
                   autoComplete="off"
                   value={draft.ante}
+                  placeholder={draft.anteMode === 'bb' ? draft.levelBb : ''}
                   onChange={(e) => set('ante', e.target.value)}
                 />
               </label>
             )}
-            {levelAnte(session) === 'bb' && (
+            {!anteTyped && levelAnte(session) === 'bb' && (
               <p className="col-span-2 text-sm text-muted">{th('anteIsBb')}</p>
             )}
           </div>
+          {structureHref && (
+            <Link href={structureHref} className={buttonClass({ variant: 'ghost' })}>
+              {t(hasStructure ? 'structureEdit' : 'structureAdd')}
+            </Link>
+          )}
           <div className="space-y-2">
             <h3 className="text-base font-medium">{t('stage')}</h3>
             <div className="flex flex-wrap gap-1.5">

@@ -77,9 +77,9 @@ Không có bước thiết lập riêng và không có nút "Bắt đầu ghi": 
   - `per_player`: mỗi ghế đóng ante.
   - `bb_ante`: ghế BB đóng một khoản thay cả bàn (mặc định = BB).
   - Ante là **tiền chết**: vào pot, không tính vào mức phải theo. Đóng trước blind.
-- Cấu trúc blind: tùy chọn khi tạo phiên (danh sách level: SB, BB, ante). Bỏ qua được.
-  - Có cấu trúc → "Lên level" tự điền SB/BB/ante.
-  - Không có → mỗi hand tự nhập, điền sẵn theo hand trước.
+- Cấu trúc blind: tùy chọn khi tạo phiên (danh sách level: số level, SB, BB, ante, loại ante, số phút). Bỏ qua được. Dán nhanh từ văn bản, mỗi dòng `level sb/bb ante [phút]`. Sửa được giữa phiên.
+  - Có cấu trúc → thanh ngữ cảnh "Lv 8 · 300/600 (600)"; "Lên level" / "Lùi level" tự điền SB/BB/ante; sửa tay SB/BB/ante không đổi số level. Hand sau giữ level và giá trị của hand trước. Có số phút → chỉ gợi ý "Có thể đã sang Lv 9" theo giờ bắt đầu phiên, không tự đổi.
+  - Không có → mỗi hand tự nhập SB/BB/ante, điền sẵn theo hand trước (cả SB).
 - Nhãn giai đoạn giải (tùy chọn, chọn lúc ghi hand): Đầu giải · Giữa giải · Gần bubble · Bubble · ITM · Bàn chung kết · Heads-up.
 - MTT ẩn straddle.
 

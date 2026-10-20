@@ -106,6 +106,18 @@ export function prevLevel(levels: readonly BlindLevel[], n: number): BlindLevel 
 }
 
 /**
+ * The row a session starts at: `startLevel` when the list has it, else the next level up, else
+ * (past the end) the last level; without a start level, the first one.
+ */
+export function startRow(
+  levels: readonly BlindLevel[],
+  startLevel: number | null,
+): BlindLevel | null {
+  const n = startLevel != null && Number.isInteger(startLevel) && startLevel > 0 ? startLevel : 0;
+  return levelAt(levels, n) ?? nextLevel(levels, n - 1) ?? [...levels].sort(byLevel).at(-1) ?? null;
+}
+
+/**
  * The level the clock says the tournament has reached, to hint "may be Lv 9 by now"; it never
  * changes anything by itself. Counts from `startLevel` at `startedAt`. Null when it cannot know:
  * no levels, `now` before the start, or a level on the way without a length.
@@ -134,14 +146,14 @@ export function suggestLevel(opts: {
 }
 
 /** The jsonb shape of `sessions.mtt.blind_levels`. */
-export interface BlindLevelJson {
+export type BlindLevelJson = {
   level: number;
   sb: number;
   bb: number;
   ante: number;
   ante_mode: LevelAnteMode;
   minutes: number | null;
-}
+};
 
 export const blindLevelsToJson = (levels: readonly BlindLevel[]): BlindLevelJson[] =>
   tidy([...levels]).map((l) => ({

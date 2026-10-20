@@ -77,6 +77,14 @@ export function EndForm({ sessionId, base, initial, handCount }: Props) {
               }`
             : t('resultNone')}
         </p>
+        {isMtt && live.buyin != null && (
+          <p className="text-sm text-muted">
+            {t('mttCost', {
+              entries: 1 + (live.mtt?.reentries ?? 0),
+              cost: money(live.buyin * (1 + (live.mtt?.reentries ?? 0))),
+            })}
+          </p>
+        )}
         {rate != null && <p className="text-sm">{t('bbPerHour', { n: num(rate) })}</p>}
         <p className="text-sm text-muted">{tSessions('handsOnly', { count: handCount })}</p>
         {breached && (

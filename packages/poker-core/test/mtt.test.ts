@@ -7,6 +7,7 @@ import {
   prevLevel,
   readBlindLevels,
   sessionResult,
+  startRow,
   suggestLevel,
   type BlindLevel,
   type StatsSession,
@@ -107,6 +108,26 @@ describe('levelAt / nextLevel / prevLevel', () => {
     expect(prevLevel(levels, 4)?.level).toBe(2);
     expect(prevLevel(levels, 1)).toBeNull();
     expect(prevLevel(levels, 9)?.level).toBe(4);
+  });
+});
+
+describe('startRow', () => {
+  const levels = [lv(2, 50, 100), lv(5, 150, 300), lv(6, 200, 400)];
+  it('is the start level when it is in the list', () => {
+    expect(startRow(levels, 5)?.level).toBe(5);
+  });
+  it('is the next level up when the start level is not in the list', () => {
+    expect(startRow(levels, 3)?.level).toBe(5);
+    expect(startRow(levels, 1)?.level).toBe(2);
+  });
+  it('is the first level without a start level', () => {
+    expect(startRow(levels, null)?.level).toBe(2);
+  });
+  it('is the last level when the start level is past the end', () => {
+    expect(startRow(levels, 9)?.level).toBe(6);
+  });
+  it('is null without levels', () => {
+    expect(startRow([], 3)).toBeNull();
   });
 });
 

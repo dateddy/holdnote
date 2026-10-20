@@ -108,6 +108,7 @@ export {
   parseBlindStructure,
   prevLevel,
   readBlindLevels,
+  startRow,
   suggestLevel,
   type BlindLevel,
   type BlindLevelJson,

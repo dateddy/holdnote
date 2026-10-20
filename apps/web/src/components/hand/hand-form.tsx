@@ -10,12 +10,14 @@ import {
   forcedBets,
   formatShorthand,
   isPostAct,
+  levelAt,
   parseAmount,
   parseShorthand,
   POSITIONS,
   reachedStreet,
   replay,
   streetTabs,
+  suggestLevel,
   toBb,
   undo as undoAction,
   type Action,
@@ -25,6 +27,7 @@ import {
   type Position,
   type Street,
 } from 'poker-core';
+import { Button } from '@/components/ui/button';
 import { Card as Panel } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
 import { Input } from '@/components/ui/input';
@@ -43,6 +46,7 @@ import {
   type PreviousHand,
 } from '@/lib/hands/build';
 import { opponentLabel } from '@/lib/hands/labels';
+import { applyLevel, currentLevel, levelLabel, sessionLevels, startLevel } from '@/lib/hands/level';
 import { boardInput, draftToSetup } from '@/lib/hands/setup';
 import { applyShorthand } from '@/lib/hands/shorthand';
 import {
@@ -88,6 +92,8 @@ type Props = {
   /** Last villain stack seen against each opponent. */
   opponentStacks?: Record<string, number>;
   entryMode: 'buttons' | 'shorthand';
+  /** When the session started (MTT): the level length turns it into a "may be Lv n by now" hint. */
+  startedAt?: string | null;
   /** Set on the hand detail screen: update this hand instead of adding one. */
   edit?: { handId: string; num: number; initial: HandDraft };
   /** Onboarding practice (spec 3.2): nothing is saved; the button hands the draft back. */
@@ -106,6 +112,7 @@ export function HandForm({
   venue = null,
   opponentStacks = {},
   entryMode,
+  startedAt = null,
   edit,
   practice,
 }: Props) {
@@ -181,6 +188,21 @@ export function HandForm({
 
   const set = <K extends keyof HandDraft>(key: K, value: HandDraft[K]) =>
     setDraft((d) => ({ ...d, [key]: value }));
+
+  // The clock only hints at the level (spec 5): it never changes it. Read after mount, so the
+  // server render and the first client render agree.
+  const levels = useMemo(() => sessionLevels(session), [session]);
+  const [now, setNow] = useState<number | null>(null);
+  useEffect(() => {
+    if (edit || levels.length === 0 || !startedAt) return;
+    const tick = () => setNow(Date.now());
+    const first = setTimeout(tick, 0);
+    const timer = setInterval(tick, 60_000);
+    return () => {
+      clearTimeout(first);
+      clearInterval(timer);
+    };
+  }, [edit, levels, startedAt]);
 
   // In shorthand mode the line is the source of truth; actions and board come from parsing it.
   const parsed = useMemo(
@@ -441,6 +463,9 @@ export function HandForm({
       hero_stack: toNumber(draft.heroStack),
       result: derived.result,
       level_bb: toNumber(draft.levelBb),
+      level: toNumber(draft.level),
+      sb: session.kind === 'mtt' ? (setup?.sb ?? null) : null,
+      ante_mode: draft.anteMode || null,
       players_dealt: toNumber(draft.playersDealt),
       ante: toNumber(draft.ante),
       hero_pos: draft.heroPos,
@@ -517,12 +542,26 @@ export function HandForm({
   const showShowdown =
     mode === 'shorthand' ||
     (machine !== null && (['runout', 'showdown', 'won'].includes(machine.phase.kind) || decided));
+  const blindsAnte = derived.input?.blinds.ante;
+  const levelText = levelLabel(
+    draft,
+    blindsAnte && blindsAnte.mode !== 'none' ? blindsAnte.amount : 0,
+  );
+  // "May be Lv 9 by now": only when the clock is ahead of the level the hand is at.
+  const here = currentLevel(levels, draft);
+  const clock =
+    now !== null && startedAt
+      ? suggestLevel({
+          levels,
+          startLevel: startLevel(session, levels)?.level ?? 1,
+          startedAt: new Date(startedAt),
+          now: new Date(now),
+        })
+      : null;
+  const suggested = clock !== null && here !== null && clock > here.level ? clock : null;
   const extra =
     session.kind === 'mtt'
-      ? [
-          draft.levelBb && tr('levelChip', { bb: draft.levelBb }),
-          draft.stage && tr(`stage_${draft.stage as 'early'}`),
-        ]
+      ? [levelText, draft.stage && tr(`stage_${draft.stage as 'early'}`)]
           .filter(Boolean)
           .join(' · ')
       : draft.straddles.length > 0
@@ -584,12 +623,32 @@ export function HandForm({
             setDraft((d) => setStraddleCount(session, d, players, count, bbForStraddle))
           }
           set={set}
+          onDraft={setDraft}
+          {...(!practice && !edit && { structureHref: `/sessions/${sessionId}/structure` })}
           mode={mode}
           onMode={switchMode}
           modeLocked={Boolean(edit?.initial.legacy)}
           switchBlocked={switchBlocked}
         />
       </ContextBar>
+
+      {suggested !== null && (
+        <div
+          role="status"
+          className="flex items-center justify-between gap-3 rounded-md bg-accent/10 px-3 py-2 text-sm"
+        >
+          <span>{tr('levelHint', { n: suggested })}</span>
+          <Button
+            variant="ghost"
+            onClick={() => {
+              const target = levelAt(levels, suggested);
+              if (target) setDraft((d) => applyLevel(d, target));
+            }}
+          >
+            {tr('levelHintApply', { n: suggested })}
+          </Button>
+        </div>
+      )}
 
       <CardsCard
         slots={draft.slots}

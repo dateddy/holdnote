@@ -2,6 +2,8 @@ import { getLocale, getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { toBb } from 'poker-core';
+import { buttonClass } from '@/components/ui/button';
+import { sessionLevels } from '@/lib/hands/level';
 import { formatMoney } from '@/lib/sessions/format';
 import { createClient } from '@/lib/supabase/server';
 import { enterTable } from '../../actions';
@@ -26,7 +28,11 @@ export default async function BeforeSessionPage({ params }: PageProps<'/sessions
       : Promise.resolve({ data: [] }),
   ]);
 
-  const [t, locale] = await Promise.all([getTranslations('sessions'), getLocale()]);
+  const [t, tb, locale] = await Promise.all([
+    getTranslations('sessions'),
+    getTranslations('blinds'),
+    getLocale(),
+  ]);
   const stopLoss = session.stop_loss;
 
   return (
@@ -88,6 +94,14 @@ export default async function BeforeSessionPage({ params }: PageProps<'/sessions
             {t('addOpponent')}
           </Link>
         </section>
+      )}
+
+      {session.kind === 'mtt' && (
+        <Link href={`/sessions/${id}/structure`} className={buttonClass({ variant: 'secondary' })}>
+          {tb('title')}
+          {sessionLevels(session).length > 0 &&
+            ` · ${tb('count', { n: sessionLevels(session).length })}`}
+        </Link>
       )}
 
       <form action={enterTable.bind(null, id)} className="mt-auto">

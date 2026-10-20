@@ -101,7 +101,13 @@ describe('AI review helpers', () => {
   it('isRetryable: failures that used no turn can be retried, limits cannot', () => {
     for (const c of ['invalid_output', 'timeout', 'provider_busy', 'upstream_error', 'offline'])
       expect(isRetryable(c)).toBe(true);
-    for (const c of ['quota_exhausted', 'budget_locked', 'rate_limited', 'key_rejected', 'not_found'])
+    for (const c of [
+      'quota_exhausted',
+      'budget_locked',
+      'rate_limited',
+      'key_rejected',
+      'not_found',
+    ])
       expect(isRetryable(c)).toBe(false);
   });
 });

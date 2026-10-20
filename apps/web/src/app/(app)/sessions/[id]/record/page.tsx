@@ -25,7 +25,7 @@ export default async function RecordPage({ params }: PageProps<'/sessions/[id]/r
       supabase
         .from('hands')
         .select(
-          'num, hero_stack, result, level_bb, players_dealt, hero_pos, villain_pos, stage, actions',
+          'num, hero_stack, result, level_bb, level, ante, ante_mode, players_dealt, hero_pos, villain_pos, stage, actions',
         )
         .eq('session_id', id)
         .order('num', { ascending: false })
@@ -63,11 +63,14 @@ export default async function RecordPage({ params }: PageProps<'/sessions/[id]/r
     name: o.name,
     sameVenue: venue !== '' && (o.venue ?? '').trim().toLowerCase() === venue.toLowerCase(),
   }));
-  // The previous hand's straddles come from its forced bets.
-  const straddles = (Array.isArray(last?.actions) ? last.actions : []).flatMap((a) => {
-    const x = a as { act?: string; amount?: number };
-    return x.act === 'post_straddle' && typeof x.amount === 'number' ? [x.amount] : [];
-  });
+  // The previous hand's straddles and small blind come from its forced bets.
+  const posted = (act: string) =>
+    (Array.isArray(last?.actions) ? last.actions : []).flatMap((a) => {
+      const x = a as { act?: string; amount?: number };
+      return x.act === act && typeof x.amount === 'number' ? [x.amount] : [];
+    });
+  const straddles = posted('post_straddle');
+  const sb = posted('post_sb')[0] ?? null;
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-3 px-3 py-6">
@@ -82,7 +85,8 @@ export default async function RecordPage({ params }: PageProps<'/sessions/[id]/r
         locale={locale}
         venue={session.venue}
         lastNum={last?.num ?? 0}
-        previous={last ? { ...last, straddles } : null}
+        previous={last ? { ...last, straddles, sb } : null}
+        startedAt={session.start_at}
         opponents={sortOpponents(options)}
         opponentStacks={opponentStacks}
         entryMode={profile?.entry_mode === 'shorthand' ? 'shorthand' : 'buttons'}

@@ -32,7 +32,7 @@ export function draftToSetup(session: HandSession, draft: HandDraft, bb: number)
   const [first, ...rest] = opponents;
   if (!first) return null;
 
-  const blinds = blindsFor(session, bb, draft.ante);
+  const blinds = blindsFor(session, bb, draft.ante, draft.anteMode);
   const sbTyped = session.kind === 'mtt' ? num(draft.levelSb) : undefined;
   const heroStack = num(draft.heroStack);
   const straddles =

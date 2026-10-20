@@ -3,6 +3,8 @@
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useActionState, useState } from 'react';
+import { blindLevelsToJson, readBlindLevels, type BlindLevel } from 'poker-core';
+import { BlindStructureEditor } from '@/components/session/blind-structure-editor';
 import {
   ANTE_MODES,
   CURRENCIES,
@@ -18,6 +20,7 @@ import { Stepper } from '@/components/ui/stepper';
 
 export function SessionForm({ initial }: { initial: SessionFormValues }) {
   const t = useTranslations('sessions');
+  const tb = useTranslations('blinds');
   const [state, action, pending] = useActionState<CreateSessionState, FormData>(createSession, {
     values: initial,
     errors: {},
@@ -26,6 +29,14 @@ export function SessionForm({ initial }: { initial: SessionFormValues }) {
   const v = state.values;
   const [anteMode, setAnteMode] = useState(v.anteMode);
   const isMtt = v.kind === 'mtt';
+  // Optional blind structure (MTT): sent as JSON, checked again by the server.
+  const [levels, setLevels] = useState<BlindLevel[]>(() => {
+    try {
+      return readBlindLevels(JSON.parse(v.mttBlindLevels || '[]'));
+    } catch {
+      return [];
+    }
+  });
   // Players dealt in at the table, 2-10 (5.1c-5); each hand starts from it and then remembers its own.
   const [seats, setSeats] = useState(() => {
     const n = Number(v.seats);
@@ -55,6 +66,9 @@ export function SessionForm({ initial }: { initial: SessionFormValues }) {
       {error(field)}
     </label>
   );
+
+  // With a blind structure the start level sets the blinds and the ante.
+  const fromStructure = isMtt && levels.length > 0;
 
   return (
     <form action={action} className="flex flex-col gap-5">
@@ -104,34 +118,56 @@ export function SessionForm({ initial }: { initial: SessionFormValues }) {
           </label>
           {text('mttStartLevel', t('mttStartLevel'), { numeric: true })}
           {text('mttStartStack', t('mttStartStack'), { numeric: true })}
+          <input
+            type="hidden"
+            name="mttBlindLevels"
+            value={JSON.stringify(blindLevelsToJson(levels))}
+          />
+          <div className="space-y-2">
+            <p className="text-xs text-muted">
+              {tb('optional')}. {tb('hint')}
+            </p>
+            <BlindStructureEditor
+              value={levels}
+              onChange={setLevels}
+              defaultAnteMode={anteMode === 'each' || anteMode === 'bb' ? anteMode : 'none'}
+            />
+            {error('mttBlindLevels')}
+          </div>
         </>
       )}
 
-      <fieldset className="flex flex-col gap-3">
-        {isMtt && <legend className="mb-2 text-sm">{t('mttBlinds')}</legend>}
-        <div className="grid grid-cols-2 gap-3">
-          {text('sb', t('sb'), { numeric: true })}
-          {text('bb', t('bb'), { numeric: true })}
-        </div>
-        {!isMtt && text('straddle', t('straddle'), { numeric: true })}
-      </fieldset>
+      {fromStructure ? (
+        <p className="text-sm text-muted">{tb('fromStart')}</p>
+      ) : (
+        <>
+          <fieldset className="flex flex-col gap-3">
+            {isMtt && <legend className="mb-2 text-sm">{t('mttBlinds')}</legend>}
+            <div className="grid grid-cols-2 gap-3">
+              {text('sb', t('sb'), { numeric: true })}
+              {text('bb', t('bb'), { numeric: true })}
+            </div>
+            {!isMtt && text('straddle', t('straddle'), { numeric: true })}
+          </fieldset>
 
-      <Segment legend={t('ante')}>
-        {ANTE_MODES.map((m) => (
-          <label key={m} className={chip(anteMode === m)}>
-            <input
-              type="radio"
-              name="anteMode"
-              value={m}
-              checked={anteMode === m}
-              onChange={() => setAnteMode(m)}
-              className="sr-only"
-            />
-            {t(m === 'none' ? 'anteNone' : m === 'each' ? 'anteEach' : 'anteBb')}
-          </label>
-        ))}
-      </Segment>
-      {anteMode !== 'none' && text('ante', t('anteAmount'), { numeric: true })}
+          <Segment legend={t('ante')}>
+            {ANTE_MODES.map((m) => (
+              <label key={m} className={chip(anteMode === m)}>
+                <input
+                  type="radio"
+                  name="anteMode"
+                  value={m}
+                  checked={anteMode === m}
+                  onChange={() => setAnteMode(m)}
+                  className="sr-only"
+                />
+                {t(m === 'none' ? 'anteNone' : m === 'each' ? 'anteEach' : 'anteBb')}
+              </label>
+            ))}
+          </Segment>
+          {anteMode !== 'none' && text('ante', t('anteAmount'), { numeric: true })}
+        </>
+      )}
 
       <div className="flex items-center justify-between gap-3 text-sm">
         <span>{t('seats')}</span>

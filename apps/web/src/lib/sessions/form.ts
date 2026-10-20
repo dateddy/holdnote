@@ -1,4 +1,12 @@
-import { parseAmount, roundMoney } from 'poker-core';
+import {
+  blindLevelsToJson,
+  parseAmount,
+  readBlindLevels,
+  roundMoney,
+  startRow,
+  type BlindLevel,
+  type BlindLevelJson,
+} from 'poker-core';
 
 export const KINDS = ['cash', 'mtt'] as const;
 export const MODES = ['live', 'online'] as const;
@@ -33,6 +41,8 @@ export type SessionFormValues = {
   mttReentry: string;
   mttStartLevel: string;
   mttStartStack: string;
+  /** Blind structure as JSON (`sessions.mtt.blind_levels`); empty = none. */
+  mttBlindLevels: string;
 };
 
 export type SessionField = keyof SessionFormValues;
@@ -47,6 +57,8 @@ export type MttInfo = {
   start_level: number | null;
   /** Chips. */
   start_stack: number | null;
+  /** Optional blind structure, one row per level (spec 5). */
+  blind_levels?: BlindLevelJson[];
 };
 
 export type SessionInsertRow = {
@@ -89,6 +101,7 @@ export const SESSION_FIELDS = [
   'mttReentry',
   'mttStartLevel',
   'mttStartStack',
+  'mttBlindLevels',
 ] as const satisfies readonly SessionField[];
 
 export function emptyForm(currency: string): SessionFormValues {
@@ -111,6 +124,7 @@ export function emptyForm(currency: string): SessionFormValues {
     mttReentry: '',
     mttStartLevel: '',
     mttStartStack: '',
+    mttBlindLevels: '',
   };
 }
 
@@ -135,16 +149,45 @@ export function parseSessionForm(v: SessionFormValues): ParseResult {
     return roundMoney(n);
   };
 
-  const sb = amount('sb', { allowZero: true });
-  const bb = amount('bb');
-  const straddle = kind === 'cash' ? amount('straddle') : null;
-  if (bb == null && !errors.bb && (kind === 'cash' || sb != null)) fail('bb', 'required');
-  if (sb != null && bb != null && sb > bb) fail('sb', 'sbAboveBb');
+  // Blind structure (MTT, optional). With one, the start level sets the session blinds and ante:
+  // what the form carries over from the last session or has typed is not used.
+  let levels: BlindLevel[] = [];
+  if (kind === 'mtt' && v.mttBlindLevels.trim()) {
+    try {
+      const parsed: unknown = JSON.parse(v.mttBlindLevels);
+      if (!Array.isArray(parsed)) throw new Error('not a list');
+      levels = readBlindLevels(parsed);
+    } catch {
+      fail('mttBlindLevels', 'invalid');
+    }
+  }
+  const startN = Number(v.mttStartLevel.trim());
+  const start = startRow(
+    levels,
+    v.mttStartLevel.trim() && Number.isInteger(startN) ? startN : null,
+  );
 
-  const anteMode: AnteMode = isOneOf(ANTE_MODES, v.anteMode) ? v.anteMode : 'none';
-  if (!isOneOf(ANTE_MODES, v.anteMode)) fail('anteMode', 'invalid');
-  const ante = anteMode === 'none' ? null : amount('ante');
-  if (anteMode !== 'none' && ante == null) fail('ante', 'required');
+  let sb: number | null;
+  let bb: number | null;
+  let anteMode: AnteMode;
+  let ante: number | null;
+  if (start) {
+    sb = start.sb;
+    bb = start.bb;
+    anteMode = start.anteMode;
+    ante = start.ante > 0 ? start.ante : null;
+  } else {
+    sb = amount('sb', { allowZero: true });
+    bb = amount('bb');
+    if (bb == null && !errors.bb && (kind === 'cash' || sb != null)) fail('bb', 'required');
+    if (sb != null && bb != null && sb > bb) fail('sb', 'sbAboveBb');
+
+    anteMode = isOneOf(ANTE_MODES, v.anteMode) ? v.anteMode : 'none';
+    if (!isOneOf(ANTE_MODES, v.anteMode)) fail('anteMode', 'invalid');
+    ante = anteMode === 'none' ? null : amount('ante');
+    if (anteMode !== 'none' && ante == null) fail('ante', 'required');
+  }
+  const straddle = kind === 'cash' ? amount('straddle') : null;
 
   let seats: number | null = null;
   if (v.seats.trim()) {
@@ -172,6 +215,7 @@ export function parseSessionForm(v: SessionFormValues): ParseResult {
       reentry: v.mttReentry === 'on',
       start_level: startLevel,
       start_stack: amount('mttStartStack'),
+      ...(levels.length > 0 && { blind_levels: blindLevelsToJson(levels) }),
     };
   }
 
@@ -259,12 +303,14 @@ export function readMtt(json: unknown): MttInfo | null {
   if (!json || typeof json !== 'object' || Array.isArray(json)) return null;
   const o = json as Record<string, unknown>;
   const num = (x: unknown) => (typeof x === 'number' && Number.isFinite(x) ? x : null);
+  const levels = readBlindLevels(o.blind_levels);
   return {
     name: typeof o.name === 'string' ? o.name : null,
     type: isOneOf(MTT_TYPES, o.type) ? o.type : 'regular',
     reentry: o.reentry === true,
     start_level: num(o.start_level),
     start_stack: num(o.start_stack),
+    ...(levels.length > 0 && { blind_levels: blindLevelsToJson(levels) }),
   };
 }
 

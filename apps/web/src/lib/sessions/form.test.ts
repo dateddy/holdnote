@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { emptyForm, parseSessionForm, prefillFrom, type SessionFormValues } from './form';
+import { emptyForm, parseSessionForm, prefillFrom, readMtt, type SessionFormValues } from './form';
 
 const cash = (over: Partial<SessionFormValues> = {}): SessionFormValues => ({
   ...emptyForm('VND'),
@@ -188,6 +188,75 @@ describe('parseSessionForm — MTT', () => {
       ok: false,
       errors: { mttStartLevel: 'positive', mttType: 'invalid' },
     });
+  });
+});
+
+describe('parseSessionForm — blind structure', () => {
+  const levels = JSON.stringify([
+    { level: 1, sb: 25, bb: 50, ante: 0, ante_mode: 'none', minutes: 20 },
+    { level: 7, sb: 175, bb: 350, ante: 350, ante_mode: 'bb', minutes: 20 },
+    { level: 8, sb: 200, bb: 400, ante: 400, ante_mode: 'bb', minutes: null },
+  ]);
+  const bare = { sb: '', bb: '', anteMode: 'none', ante: '', mttBlindLevels: levels };
+
+  it('is stored in mtt.blind_levels, sorted', () => {
+    const r = parseSessionForm(
+      mtt({ ...bare, mttBlindLevels: JSON.stringify(JSON.parse(levels).reverse()) }),
+    );
+    expect(r.ok && r.insert.mtt?.blind_levels?.map((l) => l.level)).toEqual([1, 7, 8]);
+  });
+
+  it('fills empty SB, BB and ante from the start level', () => {
+    const r = parseSessionForm(mtt(bare));
+    expect(r.ok && r.insert).toMatchObject({ sb: 175, bb: 350, ante_mode: 'bb', ante: 350 });
+  });
+
+  it('without a start level, from the first level', () => {
+    const r = parseSessionForm(mtt({ ...bare, mttStartLevel: '' }));
+    expect(r.ok && r.insert).toMatchObject({ sb: 25, bb: 50, ante_mode: 'none', ante: null });
+  });
+
+  it('the start level wins over blinds typed or carried over from the last session', () => {
+    const r = parseSessionForm(mtt({ ...bare, sb: '100', bb: '200', anteMode: 'each', ante: '5' }));
+    expect(r.ok && r.insert).toMatchObject({ sb: 175, bb: 350, ante_mode: 'bb', ante: 350 });
+  });
+
+  it('does not need the blind fields at all (they are hidden when there is a structure)', () => {
+    const r = parseSessionForm(mtt({ ...bare, anteMode: '' }));
+    expect(r.ok && r.insert).toMatchObject({ sb: 175, bb: 350 });
+  });
+
+  it('a start level missing from the list uses the next one up', () => {
+    const r = parseSessionForm(mtt({ ...bare, mttStartLevel: '5' }));
+    expect(r.ok && r.insert.bb).toBe(350);
+  });
+
+  it('empty or missing structure leaves mtt without blind_levels', () => {
+    for (const mttBlindLevels of ['', '[]']) {
+      const r = parseSessionForm(mtt({ mttBlindLevels }));
+      expect(r.ok && r.insert.mtt).not.toHaveProperty('blind_levels');
+    }
+  });
+
+  it('rejects text that is not a JSON list', () => {
+    expect(parseSessionForm(mtt({ mttBlindLevels: 'oops' }))).toEqual({
+      ok: false,
+      errors: { mttBlindLevels: 'invalid' },
+    });
+    expect(parseSessionForm(mtt({ mttBlindLevels: '{"a":1}' }))).toMatchObject({ ok: false });
+  });
+
+  it('a cash session ignores it', () => {
+    const r = parseSessionForm(cash({ mttBlindLevels: levels }));
+    expect(r.ok && r.insert.mtt).toBeNull();
+  });
+});
+
+describe('readMtt', () => {
+  it('keeps the blind structure, so ending the session does not lose it', () => {
+    const levels = [{ level: 1, sb: 25, bb: 50, ante: 0, ante_mode: 'none', minutes: null }];
+    expect(readMtt({ name: 'x', blind_levels: levels })?.blind_levels).toEqual(levels);
+    expect(readMtt({ name: 'x' })).not.toHaveProperty('blind_levels');
   });
 });
 
