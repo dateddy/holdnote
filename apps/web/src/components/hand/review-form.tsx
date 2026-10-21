@@ -6,14 +6,20 @@ import { useRouter } from 'next/navigation';
 import { useRef, useState, type ReactNode } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Chip } from '@/components/ui/chip';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { InfoTip } from '@/components/ui/info-tip';
 import { Textarea } from '@/components/ui/textarea';
 import { Toggle } from '@/components/ui/toggle';
 import { createClient } from '@/lib/supabase/client';
 import {
   aiErrorCode,
+  ERROR_TAGS,
+  EV_VERDICTS,
   fromReviewRow,
   isRetryable,
+  toggleTag,
+  toReviewRow,
   type ReviewDraft,
   type ReviewRow,
 } from '@/lib/review/review';
@@ -58,8 +64,9 @@ type AiResponse = {
 };
 
 /**
- * "AI phân tích" (spec 3.7). No review yet: only the AI button and the turns left. With one: its
- * fields read-only, the "Đã review" switch (saved at once) and the rebuttal. Nothing is typed in by hand.
+ * "AI phân tích" (spec 3.7). No AI review: the AI button with the turns left, and under it the
+ * "Bạn tự review" form for the player's own words. With an AI review: its fields read-only, the
+ * "Đã review" switch (saved at once) and the rebuttal.
  */
 export function ReviewForm({
   handId,
@@ -87,8 +94,13 @@ export function ReviewForm({
   const [rebutOpen, setRebutOpen] = useState(false);
   const [reason, setReason] = useState('');
   const [doneFailed, setDoneFailed] = useState(false);
+  const [confirmAgain, setConfirmAgain] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'failed'>('idle');
 
   const outOfTurns = ai.plan === 'free' && (ai.locked || remaining === 0);
+  // What a new run costs, said before the button is pressed and again in the confirmation.
+  const turnsLine =
+    ai.plan === 'byok' ? t('aiAgainOwnKey') : t('aiAgainCost', { n: remaining ?? 0 });
 
   async function callAi(body: { rebuttal?: string }) {
     lastBody.current = body;
@@ -135,6 +147,117 @@ export function ReviewForm({
     }
     router.refresh();
   }
+
+  const set = <K extends keyof ReviewDraft>(key: K, value: ReviewDraft[K]) => {
+    setSaveStatus('idle');
+    setDraft((d) => ({ ...d, [key]: value }));
+  };
+
+  /** "Bạn tự review": one manual review per hand, inserted the first time and updated after. */
+  async function saveManual() {
+    setSaveStatus('saving');
+    const supabase = createClient();
+    const row = toReviewRow(draft, isMtt);
+    let ok: boolean;
+    if (id) {
+      const { error } = await supabase.from('reviews').update(row).eq('id', id);
+      ok = !error;
+    } else {
+      const { data, error } = await supabase
+        .from('reviews')
+        .insert({ ...row, hand_id: handId, source: 'manual', is_current: true })
+        .select('id')
+        .single();
+      ok = !error;
+      if (data) setId(data.id);
+    }
+    setSaveStatus(ok ? 'saved' : 'failed');
+    router.refresh();
+  }
+
+  const area = (key: 'range' | 'math' | 'line' | 'icmText', label: string, extra?: ReactNode) => (
+    <label className="flex flex-col gap-1 text-sm">
+      {label}
+      {extra}
+      <Textarea rows={3} value={draft[key]} onChange={(e) => set(key, e.target.value)} />
+    </label>
+  );
+
+  const manualForm = (
+    <div className="flex flex-col gap-3">
+      <h3 className="text-base font-medium">{t('selfReview')}</h3>
+      {area('range', t('range'))}
+      {area(
+        'math',
+        t('math'),
+        mathHints.length > 0 && (
+          <ul className="space-y-0.5 rounded-md bg-accent/5 p-3 text-sm">
+            {mathHints.map((m, i) => (
+              <li key={i}>
+                {t('mathHint', { street: m.street, act: m.act, toCall: m.toCall, odds: m.odds })}
+                {m.mdf ? ` · MDF ${m.mdf}` : ''}
+              </li>
+            ))}
+          </ul>
+        ),
+      )}
+      {area('line', t('line'))}
+      {isMtt && area('icmText', t('icm'))}
+      <div className="space-y-1">
+        <p className="text-sm">{t('errors')}</p>
+        <div className="flex flex-wrap gap-1.5">
+          {ERROR_TAGS.map((tag) => (
+            <Chip
+              key={tag}
+              on={draft.errorTags.includes(tag)}
+              onClick={() => set('errorTags', toggleTag(draft.errorTags, tag))}
+            >
+              {t(`tag_${tag}` as 'tag_tilt')}
+            </Chip>
+          ))}
+        </div>
+      </div>
+      <div className="space-y-1">
+        <p className="text-sm">{t('ev')}</p>
+        <div className="grid grid-cols-3 gap-1.5">
+          {EV_VERDICTS.map((v) => (
+            <Chip
+              key={v}
+              on={draft.evVerdict === v}
+              onClick={() => set('evVerdict', draft.evVerdict === v ? '' : v)}
+            >
+              {t(`ev_${v}` as 'ev_correct')}
+            </Chip>
+          ))}
+        </div>
+      </div>
+      <label className="flex flex-col gap-1 text-sm">
+        {t('lesson')}
+        <Textarea rows={2} value={draft.lesson} onChange={(e) => set('lesson', e.target.value)} />
+      </label>
+      <div className="flex items-center justify-between gap-3 text-base">
+        <span>{t('done')}</span>
+        <Toggle
+          checked={draft.accepted}
+          aria-label={t('done')}
+          onClick={() => set('accepted', !draft.accepted)}
+        />
+      </div>
+      {saveStatus === 'saved' && (
+        <p role="status" className="text-sm">
+          {t('saved')}
+        </p>
+      )}
+      {saveStatus === 'failed' && (
+        <p role="alert" className="text-sm text-loss">
+          {t('saveFailed')}
+        </p>
+      )}
+      <Button size="lg" onClick={saveManual} disabled={saveStatus === 'saving'}>
+        {saveStatus === 'saving' ? t('saving') : t('save')}
+      </Button>
+    </div>
+  );
 
   const read = (label: string, value: string, extra?: ReactNode) =>
     value.trim() === '' && !extra ? null : (
@@ -186,6 +309,23 @@ export function ReviewForm({
 
   return (
     <section className="flex flex-col gap-4">
+      {isAi && (
+        <ConfirmDialog
+          open={confirmAgain}
+          tone="primary"
+          title={t('aiAgainTitle')}
+          confirmLabel={t('aiAgainConfirm')}
+          cancelLabel={t('rebutCancel')}
+          onCancel={() => setConfirmAgain(false)}
+          onConfirm={() => {
+            setConfirmAgain(false);
+            callAi({});
+          }}
+        >
+          <p>{turnsLine}</p>
+          <p>{t('aiAgainNote')}</p>
+        </ConfirmDialog>
+      )}
       <h2 className="flex flex-wrap items-center gap-2 text-lg font-semibold">
         {t('title')}
         <InfoTip icon="!" text={t('referenceOnly')} label={tCommon('explain')} />
@@ -196,9 +336,10 @@ export function ReviewForm({
         )}
       </h2>
 
-      {!id && aiBlock}
+      {!isAi && aiBlock}
+      {!isAi && manualForm}
 
-      {id && (
+      {id && isAi && (
         <>
           {read(t('range'), draft.range)}
           {read(
@@ -320,12 +461,12 @@ export function ReviewForm({
             <Button
               variant="ghost"
               full={false}
-              onClick={() => callAi({})}
+              onClick={() => setConfirmAgain(true)}
               disabled={run === 'busy' || outOfTurns}
             >
               {t('aiAgain')}
             </Button>
-            <p className="text-xs text-muted">{t('aiAgainNote')}</p>
+            <p className="text-xs text-muted">{turnsLine}</p>
           </div>
         </>
       )}

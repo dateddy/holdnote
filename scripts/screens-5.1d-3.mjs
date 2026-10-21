@@ -389,6 +389,15 @@ async function main() {
     (await page.getByRole('tooltip').innerText()).includes('Mang tính chất tham khảo'),
     'hand: "!" opens "Mang tính chất tham khảo"',
   );
+  await page.getByRole('button', { name: 'Chạy lại AI review' }).click();
+  await page.waitForTimeout(200);
+  const again = await page.getByRole('dialog').innerText();
+  check(
+    again.includes('Trừ 1 lượt') && again.includes('Còn 30 lượt'),
+    `hand: re-run asks first and shows the turns left (${again.replace(/\s+/g, ' ').slice(0, 90)})`,
+  );
+  await shot('10b-hand-rerun-confirm');
+  await page.getByRole('button', { name: 'Hủy' }).click();
   await shot('10-hand-with-review');
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
   await shot('11-hand-with-review-bottom');
@@ -400,11 +409,24 @@ async function main() {
     (await page.getByRole('button', { name: 'AI review', exact: true }).count()) === 1,
     'hand without a review: the AI review button',
   );
-  check(
-    (await page.getByText('Range đối thủ').count()) === 0,
-    'hand without a review: no empty cells',
-  );
   check((await page.getByText(/Còn \d+ lượt/).count()) === 1, 'hand without a review: turns left');
+  check(
+    (await page.getByText('Bạn tự review').count()) === 1,
+    'hand without a review: own-review form',
+  );
+  await page.getByRole('textbox', { name: 'Bài học' }).fill('Đừng shove với bài trung bình.');
+  await page.getByRole('button', { name: 'Lưu review' }).click();
+  await page.getByText('Đã lưu review.').waitFor();
+  const { data: own } = await admin
+    .from('reviews')
+    .select('source, lesson')
+    .eq('hand_id', ids.flat)
+    .eq('is_current', true)
+    .single();
+  check(
+    own?.source === 'manual' && own.lesson?.startsWith('Đừng'),
+    'hand without a review: saved as a manual review',
+  );
   check(
     (await page.getByText('Hand lưu trước bản cập nhật, chưa có dữ liệu chia pot.').count()) === 1,
     'hand: unpriced old hand says it has no pot data',

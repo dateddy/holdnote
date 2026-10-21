@@ -16,3 +16,6 @@ __pycache__/
 
 # screenshots from pnpm screens
 screens/
+
+# copies taken before one-off data fixes
+backups/

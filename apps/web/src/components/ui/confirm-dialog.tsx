@@ -13,6 +13,8 @@ type Props = {
   onCancel: () => void;
   /** The action is running: both buttons off. */
   pending?: boolean;
+  /** `danger` (red) for deleting; `primary` for a choice that costs something but destroys nothing. */
+  tone?: 'danger' | 'primary';
 };
 
 /** Asks before something that cannot be undone (deleting a session). Escape and the backdrop cancel. */
@@ -25,6 +27,7 @@ export function ConfirmDialog({
   onConfirm,
   onCancel,
   pending = false,
+  tone = 'danger',
 }: Props) {
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
@@ -51,7 +54,7 @@ export function ConfirmDialog({
         <div className="text-sm text-muted">{children}</div>
       </div>
       <div className="mt-4 flex flex-col gap-2">
-        <Button variant="danger" onClick={onConfirm} disabled={pending}>
+        <Button variant={tone} onClick={onConfirm} disabled={pending}>
           {confirmLabel}
         </Button>
         <Button variant="secondary" onClick={onCancel} disabled={pending}>

@@ -277,7 +277,15 @@
     "promptLabel": "Prompt {version}",
     "referenceOnly": "Mang tính chất tham khảo",
     "aiAgain": "Chạy lại AI review",
-    "aiAgainNote": "Dùng sau khi sửa hand. Hand chưa đổi thì dùng lại review cũ, không trừ lượt."
+    "aiAgainNote": "Dùng sau khi sửa hand. Nếu hand chưa đổi, app dùng lại review cũ và không trừ lượt.",
+    "aiAgainTitle": "Chạy lại AI review?",
+    "aiAgainConfirm": "Chạy lại",
+    "aiAgainCost": "Trừ 1 lượt. Còn {n} lượt tháng này.",
+    "aiAgainOwnKey": "Dùng key riêng của bạn, không trừ lượt của gói miễn phí.",
+    "selfReview": "Bạn tự review",
+    "save": "Lưu review",
+    "saving": "Đang lưu…",
+    "saved": "Đã lưu review."
   },
   "settings": {
     "title": "Cài đặt",

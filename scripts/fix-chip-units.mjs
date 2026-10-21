@@ -1,6 +1,7 @@
 // One-off (5.1d-3c): live sessions saved as VND with chip-sized blinds (20/50) were really chips of
 // 1000 VND, and CHIP sessions have no rate yet. Dry run by default; `--apply` writes.
 //   node scripts/fix-chip-units.mjs [--apply]
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 const require = createRequire(new URL('../apps/web/package.json', import.meta.url));
 const { loadEnvConfig } = require('@next/env');
@@ -32,6 +33,16 @@ console.log(
 );
 
 if (apply) {
+  // Copy what is about to change (the sessions and their hands) to backups/ first; it is gitignored.
+  const ids = todo.map((s) => s.id);
+  const { data: fullSessions, error: sErr } = await sb.from('sessions').select('*').in('id', ids);
+  if (sErr) throw sErr;
+  const { data: fullHands, error: hErr } = await sb.from('hands').select('*').in('session_id', ids);
+  if (hErr) throw hErr;
+  mkdirSync('backups', { recursive: true });
+  const file = `backups/chip-units-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+  writeFileSync(file, JSON.stringify({ sessions: fullSessions, hands: fullHands }, null, 2));
+  console.log(`backup: ${file} (${fullSessions.length} sessions, ${fullHands.length} hands)`);
   for (const s of todo) {
     const r = await sb
       .from('sessions')

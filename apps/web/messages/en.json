@@ -277,7 +277,15 @@
     "promptLabel": "Prompt {version}",
     "referenceOnly": "For reference only",
     "aiAgain": "Run AI review again",
-    "aiAgainNote": "Use it after editing the hand. An unchanged hand reuses the old review at no cost."
+    "aiAgainNote": "Use it after editing the hand. If the hand has not changed, the old review is reused at no cost.",
+    "aiAgainTitle": "Run AI review again?",
+    "aiAgainConfirm": "Run again",
+    "aiAgainCost": "Costs 1 turn. {n} left this month.",
+    "aiAgainOwnKey": "Uses your own key, no free-plan turn is spent.",
+    "selfReview": "Your own review",
+    "save": "Save review",
+    "saving": "Saving…",
+    "saved": "Review saved."
   },
   "settings": {
     "title": "Settings",

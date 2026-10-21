@@ -452,3 +452,11 @@ Append-only. Không sửa, không xóa mục cũ. Muốn đảo một quyết đ
 - Chưa làm: desktop (Đạt thử sau): bảng phiên chưa có cột ⋯; tab Ghi hand không còn nên lối tắt vào phiên đang mở là "+ Hand".
 - Supersedes: DEC-058 (3) (bốn tab), DEC-044 (2) (bốn tab) và (6) (Vào bàn đi thẳng Ghi nhanh, nay từ form), DEC-061 (6) ("Ý kiến thứ hai", nhãn Thử nghiệm); spec 4 (thêm hai cột).
 - Ai quyết: Đạt (duyệt kế hoạch 2026-10-21)
+
+## DEC-063 — Đổi đơn vị 3 phiên cũ, review tay trở lại, xác nhận chạy lại AI review (sau 5.1d-3)
+
+- Ngày: 2026-10-21
+- Quyết định: (1) Đạt duyệt đổi 3 phiên cũ sang Chip, 1 chip = 1.000 VND. `scripts/fix-chip-units.mjs --apply` tự chép các dòng `sessions` và `hands` bị ảnh hưởng ra `backups/` (đã gitignore) trước khi ghi. Sau đó `pnpm recheck:results`: đã quét 5 hand, 0 hand lệch; kết quả bb của cả 5 hand giữ nguyên. (2) Ca vàng giữ loại pot ISO. (3) Review tay trở lại: hand chưa có AI review thì dưới nút AI review có form "Bạn tự review" (các ô, loại lỗi, EV, bài học, "Đã review", nút Lưu; một review tay mỗi hand, lưu lần đầu là chèn, sau đó là cập nhật). Hand có AI review thì các ô chỉ đọc + "Đã review" + Phản biện; chạy AI thay review tay hiện tại. (4) "Chạy lại AI review" hỏi xác nhận trước: nói rõ trừ 1 lượt và còn bao nhiêu lượt (gói key riêng: không trừ lượt gói miễn phí), kèm ghi chú hand chưa đổi thì dùng lại review cũ, không trừ lượt. `ConfirmDialog` thêm `tone` (`danger` mặc định, `primary`).
+- Lý do: Đạt duyệt sau báo cáo 5.1d-3; review tay vẫn cần cho hand chưa gọi AI.
+- Supersedes: DEC-062 (8) về "bỏ nhập review tay" và "Chạy lại AI review" không xác nhận.
+- Ai quyết: Đạt (2026-10-21)
