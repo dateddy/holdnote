@@ -261,7 +261,11 @@
     "rebutCost": "The AI re-checks its review using your reason. Uses 1 turn.",
     "rebutCancel": "Cancel",
     "rebutSend": "Send rebuttal",
-    "ai_nothing_to_summarize": "No hands recorded in this session yet."
+    "ai_nothing_to_summarize": "No hands recorded in this session yet.",
+    "secondOpinion": "Second opinion",
+    "experimental": "Experimental",
+    "promptLabel": "Prompt {version}",
+    "experimentalNote": "The AI only offers a suggestion and can be wrong. You make the call."
   },
   "settings": {
     "title": "Settings",
@@ -802,5 +806,36 @@
     "potShort_single_raised": "Raise",
     "potShort_three_bet": "3-bet",
     "potShort_four_bet_plus": "4-bet+"
+  },
+  "replay": {
+    "table": "Replay table",
+    "prev": "Previous action",
+    "next": "Next action",
+    "close": "Close",
+    "step": "{step}/{total}",
+    "start": "Start of the hand",
+    "end": "End",
+    "stackNote": "Stacks in bb",
+    "pot": "Pot",
+    "allIn": "All-in",
+    "fold": "Fold",
+    "behind": "{amount} bb",
+    "seatLabel": "{pos}, {who}, {stack}",
+    "seatNoStack": "{pos}, {who}",
+    "out": "folded",
+    "timeline": "How the hand went",
+    "showdown": "Showdown",
+    "cardsOf": "{who}'s cards",
+    "potMain": "Main pot",
+    "potSide": "Side pot {n}",
+    "winnerOf": "{who} wins",
+    "splitBetween": "{who} split the pot",
+    "noShowdown": "The hand ended without a showdown.",
+    "editHand": "Edit hand",
+    "result": "Result",
+    "handNum": "Hand #{num}",
+    "moneyLine": "{amount}",
+    "notPriced": "Not enough data to replay this hand (no blinds).",
+    "thought": "Thought"
   }
 }

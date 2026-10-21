@@ -1,0 +1,302 @@
+{
+  "golden": {
+    "num": 7,
+    "hero_cards": ["Ah", "Kd"],
+    "board": ["7c", "8d", "2s", "Jh", "3c"],
+    "villain_cards": ["9d", "9s"],
+    "hero_pos": "MP",
+    "villain_pos": "BTN",
+    "opponent_id": null,
+    "opponents": [
+      {
+        "pos": "BTN",
+        "stack": 20000,
+        "cards": ["9d", "9s"]
+      }
+    ],
+    "actions": [
+      {
+        "street": "preflop",
+        "actor": "other",
+        "pos": "SB",
+        "act": "post_sb",
+        "amount": 25
+      },
+      {
+        "street": "preflop",
+        "actor": "other",
+        "pos": "BB",
+        "act": "post_bb",
+        "amount": 50
+      },
+      {
+        "street": "preflop",
+        "actor": "hero",
+        "pos": "MP",
+        "act": "call",
+        "verb": "limp",
+        "amount": 50
+      },
+      {
+        "street": "preflop",
+        "actor": "villain",
+        "pos": "BTN",
+        "act": "raise",
+        "verb": "open",
+        "amount": 500
+      },
+      {
+        "street": "preflop",
+        "actor": "hero",
+        "pos": "MP",
+        "act": "call",
+        "amount": 500
+      },
+      {
+        "street": "flop",
+        "actor": "hero",
+        "pos": "MP",
+        "act": "check"
+      },
+      {
+        "street": "flop",
+        "actor": "villain",
+        "pos": "BTN",
+        "act": "bet",
+        "amount": 500
+      },
+      {
+        "street": "flop",
+        "actor": "hero",
+        "pos": "MP",
+        "act": "call",
+        "amount": 500
+      },
+      {
+        "street": "turn",
+        "actor": "hero",
+        "pos": "MP",
+        "act": "check"
+      },
+      {
+        "street": "turn",
+        "actor": "villain",
+        "pos": "BTN",
+        "act": "bet",
+        "amount": 1000
+      },
+      {
+        "street": "turn",
+        "actor": "hero",
+        "pos": "MP",
+        "act": "call",
+        "amount": 1000
+      },
+      {
+        "street": "river",
+        "actor": "hero",
+        "pos": "MP",
+        "act": "bet",
+        "amount": 5000
+      },
+      {
+        "street": "river",
+        "actor": "villain",
+        "pos": "BTN",
+        "act": "all-in",
+        "amount": 18000
+      },
+      {
+        "street": "river",
+        "actor": "hero",
+        "pos": "MP",
+        "act": "call",
+        "amount": 16000
+      }
+    ],
+    "pot_winners": [],
+    "raw_line": null,
+    "outcome": "lose",
+    "result": -18000,
+    "pot_final": 36075,
+    "hero_stack": 18000,
+    "villain_stack": 20000,
+    "eff_stack": 18000,
+    "level_bb": null,
+    "level": null,
+    "ante_mode": null,
+    "ante": null,
+    "players_dealt": 9,
+    "stage": null,
+    "thought": "Call river all-in quá rộng? Đối thủ chỉ có nut hoặc bluff.",
+    "flagged": true,
+    "tags": [],
+    "missing_data": false
+  },
+  "sidePot": {
+    "num": 8,
+    "hero_cards": ["Ah", "Ad"],
+    "board": ["Qs", "7d", "5h", "2s", "9c"],
+    "villain_cards": ["Tc", "3c"],
+    "hero_pos": "BTN",
+    "villain_pos": "BB",
+    "opponent_id": null,
+    "opponents": [
+      {
+        "pos": "SB",
+        "stack": 3000,
+        "cards": ["Kh", "Kd"]
+      },
+      {
+        "pos": "BB",
+        "stack": 5000,
+        "cards": ["Tc", "3c"]
+      }
+    ],
+    "actions": [
+      {
+        "street": "preflop",
+        "actor": "other",
+        "pos": "SB",
+        "act": "post_sb",
+        "amount": 25
+      },
+      {
+        "street": "preflop",
+        "actor": "villain",
+        "pos": "BB",
+        "act": "post_bb",
+        "amount": 50
+      },
+      {
+        "street": "preflop",
+        "actor": "hero",
+        "pos": "BTN",
+        "act": "all-in",
+        "amount": 1000
+      },
+      {
+        "street": "preflop",
+        "actor": "other",
+        "pos": "SB",
+        "act": "all-in",
+        "amount": 3000
+      },
+      {
+        "street": "preflop",
+        "actor": "villain",
+        "pos": "BB",
+        "act": "all-in",
+        "amount": 5000
+      }
+    ],
+    "pot_winners": [],
+    "raw_line": null,
+    "outcome": "win",
+    "result": 2000,
+    "pot_final": 7000,
+    "hero_stack": 1000,
+    "villain_stack": 5000,
+    "eff_stack": 1000,
+    "level_bb": null,
+    "level": null,
+    "ante_mode": null,
+    "ante": null,
+    "players_dealt": 3,
+    "stage": null,
+    "thought": "Shove ngắn stack, hai người call.",
+    "flagged": false,
+    "tags": [],
+    "missing_data": false
+  },
+  "mtt": {
+    "num": 3,
+    "hero_cards": ["Qh", "Jh"],
+    "board": ["Ts", "6h", "2c"],
+    "villain_cards": null,
+    "hero_pos": "CO",
+    "villain_pos": "BB",
+    "opponent_id": null,
+    "opponents": [
+      {
+        "pos": "BB",
+        "stack": 80000
+      }
+    ],
+    "actions": [
+      {
+        "street": "preflop",
+        "actor": "other",
+        "pos": "SB",
+        "act": "post_sb",
+        "amount": 500
+      },
+      {
+        "street": "preflop",
+        "actor": "villain",
+        "pos": "BB",
+        "act": "post_bb",
+        "amount": 1000
+      },
+      {
+        "street": "preflop",
+        "actor": "hero",
+        "pos": "CO",
+        "act": "raise",
+        "verb": "open",
+        "amount": 2000
+      },
+      {
+        "street": "preflop",
+        "actor": "villain",
+        "pos": "BB",
+        "act": "call",
+        "amount": 2000
+      },
+      {
+        "street": "flop",
+        "actor": "villain",
+        "pos": "BB",
+        "act": "check"
+      },
+      {
+        "street": "flop",
+        "actor": "hero",
+        "pos": "CO",
+        "act": "bet",
+        "amount": 3000
+      },
+      {
+        "street": "flop",
+        "actor": "villain",
+        "pos": "BB",
+        "act": "raise",
+        "amount": 9000
+      },
+      {
+        "street": "flop",
+        "actor": "hero",
+        "pos": "CO",
+        "act": "fold"
+      }
+    ],
+    "pot_winners": [],
+    "raw_line": null,
+    "outcome": "fold",
+    "result": -5000,
+    "pot_final": 10500,
+    "hero_stack": 60000,
+    "villain_stack": 80000,
+    "eff_stack": 60000,
+    "level_bb": 1000,
+    "level": 8,
+    "ante_mode": null,
+    "ante": null,
+    "players_dealt": 9,
+    "stage": "bubble",
+    "thought": "Bubble, chip lead gọi rộng.",
+    "flagged": false,
+    "tags": [],
+    "missing_data": false
+  }
+}

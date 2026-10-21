@@ -67,7 +67,7 @@ describe('buildHandRows', () => {
     expect(r!.opponents).toBe(1);
     expect(r!.eff).toEqual({ amount: 18000, bb: 360 });
     // The last step still holds the 2000 of the shove nobody could call; potBb is after it is returned.
-    expect(r!.steps.at(-1)?.potAfter).toBe(38075);
+    expect(r!.replay?.resultBb).toBe(-360);
   });
 
   it('review labels: flagged without an accepted review needs a look; AI source is shown', () => {
@@ -121,7 +121,7 @@ const row = (over: Partial<HandRow>): HandRow => ({
   resultBb: 0,
   potBb: 10,
   showdown: false,
-  steps: [],
+  replay: null,
   eff: null,
   flagged: false,
   accepted: false,

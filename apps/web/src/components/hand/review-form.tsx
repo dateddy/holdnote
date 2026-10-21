@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useRef, useState } from 'react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/client';
 import {
@@ -206,14 +207,18 @@ export function ReviewForm({
 
   return (
     <section className="flex flex-col gap-4">
-      <h2 className="text-lg font-semibold">
-        {t('title')}
-        {saved.source === 'ai' && prompt === 'v2' && (
-          <span className="ml-2 rounded border border-line px-1.5 py-0.5 text-xs font-normal text-muted">
-            {t('oldPromptLabel')}
-          </span>
-        )}
-      </h2>
+      <div className="space-y-1">
+        <h2 className="flex flex-wrap items-center gap-2 text-lg font-semibold">
+          {t('secondOpinion')}
+          <Badge tone="warn">{t('experimental')}</Badge>
+          {saved.source === 'ai' && prompt && (
+            <Badge tone="muted">
+              {prompt === 'v2' ? t('oldPromptLabel') : t('promptLabel', { version: prompt })}
+            </Badge>
+          )}
+        </h2>
+        <p className="text-sm text-muted">{t('experimentalNote')}</p>
+      </div>
 
       <div className="flex flex-col gap-2 rounded-md border border-line bg-surface p-3">
         <button

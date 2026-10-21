@@ -6,10 +6,12 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState, useTransition } from 'react';
 import { deleteSession } from '@/app/(app)/sessions/actions';
 import { setHandFlag } from '@/app/(app)/hands/actions';
-import { HandSummary } from '@/components/hand/hand-summary';
+import type { AiInfo } from '@/components/hand/review-form';
 import { HandRow } from '@/components/hand-list/hand-row';
 import { HandTable } from '@/components/hand-list/hand-table';
 import { useHandText } from '@/components/hand-list/use-hand-text';
+import { Replayer } from '@/components/replay/replayer';
+import { ReviewPanel, type HandReview } from '@/components/replay/review-panel';
 import { Button, buttonClass } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
@@ -46,6 +48,11 @@ type Props = {
   tiles: CashTiles | MttTiles;
   rows: HandRowData[];
   initialFilter: HandListFilter;
+  /** Hand open in the replayer when the page loads (`?hand=`). */
+  initialHandId: string | null;
+  /** Current review of each hand, by hand id. */
+  reviews: Record<string, HandReview | null>;
+  ai: AiInfo;
 };
 
 const isTyping = (el: EventTarget | null): boolean => {
@@ -54,7 +61,16 @@ const isTyping = (el: EventTarget | null): boolean => {
 };
 
 /** One session: tiles, the buttons for its stage, and the hands (list on phone, table + panel on desktop). */
-export function SessionDetail({ session, stage, tiles, rows: initialRows, initialFilter }: Props) {
+export function SessionDetail({
+  session,
+  stage,
+  tiles,
+  rows: initialRows,
+  initialFilter,
+  initialHandId,
+  reviews,
+  ai,
+}: Props) {
   const t = useTranslations('sessionDetail');
   const tCommon = useTranslations('common');
   const tList = useTranslations('handList');
@@ -65,26 +81,39 @@ export function SessionDetail({ session, stage, tiles, rows: initialRows, initia
 
   const [rows, setRows] = useState(initialRows);
   const [filter, setFilter] = useState(initialFilter);
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(initialHandId);
   const [confirming, setConfirming] = useState(false);
   const [deleting, startDelete] = useTransition();
   const [deleteFailed, setDeleteFailed] = useState(false);
   const [, startFlag] = useTransition();
 
+  // The filter and the open hand live in the address, so Back and reload come back to the same view.
+  const writeAddress = (next: HandListFilter, handId: string | null) => {
+    const params = new URLSearchParams(serializeHandFilter(next));
+    if (handId) params.set('hand', handId);
+    const qs = params.toString();
+    window.history.replaceState(null, '', qs ? `?${qs}` : window.location.pathname);
+  };
   const update = (patch: Partial<HandListFilter>) => {
     const next = { ...filter, ...patch };
     setFilter(next);
-    // Keep the filter in the address so Back and reload come back to the same list.
-    const qs = serializeHandFilter(next);
-    window.history.replaceState(null, '', qs ? `?${qs}` : window.location.pathname);
+    writeAddress(next, selected);
   };
+  const select = useCallback(
+    (handId: string | null) => {
+      setSelected(handId);
+      writeAddress(filter, handId);
+    },
+    [filter],
+  );
 
   const options = useMemo(() => handOptions(rows), [rows]);
   const shown = useMemo(
     () => sortHandRows(filterHandRows(rows, filter), filter.sort),
     [rows, filter],
   );
-  const active = shown.find((r) => r.id === selected) ?? shown[0] ?? null;
+  // Nothing open until a hand is chosen: the table then has the whole width.
+  const active = (selected && shown.find((r) => r.id === selected)) || null;
   const qs = serializeHandFilter(filter);
   const hrefOf = (handId: string) => `/hands/${handId}${qs ? `?${qs}` : ''}`;
 
@@ -103,32 +132,36 @@ export function SessionDetail({ session, stage, tiles, rows: initialRows, initia
     });
   }, []);
 
-  // Desktop keys: ↑ ↓ move through the hands, R flags the open one for review.
+  // Desktop keys: ↑ ↓ move through the hands, R flags the open one, Esc closes the replayer.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey || e.altKey || isTyping(e.target)) return;
-      if (!window.matchMedia('(min-width: 1024px)').matches || !active) return;
-      const at = shown.findIndex((r) => r.id === active.id);
+      if (!window.matchMedia('(min-width: 1024px)').matches) return;
+      const at = active ? shown.findIndex((r) => r.id === active.id) : -1;
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
         const next = shown[at + (e.key === 'ArrowDown' ? 1 : -1)];
         if (next) {
           e.preventDefault();
-          setSelected(next.id);
-          document
-            .querySelector(`[data-hand-id="${next.id}"]`)
-            ?.scrollIntoView({ block: 'nearest' });
+          select(next.id);
         }
-      } else if (e.key === 'r' || e.key === 'R') {
+      } else if (e.key === 'Escape' && active) {
+        select(null);
+      } else if ((e.key === 'r' || e.key === 'R') && active) {
         e.preventDefault();
         toggleFlag(active);
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [active, shown, toggleFlag]);
+  }, [active, shown, toggleFlag, select]);
+
+  // The open hand stays in view in the list on the left.
+  useEffect(() => {
+    if (!selected) return;
+    document.querySelector(`[data-hand-id="${selected}"]`)?.scrollIntoView({ block: 'nearest' });
+  }, [selected]);
 
   const explain = tCommon('explain');
-  const num1 = (n: number) => new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(n);
   const money = (n: number) => formatMoney(n, session.currency, locale);
   const signedMoney = (n: number) => `${n > 0 ? '+' : ''}${money(n)}`;
 
@@ -350,44 +383,50 @@ export function SessionDetail({ session, stage, tiles, rows: initialRows, initia
             ))}
           </ul>
 
-          {/* Desktop: table, with the open hand in a panel on the right */}
-          <div className="hidden items-start gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_22rem]">
-            <HandTable rows={shown} selectedId={active?.id ?? null} onSelect={setSelected} />
-            {active && (
-              <aside className="sticky top-6 flex max-h-[calc(100vh-3rem)] flex-col gap-3 overflow-y-auto">
-                <HandSummary
-                  heroCards={active.heroCards}
-                  board={active.board}
-                  heroPos={active.heroPos ?? ''}
-                  villPos={active.villPos ?? ''}
-                  steps={active.steps}
-                  result={
-                    active.result == null || active.resultBb == null
-                      ? null
-                      : {
-                          value: active.result,
-                          text: `${signedNumber(active.resultBb, locale)} bb`,
-                        }
-                  }
-                  eff={
-                    active.eff ? `${money(active.eff.amount)} (${num1(active.eff.bb)} bb)` : null
-                  }
-                  thought={active.thought}
-                  flagged={active.flagged}
-                  money={money}
-                />
-                <div className="flex gap-2">
-                  <Link
-                    href={hrefOf(active.id)}
-                    className={buttonClass({ variant: 'secondary', full: false })}
-                  >
-                    {tList('open')}
-                  </Link>
-                  <Button variant="secondary" full={false} onClick={() => toggleFlag(active)}>
-                    {tList('flag')}
-                  </Button>
+          {/* Desktop: the whole table, or a narrow list with the replayer beside it */}
+          <div className="hidden lg:block">
+            {active ? (
+              <div className="grid items-start gap-6 lg:grid-cols-[420px_minmax(0,1fr)]">
+                <ul className="sticky top-6 max-h-[calc(100vh-3rem)] divide-y divide-line overflow-y-auto rounded-md border border-line bg-surface">
+                  {shown.map((r) => (
+                    <li key={r.id} data-hand-id={r.id}>
+                      <HandRow
+                        row={r}
+                        href={hrefOf(r.id)}
+                        selected={r.id === active.id}
+                        onSelect={select}
+                      />
+                    </li>
+                  ))}
+                </ul>
+                <div className="flex min-w-0 flex-col gap-8">
+                  {active.replay ? (
+                    <Replayer
+                      key={active.id}
+                      hand={active.replay}
+                      meta={{
+                        id: active.id,
+                        num: active.num,
+                        thought: active.thought,
+                        needsReview: active.needsReview,
+                        aiReviewed: active.aiReviewed,
+                        missing: active.missing,
+                      }}
+                      currency={session.currency}
+                      onClose={() => select(null)}
+                    />
+                  ) : null}
+                  <ReviewPanel
+                    handId={active.id}
+                    review={reviews[active.id] ?? null}
+                    hand={active.replay}
+                    isMtt={session.kind === 'mtt'}
+                    ai={ai}
+                  />
                 </div>
-              </aside>
+              </div>
+            ) : (
+              <HandTable rows={shown} selectedId={null} onSelect={select} />
             )}
           </div>
         </>

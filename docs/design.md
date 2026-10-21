@@ -138,6 +138,9 @@ Bộ chọn bài, bàn phím số và bàn mini **trượt ra trong luồng tran
 | `MoreMenu`                 | Nút `⋯` ở đầu màn mở danh sách hành động phụ (link hoặc hành động, mục `danger` chữ đỏ); đóng khi chạm ngoài hoặc Escape        |
 | `ConfirmDialog`            | Hộp xác nhận (`<dialog>` modal) cho việc không hoàn tác được, nút `danger` + Hủy                                              |
 
+| `TableSeat`                | Ghế trên bàn replayer: vị trí + stack bb, tô màu mình (`accent`) / đối thủ (`villain`) / người khác (viền), ra khỏi hand thì mờ, nhãn All-in/Fold; tĩnh, `aria-label` đọc đủ vị trí, vai trò và stack |
+| `BetChip`                  | Số bb đã cược trước một ghế ở street hiện tại                                                                                  |
+
 `Button` có thêm variant `danger` (nền `loss`). `TopBar` hiện đồng thời nút back và `action`.
 
 Chip bật/tắt chọn nhiều dùng `Chip`; ô tìm dùng `Input type="search"`. Danh sách phiên ghép các component trên trong `components/session`.
@@ -151,9 +154,9 @@ Sẽ thêm trong các task 5.1b-x: `Icon` (lucide), `TopBar` variant tab/con, `T
 - 4 tab gốc (DEC-058): **Phiên** `/` · **Ghi hand** · **Thống kê** `/stats` · **Cài đặt** `/settings`. Điện thoại: thanh dưới; từ 1024px: `SideNav` bên trái, cùng 4 mục.
 - Màn gốc của tab: không có nút back.
 - Màn con: back về màn cha trong cùng tab; tab cha vẫn sáng (`lib/nav.ts`, `activeTab`):
-  - Phiên: `/`, `/sessions/[id]` (có danh sách hand; `/sessions/[id]/hands` chuyển về đây), `/sessions/[id]/edit`, `/sessions/[id]/summary`, `/hands/[id]` (back về `/sessions/[id]` kèm bộ lọc).
+  - Phiên: `/`, `/sessions/[id]` (có danh sách hand; `/sessions/[id]/hands` chuyển về đây), `/sessions/[id]/edit`, `/sessions/[id]/summary`, `/hands/[id]` (replayer + review; back về `/sessions/[id]` kèm bộ lọc), `/hands/[id]/edit` (Sửa hand).
   - Ghi hand: `/sessions/new`, `/sessions/[id]/before`, `record`, `structure`, `end`.
   - Thống kê: `/stats`; `/rules`, `/opponents`, `/opponents/new`, `/opponents/[id]` (con của Thống kê).
   - Cài đặt: `/settings`.
-- Ngoại lệ bề rộng: trang Phiên từ 1024px không giới hạn `max-w-md` (cột lọc 16rem + bảng 9 cột); chi tiết phiên cũng vậy (bảng hand + khung phải 22rem, dính khi cuộn); điện thoại vẫn `max-w-md`.
+- Ngoại lệ bề rộng: trang Phiên từ 1024px không giới hạn `max-w-md` (cột lọc 16rem + bảng 9 cột); chi tiết phiên cũng vậy: chưa chọn hand thì bảng đủ 12 cột rộng hết màn, chọn hand thì lưới `420px | còn lại` (danh sách hàng 4 dòng bên trái, dính và cuộn riêng; replayer + review bên phải); Esc hoặc ✕ đóng; điện thoại vẫn `max-w-md`.
 - Phần còn lại của cây màn chốt ở task 5.1b-2.

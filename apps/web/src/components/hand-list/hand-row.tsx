@@ -12,7 +12,19 @@ import { useHandText } from './use-hand-text';
  * One hand on the phone, four lines: number, seats, pot type and result; my cards and the board;
  * the action chips; labels and a piece of the note. Tapping opens the hand page.
  */
-export function HandRow({ row, href }: { row: HandRowData; href: string }) {
+export function HandRow({
+  row,
+  href,
+  selected = false,
+  onSelect,
+}: {
+  row: HandRowData;
+  href: string;
+  /** The hand open in the replayer (desktop list). */
+  selected?: boolean;
+  /** Desktop: tapping opens the replayer in place instead of the hand page. */
+  onSelect?: (id: string) => void;
+}) {
   const x = useHandText();
   const { t } = x;
   const line1 = [
@@ -28,7 +40,16 @@ export function HandRow({ row, href }: { row: HandRowData; href: string }) {
     <Link
       href={href}
       aria-label={t('rowLabel', { num: row.num })}
-      className="flex flex-col gap-2 p-3"
+      aria-current={selected ? 'true' : undefined}
+      onClick={
+        onSelect
+          ? (e) => {
+              e.preventDefault();
+              onSelect(row.id);
+            }
+          : undefined
+      }
+      className={`flex flex-col gap-2 p-3 ${selected ? 'bg-accent/10' : ''}`.trim()}
     >
       <span className="flex items-baseline justify-between gap-3">
         <span className="min-w-0 truncate text-sm">{line1}</span>

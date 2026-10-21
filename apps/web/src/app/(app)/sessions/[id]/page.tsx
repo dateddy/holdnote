@@ -1,5 +1,6 @@
 import { getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
+import type { HandReview } from '@/components/replay/review-panel';
 import { SessionDetail } from '@/components/session/session-detail';
 import { SyncStatus } from '@/components/hand/sync-status';
 import {
@@ -13,6 +14,10 @@ import { detailTiles, sessionStage } from '@/lib/sessions/detail';
 import { formatDay } from '@/lib/sessions/format';
 import { readMtt } from '@/lib/sessions/form';
 import { readSummary, STATS_COLUMNS, toStatsSession } from '@/lib/sessions/summary';
+import { loadUsage } from '@/lib/ai/quota';
+import { aiStatus } from '@/lib/ai/status';
+import { REVIEW_COLUMNS } from '@/lib/review/review';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 
 /** One session: tiles, the next step for its stage, and its hands with filters (spec 3.6). */
@@ -35,7 +40,7 @@ export default async function SessionPage({ params, searchParams }: PageProps<'/
   const { data: reviews } = ids.length
     ? await supabase
         .from('reviews')
-        .select('hand_id, source, accepted')
+        .select(`hand_id, ${REVIEW_COLUMNS}`)
         .eq('is_current', true)
         .in('hand_id', ids)
     : { data: [] };
@@ -43,6 +48,13 @@ export default async function SessionPage({ params, searchParams }: PageProps<'/
   const reviewOf = new Map<string, HandReviewInfo>(
     (reviews ?? []).map((r) => [r.hand_id, { source: r.source, accepted: r.accepted }]),
   );
+  const reviewRows: Record<string, HandReview> = Object.fromEntries(
+    (reviews ?? []).map((r) => [r.hand_id, r as unknown as HandReview]),
+  );
+  const { data: claims } = await supabase.auth.getClaims();
+  const userId = claims?.claims.sub;
+  const status = userId ? aiStatus(await loadUsage(createAdminClient(), userId)) : null;
+  const handParam = Array.isArray(query.hand) ? query.hand[0] : query.hand;
   const session = toStatsSession(row);
   const rows = buildHandRows(row, (hands ?? []) as unknown as HandRowDb[], reviewOf);
 
@@ -71,6 +83,13 @@ export default async function SessionPage({ params, searchParams }: PageProps<'/
         tiles={detailTiles(session, rows, new Date().toISOString())}
         rows={rows}
         initialFilter={parseHandFilter(query)}
+        initialHandId={handParam && rows.some((r) => r.id === handParam) ? handParam : null}
+        reviews={reviewRows}
+        ai={{
+          plan: status?.plan ?? 'free',
+          remaining: status?.remaining ?? null,
+          locked: status?.budgetLocked ?? false,
+        }}
       />
       <div className="mx-auto w-full max-w-md px-6 pb-6 lg:max-w-none">
         <SyncStatus />

@@ -1,27 +1,23 @@
-import { getLocale, getTranslations } from 'next-intl/server';
+import { getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
-import { computePot, potOddsAtDecisions } from 'poker-core';
-import { HandForm } from '@/components/hand/hand-form';
-import { HandSummary } from '@/components/hand/hand-summary';
-import { ReviewForm, type MathHint } from '@/components/hand/review-form';
-import {
-  boardCards,
-  deriveHand,
-  fromHandRow,
-  HAND_EDIT_COLUMNS,
-  HAND_SESSION_COLUMNS,
-  heroCards,
-} from '@/lib/hands/build';
-import { parseHandFilter, serializeHandFilter } from '@/lib/hands/session-hands';
-import { sortOpponents } from '@/lib/hands/table';
+import { Replayer } from '@/components/replay/replayer';
+import { ReviewPanel, type HandReview } from '@/components/replay/review-panel';
+import { TopBar } from '@/components/ui/top-bar';
 import { loadUsage } from '@/lib/ai/quota';
 import { aiStatus } from '@/lib/ai/status';
-import { fromReviewRow, REVIEW_COLUMNS } from '@/lib/review/review';
-import { formatMoney } from '@/lib/sessions/format';
+import { HAND_SESSION_COLUMNS } from '@/lib/hands/build';
+import {
+  buildHandRows,
+  HAND_ROW_COLUMNS,
+  parseHandFilter,
+  serializeHandFilter,
+  type HandRowDb,
+} from '@/lib/hands/session-hands';
+import { REVIEW_COLUMNS } from '@/lib/review/review';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { TopBar } from '@/components/ui/top-bar';
 import { createClient } from '@/lib/supabase/server';
 
+/** One hand: the replayer, then the second opinion (review). Editing the hand is its own screen. */
 export default async function HandDetailPage({ params, searchParams }: PageProps<'/hands/[id]'>) {
   const [{ id }, query] = await Promise.all([params, searchParams]);
   // The filter of the session page the player came from, so Back returns to the same list.
@@ -30,53 +26,41 @@ export default async function HandDetailPage({ params, searchParams }: PageProps
 
   const { data: hand } = await supabase
     .from('hands')
-    .select(HAND_EDIT_COLUMNS)
+    .select(HAND_ROW_COLUMNS)
     .eq('id', id)
     .maybeSingle();
   if (!hand) notFound();
 
   const { data: session } = await supabase
     .from('sessions')
-    .select(`${HAND_SESSION_COLUMNS}, currency, venue`)
+    .select(`${HAND_SESSION_COLUMNS}, currency`)
     .eq('id', hand.session_id)
     .maybeSingle();
   if (!session) notFound();
 
-  const venue = session.venue?.trim() ?? '';
-  const [{ data: review }, { data: opponents }, { data: profile }, t, locale] = await Promise.all([
+  const [{ data: review }, t] = await Promise.all([
     supabase
       .from('reviews')
       .select(REVIEW_COLUMNS)
       .eq('hand_id', id)
       .eq('is_current', true)
       .maybeSingle(),
-    supabase.from('opponents').select('id, name, venue').order('name'),
-    supabase.from('profiles').select('entry_mode').single(),
     getTranslations('hand'),
-    getLocale(),
   ]);
 
   const { data: claims } = await supabase.auth.getClaims();
   const userId = claims?.claims.sub;
   const status = userId ? aiStatus(await loadUsage(createAdminClient(), userId)) : null;
 
-  // Pot odds come from poker-core, never from the reviewer's head (CLAUDE.md rule 5).
-  const draft = fromHandRow(session, hand);
-  const derived = deriveHand(session, draft);
-  const money = (n: number) => formatMoney(n, session.currency, locale);
-  const steps = derived.input ? computePot(derived.input).steps : [];
-  const mathHints: MathHint[] = derived.input
-    ? potOddsAtDecisions(derived.input).map((d) => ({
-        street: t(`street_${d.street}`),
-        act: t(`act_${d.act}`),
-        toCall: money(d.toCall),
-        odds: `${Math.round(d.potOdds * 100)}%`,
-        mdf: d.mdf == null ? null : `${Math.round(d.mdf * 100)}%`,
-      }))
-    : [];
+  const [row] = buildHandRows(
+    session,
+    [hand as unknown as HandRowDb],
+    new Map(review ? [[id, { source: review.source, accepted: review.accepted }]] : []),
+  );
+  if (!row) notFound();
 
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-8 p-6">
+    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-8 p-6 lg:max-w-3xl">
       <TopBar
         title={t('detailTitle', { num: hand.num })}
         back={{
@@ -85,69 +69,33 @@ export default async function HandDetailPage({ params, searchParams }: PageProps
         }}
       />
 
-      <HandSummary
-        heroCards={heroCards(draft)}
-        board={boardCards(draft)}
-        heroPos={draft.heroPos}
-        villPos={draft.villPos}
-        steps={steps}
-        result={
-          derived.result == null
-            ? null
-            : {
-                value: derived.result,
-                text:
-                  derived.resultBb == null
-                    ? money(derived.result)
-                    : `${derived.resultBb > 0 ? '+' : ''}${derived.resultBb} bb`,
-              }
-        }
-        eff={derived.eff ? `${money(derived.eff.amount)} (${derived.eff.bb} bb)` : null}
-        thought={draft.thought}
-        flagged={draft.flagged}
-        money={money}
-      />
+      {row.replay ? (
+        <Replayer
+          hand={row.replay}
+          meta={{
+            id,
+            num: row.num,
+            thought: row.thought,
+            needsReview: row.needsReview,
+            aiReviewed: row.aiReviewed,
+            missing: row.missing,
+          }}
+          currency={session.currency}
+          showNum={false}
+        />
+      ) : null}
 
-      <ReviewForm
-        handId={hand.id}
-        reviewId={review?.id ?? null}
-        source={review?.source ?? null}
-        promptVersion={review?.prompt_version ?? null}
-        initial={fromReviewRow(review)}
+      <ReviewPanel
+        handId={id}
+        review={(review as HandReview | null) ?? null}
+        hand={row.replay}
+        isMtt={session.kind === 'mtt'}
         ai={{
           plan: status?.plan ?? 'free',
           remaining: status?.remaining ?? null,
           locked: status?.budgetLocked ?? false,
         }}
-        isMtt={session.kind === 'mtt'}
-        mathHints={mathHints}
       />
-
-      <details className="group rounded-md border border-line bg-surface">
-        <summary className="flex h-12 cursor-pointer items-center px-4 font-medium">
-          {t('editHand')}
-        </summary>
-        <div className="p-4 pt-0">
-          <HandForm
-            sessionId={hand.session_id}
-            session={session}
-            locale={locale}
-            venue={session.venue}
-            lastNum={hand.num - 1}
-            previous={null}
-            opponents={sortOpponents(
-              (opponents ?? []).map((o) => ({
-                id: o.id,
-                name: o.name,
-                sameVenue:
-                  venue !== '' && (o.venue ?? '').trim().toLowerCase() === venue.toLowerCase(),
-              })),
-            )}
-            entryMode={profile?.entry_mode === 'shorthand' ? 'shorthand' : 'buttons'}
-            edit={{ handId: hand.id, num: hand.num, initial: draft }}
-          />
-        </div>
-      </details>
     </main>
   );
 }

@@ -261,7 +261,11 @@
     "rebutCost": "AI xem lại review theo lý do của bạn. Tính 1 lượt.",
     "rebutCancel": "Hủy",
     "rebutSend": "Gửi phản biện",
-    "ai_nothing_to_summarize": "Phiên này chưa có hand nào."
+    "ai_nothing_to_summarize": "Phiên này chưa có hand nào.",
+    "secondOpinion": "Ý kiến thứ hai",
+    "experimental": "Thử nghiệm",
+    "promptLabel": "Prompt {version}",
+    "experimentalNote": "AI chỉ gợi ý để tham khảo và có thể sai. Bạn là người quyết định."
   },
   "settings": {
     "title": "Cài đặt",
@@ -802,5 +806,36 @@
     "potShort_single_raised": "Raise",
     "potShort_three_bet": "3-bet",
     "potShort_four_bet_plus": "4-bet+"
+  },
+  "replay": {
+    "table": "Bàn chơi lại",
+    "prev": "Action trước",
+    "next": "Action sau",
+    "close": "Đóng",
+    "step": "{step}/{total}",
+    "start": "Bắt đầu hand",
+    "end": "Kết thúc",
+    "stackNote": "Stack tính bằng bb",
+    "pot": "Pot",
+    "allIn": "All-in",
+    "fold": "Fold",
+    "behind": "{amount} bb",
+    "seatLabel": "{pos}, {who}, {stack}",
+    "seatNoStack": "{pos}, {who}",
+    "out": "đã bỏ bài",
+    "timeline": "Diễn biến hand",
+    "showdown": "Showdown",
+    "cardsOf": "Bài {who}",
+    "potMain": "Pot chính",
+    "potSide": "Pot phụ {n}",
+    "winnerOf": "{who} thắng",
+    "splitBetween": "{who} chia pot",
+    "noShowdown": "Hand kết thúc không cần showdown.",
+    "editHand": "Sửa hand",
+    "result": "Kết quả",
+    "handNum": "Hand #{num}",
+    "moneyLine": "{amount}",
+    "notPriced": "Chưa đủ dữ liệu để chơi lại hand này (thiếu blind).",
+    "thought": "Suy nghĩ"
   }
 }

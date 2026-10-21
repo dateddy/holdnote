@@ -1,7 +1,5 @@
 import {
   actionChips,
-  computePot,
-  type Action,
   POSITIONS,
   wentToShowdown,
   type ActionChip,
@@ -10,6 +8,7 @@ import {
   toBb,
 } from 'poker-core';
 import { isOneOf } from '@/lib/sessions/form';
+import { buildReplayHand, type ReplayHand } from './replay';
 import {
   deriveHand,
   fromHandRow,
@@ -63,8 +62,8 @@ export type HandRow = {
   thought: string;
   level: number | null;
   stage: string | null;
-  /** Every action with the pot after it, for the side panel summary. */
-  steps: { action: Action; potAfter: number }[];
+  /** What the replayer plays; null when the hand has no big blind to price it with. */
+  replay: ReplayHand | null;
   /** Effective stack in session money and in bb. */
   eff: { amount: number; bb: number } | null;
   /** Only the cross-session hand list sets it: where the hand was played. */
@@ -85,7 +84,8 @@ export function buildHandRows(
   reviews: ReadonlyMap<string, HandReviewInfo>,
 ): HandRow[] {
   return hands.map((h) => {
-    const derived = deriveHand(session, fromHandRow(session, h));
+    const draft = fromHandRow(session, h);
+    const derived = deriveHand(session, draft);
     const bb = h.level_bb ?? derived.bb ?? session.bb ?? null;
     const chips = derived.input && bb ? actionChips(derived.input, bb) : null;
     const review = reviews.get(h.id);
@@ -107,9 +107,7 @@ export function buildHandRows(
       resultBb: result == null || !bb ? null : toBb(result, bb),
       potBb: derived.potFinal == null || !bb ? null : toBb(derived.potFinal, bb),
       showdown: derived.input ? wentToShowdown(derived.input) : false,
-      steps: derived.input
-        ? computePot(derived.input).steps.map((s) => ({ action: s.action, potAfter: s.potAfter }))
-        : [],
+      replay: buildReplayHand(h.players_dealt ?? session.seats ?? 9, draft, derived),
       eff: derived.eff,
       flagged: h.flagged,
       accepted: review?.accepted === true,

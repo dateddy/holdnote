@@ -30,9 +30,6 @@ export function HandTable({ rows, selectedId, onSelect, showSession = false }: P
   const x = useHandText();
   const { t } = x;
   const th = 'px-2 py-2 text-left text-xs font-medium whitespace-nowrap text-muted';
-  // Result and labels stay in view while the street columns scroll sideways.
-  const stickyResult = 'sticky right-32 w-24 min-w-24 border-l border-line bg-surface';
-  const stickyLabels = 'sticky right-0 w-32 min-w-32 bg-surface';
 
   return (
     <div className="overflow-x-auto rounded-md border border-line bg-surface">
@@ -51,8 +48,8 @@ export function HandTable({ rows, selectedId, onSelect, showSession = false }: P
               </th>
             ))}
             <th className={`${th} text-right`}>{t('colPotSize')}</th>
-            <th className={`${th} ${stickyResult} text-right`}>{t('colResult')}</th>
-            <th className={`${th} ${stickyLabels}`}>{t('colLabels')}</th>
+            <th className={`${th} text-right`}>{t('colResult')}</th>
+            <th className={th}>{t('colLabels')}</th>
           </tr>
         </thead>
         <tbody>
@@ -102,12 +99,10 @@ export function HandTable({ rows, selectedId, onSelect, showSession = false }: P
                 <td className="px-2 py-2 text-right whitespace-nowrap tabular-nums">
                   {x.potSize(row)}
                 </td>
-                <td
-                  className={`px-2 py-2 text-right font-medium whitespace-nowrap ${stickyResult}`}
-                >
+                <td className="px-2 py-2 text-right font-medium whitespace-nowrap">
                   <Result value={row.resultBb}>{x.bb(row.resultBb)}</Result>
                 </td>
-                <td className={`px-2 py-2 ${stickyLabels}`}>
+                <td className="px-2 py-2">
                   <HandLabels row={row} />
                 </td>
               </tr>
