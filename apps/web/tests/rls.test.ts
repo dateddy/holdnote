@@ -234,6 +234,61 @@ describe.skipIf(!configured)('RLS', () => {
         expect(!!error || (data ?? []).length === 0, columns).toBe(true);
       }
     });
+
+    it('review_rebuttals: server writes, owner only reads, one free per thread', async () => {
+      const ai = await admin
+        .from('reviews')
+        .insert({ user_id: aId, hand_id: ids.hands, source: 'ai', ev_verdict: 'mistake' })
+        .select('id')
+        .single();
+      if (ai.error) throw ai.error;
+      const base = {
+        user_id: aId,
+        hand_id: ids.hands,
+        thread_id: ai.data.id,
+        review_id: ai.data.id,
+        reason: 'He never bluffs here',
+        outcome: 'kept',
+        reply: 'Still a call.',
+      };
+      const first = await admin
+        .from('review_rebuttals')
+        .insert({ ...base, free: true })
+        .select('id')
+        .single();
+      expect(first.error).toBeNull();
+      const secondFree = await admin.from('review_rebuttals').insert({ ...base, free: true });
+      expect(secondFree.error).not.toBeNull();
+      // Revised needs the new review, kept must not have one.
+      const badRevised = await admin
+        .from('review_rebuttals')
+        .insert({ ...base, outcome: 'revised' });
+      expect(badRevised.error).not.toBeNull();
+
+      const own = await a.from('review_rebuttals').select('id, reply');
+      expect(own.data).toHaveLength(1);
+      const ins = await a.from('review_rebuttals').insert(base as never);
+      expect(ins.error).not.toBeNull();
+      const upd = await a
+        .from('review_rebuttals')
+        .update({ free: false } as never)
+        .eq('id', first.data!.id)
+        .select('id');
+      expect(upd.data ?? []).toHaveLength(0);
+      const del = await a.from('review_rebuttals').delete().eq('id', first.data!.id).select('id');
+      expect(del.data ?? []).toHaveLength(0);
+      const theirs = await b.from('review_rebuttals').select('id');
+      expect(theirs.data ?? []).toHaveLength(0);
+
+      const usage = await admin
+        .from('ai_usage')
+        .insert({ user_id: aId, kind: 'rebuttal_free', model: 'test' })
+        .select('id')
+        .single();
+      expect(usage.error).toBeNull();
+      await admin.from('ai_usage').delete().eq('id', usage.data!.id);
+      await admin.from('reviews').delete().eq('id', ai.data.id);
+    });
   });
 
   describe('other user (B)', () => {

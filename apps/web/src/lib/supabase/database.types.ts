@@ -245,6 +245,77 @@ export type Database = {
         };
         Relationships: [];
       };
+      review_rebuttals: {
+        Row: {
+          created_at: string;
+          free: boolean;
+          hand_id: string;
+          id: string;
+          new_review_id: string | null;
+          outcome: string;
+          reason: string;
+          reply: string;
+          review_id: string;
+          thread_id: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          free?: boolean;
+          hand_id: string;
+          id?: string;
+          new_review_id?: string | null;
+          outcome: string;
+          reason: string;
+          reply: string;
+          review_id: string;
+          thread_id: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          free?: boolean;
+          hand_id?: string;
+          id?: string;
+          new_review_id?: string | null;
+          outcome?: string;
+          reason?: string;
+          reply?: string;
+          review_id?: string;
+          thread_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'review_rebuttals_hand_id_user_id_fkey';
+            columns: ['hand_id', 'user_id'];
+            isOneToOne: false;
+            referencedRelation: 'hands';
+            referencedColumns: ['id', 'user_id'];
+          },
+          {
+            foreignKeyName: 'review_rebuttals_new_review_id_user_id_fkey';
+            columns: ['new_review_id', 'user_id'];
+            isOneToOne: false;
+            referencedRelation: 'reviews';
+            referencedColumns: ['id', 'user_id'];
+          },
+          {
+            foreignKeyName: 'review_rebuttals_review_id_user_id_fkey';
+            columns: ['review_id', 'user_id'];
+            isOneToOne: false;
+            referencedRelation: 'reviews';
+            referencedColumns: ['id', 'user_id'];
+          },
+          {
+            foreignKeyName: 'review_rebuttals_thread_id_user_id_fkey';
+            columns: ['thread_id', 'user_id'];
+            isOneToOne: false;
+            referencedRelation: 'reviews';
+            referencedColumns: ['id', 'user_id'];
+          },
+        ];
+      };
       reviews: {
         Row: {
           accepted: boolean;
