@@ -607,7 +607,15 @@
     "deleteFrom": "Xóa từ đây",
     "potShort": "Pot",
     "stackShort": "Stack",
-    "oldHand": "Hand này ghi từ trước khi có forced bet nên mở ở chế độ ghi tắt.",
+    "oldHand": "Không chuyển được sang Theo action ({reason}), nên mở ở chế độ ghi tắt.",
+    "oldHandReason": {
+      "bad_setup": "thiếu vị trí hoặc số liệu bàn",
+      "unknown_seat": "có người chơi không rõ vị trí",
+      "out_of_turn": "thứ tự hành động không khớp luật",
+      "invalid_action": "có hành động không hợp lệ",
+      "missing_stack": "all-in nhưng chưa biết stack",
+      "result_changed": "kết quả sẽ khác bản đã lưu"
+    },
     "modeActions": "Theo action",
     "modeShorthand": "Ghi tắt H/V",
     "preflopHeading": "Preflop",

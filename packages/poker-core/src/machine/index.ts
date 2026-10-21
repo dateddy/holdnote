@@ -17,6 +17,8 @@ export {
 } from './seats';
 export { playersByStreet } from './streets';
 export type { StreetPlayers } from './streets';
+export { actionsFromLegacy } from './from-legacy';
+export type { LegacyConversion, LegacyFailure } from './from-legacy';
 export { showdown } from './showdown';
 export type { PotOutcome, ShowdownInput, ShowdownResult } from './showdown';
 export type * from './types';

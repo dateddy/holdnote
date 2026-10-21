@@ -85,6 +85,9 @@ export {
   type SeatState,
   type Settlement,
   type WarningCode,
+  actionsFromLegacy,
+  type LegacyConversion,
+  type LegacyFailure,
 } from './machine';
 export {
   LEAK_WINDOW,

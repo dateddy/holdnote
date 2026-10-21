@@ -203,7 +203,7 @@ describe('hands recorded by action', () => {
     expect(deriveHand(cash, back).actions).toEqual(row.actions);
   });
 
-  it('a hand saved without forced bets stays legacy', () => {
+  it('a hand saved without forced bets is read by the state machine (5.1d-3)', () => {
     const back = fromHandRow(cash, {
       hero_cards: ['Ah', 'Kd'],
       board: [],
@@ -224,8 +224,9 @@ describe('hands recorded by action', () => {
       thought: null,
       flagged: false,
     });
-    expect(back.legacy).toBe(true);
-    expect(deriveHand(cash, back).machine).toBeNull();
+    expect(back.legacy).toBe(false);
+    expect(back.rawLine).toBe('');
+    expect(deriveHand(cash, back).machine).not.toBeNull();
   });
 
   it('a board missing for the street reached marks the hand as missing data', () => {

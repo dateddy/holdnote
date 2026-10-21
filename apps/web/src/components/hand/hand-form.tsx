@@ -590,7 +590,11 @@ export function HandForm({
         </p>
       )}
 
-      {edit?.initial.legacy && <p className="text-sm text-muted">{tr('oldHand')}</p>}
+      {edit?.initial.legacy && edit.initial.legacyReason && (
+        <p className="text-sm text-muted">
+          {tr('oldHand', { reason: tr(`oldHandReason.${edit.initial.legacyReason}`) })}
+        </p>
+      )}
 
       <ContextBar
         num={num}

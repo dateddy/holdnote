@@ -607,7 +607,15 @@
     "deleteFrom": "Delete from here",
     "potShort": "Pot",
     "stackShort": "Stack",
-    "oldHand": "This hand was recorded before forced bets were actions, so it opens in shorthand mode.",
+    "oldHand": "Could not switch to Theo action ({reason}), so it opens as a shorthand line.",
+    "oldHandReason": {
+      "bad_setup": "seats or table setup missing",
+      "unknown_seat": "a player has no known seat",
+      "out_of_turn": "the order of actions does not fit the rules",
+      "invalid_action": "an action is not allowed",
+      "missing_stack": "an all-in with an unknown stack",
+      "result_changed": "the result would differ from the saved one"
+    },
     "modeActions": "By action",
     "modeShorthand": "Shorthand H/V",
     "preflopHeading": "Preflop",

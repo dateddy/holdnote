@@ -1,4 +1,5 @@
 import {
+  actionsFromLegacy,
   computeEff,
   computePot,
   computeResult,
@@ -21,6 +22,7 @@ import {
   POSITIONS,
   STREETS,
   type Action,
+  type LegacyFailure,
   type BoardInput,
   type Blinds,
   type Card,
@@ -137,7 +139,14 @@ export type HandDraft = {
    * come from the session. New hands add `forcedBets(setup)` in front of `actions` when deriving.
    */
   legacy: boolean;
+  /**
+   * Why a saved hand could not be moved to the Theo action mode (it opens as a shorthand line).
+   * Set by {@link fromHandRow}; absent for new hands and for hands that moved.
+   */
+  legacyReason?: LegacyReason;
 };
+
+export type LegacyReason = LegacyFailure | 'result_changed';
 
 export type HandDerived = {
   input: HandInput | null;
@@ -769,11 +778,57 @@ export function fromHandRow(session: HandSession, row: HandRowIn): HandDraft {
     // No forced bets saved: the hand predates DEC-045 and is read with the session blinds.
     legacy: posts.length === 0,
   };
+  // Old hands (no forced bets) and hands saved from a shorthand line open in Theo action when
+  // the state machine accepts their actions (5.1d-3); otherwise they stay a shorthand line.
+  const converted =
+    draft.legacy || draft.rawLine ? toActionMode(session, draft, row.result) : draft;
   // Keep the stored result only when the numbers do not already give it.
-  if (row.result != null && deriveHand(session, draft).result !== row.result) {
-    draft.resultText = String(row.result);
+  if (row.result != null && deriveHand(session, converted).result !== row.result) {
+    converted.resultText = String(row.result);
   }
-  return draft;
+  return converted;
+}
+
+/** Same result up to a cent: the check that a conversion did not change the hand's money. */
+const sameMoney = (a: number | null, b: number | null) =>
+  a == null || b == null || Math.abs(a - b) <= 0.011;
+
+/**
+ * Saved hand to the Theo action mode: the actions go through `actionsFromLegacy` with the session's
+ * forced bets (a hand without forced bets is tried with the session straddle first, then without).
+ * The conversion is refused when it would change the saved result, so no hand silently gets new money.
+ */
+export function toActionMode(
+  session: HandSession,
+  draft: HandDraft,
+  savedResult: number | null,
+): HandDraft {
+  const bb = handBb(session, draft);
+  if (bb == null) return { ...draft, legacyReason: 'bad_setup' };
+  const sessionStraddle =
+    session.kind === 'cash' && session.straddle ? [String(session.straddle)] : [];
+  const options =
+    draft.legacy && sessionStraddle.length > 0 ? [sessionStraddle, []] : [draft.straddles];
+  let reason: LegacyReason = 'bad_setup';
+  for (const straddles of options) {
+    const trial = { ...draft, straddles };
+    const setup = draftToSetup(session, trial, bb);
+    if (!setup) continue;
+    const r = actionsFromLegacy(setup, trial.actions, boardInput(trial));
+    if (!r.ok) {
+      reason = r.reason;
+      continue;
+    }
+    const next: HandDraft = {
+      ...trial,
+      actions: stripForced(r.actions),
+      rawLine: '',
+      legacy: false,
+    };
+    if (sameMoney(deriveHand(session, next).result, savedResult)) return next;
+    reason = 'result_changed';
+  }
+  return { ...draft, legacyReason: reason };
 }
 
 /** Hand-level ante columns: only MTT hands record the ante of their level; null = session default. */
