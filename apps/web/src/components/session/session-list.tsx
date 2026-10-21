@@ -144,13 +144,20 @@ export function SessionList({
   );
 
   const net = netTile(totals, filter.kind);
-  const moneyText = (m: MoneyLine) => {
-    const own = `${m.money > 0 ? '+' : ''}${formatMoney(m.money, m.currency, locale)}`;
-    if (!m.converted) return own;
-    const worth = formatMoney(m.converted.money, m.converted.currency, locale);
-    return `${own} · ${m.money > 0 ? '+' : ''}${worth}`;
-  };
-  const netSub = net.sub.map(moneyText).join(' · ');
+  const sign = (n: number) => (n > 0 ? '+' : '');
+  /** Chips or money of one currency, signed. */
+  const ownText = (m: MoneyLine) => `${sign(m.money)}${formatMoney(m.money, m.currency, locale)}`;
+  /** What the chips are worth, when every chip session has the same rate. */
+  const worthText = (m: MoneyLine) =>
+    m.converted
+      ? `${sign(m.converted.money)}${formatMoney(m.converted.money, m.converted.currency, locale)}`
+      : null;
+  const moneyText = (m: MoneyLine) => [ownText(m), worthText(m)].filter(Boolean).join(' · ');
+  // The big number is one figure; the money the chips are worth goes to the small line.
+  const mainMoney = net.main != null && !('bb' in net.main) ? net.main : null;
+  const netSub = [mainMoney ? worthText(mainMoney) : null, ...net.sub.map(moneyText)]
+    .filter(Boolean)
+    .join(' · ');
 
   const tiles = (
     <>
@@ -180,7 +187,7 @@ export function SessionList({
         ) : 'bb' in net.main ? (
           <Result value={net.main.bb}>{signedNumber(net.main.bb, locale)} bb</Result>
         ) : (
-          <Result value={net.main.money}>{moneyText(net.main)}</Result>
+          <Result value={net.main.money}>{ownText(net.main)}</Result>
         )}
       </StatTile>
       <StatTile

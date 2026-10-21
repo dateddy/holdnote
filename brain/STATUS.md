@@ -1,33 +1,30 @@
-# STATUS — cập nhật 2026-10-21
+# STATUS — cập nhật 2026-10-21 15:10
 
 ## Đã xong
 
-- Giai đoạn 1–4 xong, 5.1 xong. 5.1b làm dở: 5.1b-1 xong, 5.1b-2…7 chưa.
-- 5.1c xong toàn bộ (1, 2, 3, 4, 5a/5b, 6a, 6a-fix, 6b): state machine, màn Ghi nhanh, bàn mini, multiway, evaluator, side pot, showdown (DEC-045…052).
-- 5.1c-3 (DEC-056): cấu trúc blind MTT trong `sessions.mtt.blind_levels` (`poker-core/src/mtt`, trang `/sessions/[id]/structure`), Lên/Lùi level, gợi ý level theo giờ, SB mang sang hand sau. Migration `20261020210000` (`hands.level`) đã áp lên DB thật; test RLS 22 pass.
-- DEC-055: review/tóm tắt AI hỏng không trừ lượt, chuẩn hóa enum trước Zod (`lib/ai/normalize.ts`), nút Thử lại ở màn review.
-- Ảnh kiểm tra: `screens/5.1c-6b/`, `screens/5.1c-3/` (375×550; ngoài git; `node scripts/screens-mtt.mjs`).
-- 5.1d-1 (DEC-058): trang chủ là danh sách phiên, 4 tab Phiên · Ghi hand · Thống kê · Cài đặt, bảng desktop từ 1024px. Ảnh: `screens/5.1d-1/` (`node scripts/screens-home.mjs`).
-- DEC-057: lượt AI hỏng cộng vào ngân sách app (`ai_usage.failed`, migration `20261021100000` đã áp, test RLS 23 pass). Task 3.6 hoãn xuống trước 5.4.
+- Giai đoạn 1–4, 5.1, 5.1c, 5.1d-1/2 xong. 5.1b làm dở (5.1b-1 xong; 5.1b-2/3 một phần nhờ 5.1d-3: 3 tab, icon, TopBar con, `Field`).
+- 5.1d-3 (DEC-062) xong 5 trên 6 phần: a potType + ISO; b `actionsFromLegacy` + sửa hand cũ ở Theo action; d form phiên dùng chung (4 nhóm, giờ, Chip, tỉ giá); e ba tab icon, `<` qua history, vuốt mép iOS; f trang chủ (⋯, + Hand, bỏ "Đang chơi", lọc mờ mép, InfoTip lật, Cài app vào Cài đặt) và khối "AI phân tích" chỉ đọc.
+- 5.1d-3c: migration `20261021120000` (`chip_value`, `chip_currency`) đã áp, RLS test xanh; script `scripts/fix-chip-units.mjs` mới chạy dry-run.
+- Ảnh 375px: `screens/5.1d-3/` (`node scripts/screens-5.1d-3.mjs`, 45 kiểm tra đều ok).
+- `poker-core` mới: `actionsFromLegacy`, `potType` loại `iso`, `StatsSession.chipRate`.
 
 ## Đang làm
 
-- Không có.
+- 5.1d-3c còn một bước: chờ Đạt duyệt danh sách 3 phiên rồi chạy `node scripts/fix-chip-units.mjs --apply`.
 
 ## Bước tiếp theo (tối đa 3, theo thứ tự)
 
-1. Đạt thử tay trên điện thoại: cấu trúc blind MTT (dán văn bản, Lên level, gợi ý level), showdown multiway, sửa chip inline, tạo đối thủ từ ô nhập.
-2. Task 5.2 migrate `legacy/data` (ghép giờ `HH:MM` thành `start_at`/`end_at`; rồi `pnpm recheck:results` và benchmark v1/v2), hoặc 5.1d-2 khi Đạt gửi nội dung.
-3. Dọn control style tay còn lại (5.1b-4/5/7): `shorthand-input`, `undo-toast`, `review-form`, `session-form`, `end-form`.
+1. Đạt duyệt danh sách đổi đơn vị (3 phiên → Chip, 1 chip = 1000 VND), rồi `--apply`.
+2. Đạt thử tay trên điện thoại: form phiên, back Android, vuốt mép iOS PWA, InfoTip, khối AI phân tích.
+3. Task 5.2 migrate `legacy/data` (CHIP + 1000 VND, `actionsFromLegacy` cho chuỗi `line`, ghép giờ `HH:MM`).
 
 ## Vướng / cần Đạt quyết
 
-- `CLAUDE.md` có luật số 10 (UI chỉ dùng `components/ui`) chưa commit: chờ Đạt quyết commit hay bỏ.
-- Hand MTT lưu trước 5.1c-3 không có `level`: nút Lên level suy ra level theo BB trùng cấu trúc. Sửa cấu trúc giữa phiên không đổi hand đã lưu (có test); ngữ cảnh AI hand MTT có level, blind/ante, giai đoạn, stack bb.
-- Hand lưu trước 5.1c-6b không có `pot_winners`: sửa hand cũ có bài đối thủ mà `outcome` trái bài sẽ bị khóa Lưu cho tới khi sửa.
-- Chưa thử tay: server action lưu tổng kết, gọi AI thật, đồng bộ offline mất mạng thật.
-- Trước beta: chính sách quyền riêng tư, tắt huấn luyện trên dữ liệu ở OpenRouter, SMTP riêng, logo thật.
+- Ca vàng `H lp V o500 H c ...` nay có loại pot ISO (limp rồi đối thủ raise); test chips đã đổi kỳ vọng. Muốn gọi SRP thì nói.
+- Trên `legacy/data`: 11 hand H/V không chuyển được vì `V1..V9` không có vị trí; hand #1 trong DB (`H r500 V ai`) thiếu stack nên vẫn mở ghi tắt.
+- Chưa làm desktop: bảng phiên chưa có cột ⋯; danh sách hand xuyên phiên; "Giải thích thuật ngữ" (5.3).
+- Trước beta: chính sách quyền riêng tư, tắt huấn luyện dữ liệu ở OpenRouter, SMTP riêng, logo thật.
 
 ## Sức khỏe repo
 
-- test: 890 pass / 0 fail (core 577, web 313) - typecheck: ok - lint: ok (1 cảnh báo cũ `_fix` ở recheck-results.test.ts)
+- test: 1091 pass / 0 fail (core 623, web 468)  - typecheck: ok  - lint: ok (1 cảnh báo `_fix` chưa dùng trong `recheck-results.test.ts`, có từ trước)
