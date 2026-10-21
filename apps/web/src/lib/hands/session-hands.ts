@@ -31,7 +31,7 @@ export type HandRowDb = HandRowIn & {
 /** The current review of a hand, as far as the table cares. */
 export type HandReviewInfo = { source: string; accepted: boolean };
 
-export const POT_TYPES = ['limped', 'single_raised', 'three_bet', 'four_bet_plus'] as const;
+export const POT_TYPES = ['limped', 'iso', 'single_raised', 'three_bet', 'four_bet_plus'] as const;
 
 /** One row of the hand table (phone and desktop), everything ready to draw. */
 export type HandRow = {

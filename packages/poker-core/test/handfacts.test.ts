@@ -35,6 +35,29 @@ describe('potType', () => {
       'three_bet',
     );
   });
+  it('an all-in without a known amount counts as a raise (saved hand #1: H r500 V ai)', () => {
+    expect(type([pre('hero', 'UTG+1', 'raise', 500), pre('villain', 'MP', 'all-in')])).toBe(
+      'three_bet',
+    );
+  });
+  it('an all-in below the current level is a call, not a raise', () => {
+    expect(type([pre('villain', 'BTN', 'raise', 300), pre('hero', 'MP', 'all-in', 200)])).toBe(
+      'single_raised',
+    );
+  });
+  it('a raise over limpers is an iso pot; a 3-bet over it is a 3-bet pot', () => {
+    const limp = pre('villain', 'UTG', 'call', 50);
+    const iso = pre('hero', 'MP', 'raise', 200);
+    expect(type([limp, iso, pre('villain', 'UTG', 'call')])).toBe('iso');
+    expect(type([limp, iso, pre('villain', 'BTN', 'raise', 600), pre('hero', 'MP', 'call')])).toBe(
+      'three_bet',
+    );
+  });
+  it('a raise with no limper stays single raised', () => {
+    expect(type([pre('hero', 'MP', 'raise', 150), pre('villain', 'BTN', 'call')])).toBe(
+      'single_raised',
+    );
+  });
   it('ignores postflop betting', () => {
     const flop = { street: 'flop', actor: 'hero', pos: 'MP', act: 'bet', amount: 100 } as Action;
     expect(type([pre('hero', 'MP', 'call', 50), pre('villain', 'BTN', 'call', 50), flop])).toBe(

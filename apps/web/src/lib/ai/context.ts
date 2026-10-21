@@ -127,6 +127,7 @@ export function sizingNote(steps: readonly ActionStep[], step: ActionStep): stri
 
 const POT_TYPE_WORD: Record<TableFacts['potType'], string> = {
   limped: 'limped pot (no preflop raise)',
+  iso: 'isolation pot (one raise over limpers)',
   single_raised: 'single-raised pot',
   three_bet: '3-bet pot',
   four_bet_plus: '4-bet+ pot',

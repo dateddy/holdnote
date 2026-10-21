@@ -54,7 +54,7 @@ describe('buildHandRows', () => {
     const [r] = buildHandRows(cash, [goldRow()], new Map());
     expect(r!.num).toBe(7);
     expect(r!.resultBb).toBe(-360);
-    expect(r!.potType).toBe('single_raised');
+    expect(r!.potType).toBe('iso');
     expect(r!.showdown).toBe(true);
     expect(r!.potBb).toBe(721.5); // 36075 / 50
     expect(r!.chips.river.map((c) => [c.act, c.amountBb])).toEqual([

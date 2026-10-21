@@ -9,7 +9,7 @@ const gold = (): HandInput =>
 describe('actionChips', () => {
   it('golden hand: chips per street, sizes in bb from the resolved amounts', () => {
     const r = actionChips(gold(), 50);
-    expect(r.potType).toBe('single_raised');
+    expect(r.potType).toBe('iso');
     const view = (s: keyof typeof r.streets) =>
       r.streets[s].map((c) => [c.actor, c.pos, c.act, c.amountBb]);
     expect(view('preflop')).toEqual([
