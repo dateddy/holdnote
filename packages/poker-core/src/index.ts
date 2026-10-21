@@ -29,6 +29,12 @@ export {
   type HandRank,
 } from './engine/evaluate';
 export {
+  describeRank,
+  heroHandByStreet,
+  type PostflopStreet,
+  type StreetHand,
+} from './engine/hero-hand';
+export {
   buildPots,
   chipUnit,
   settlePots,
