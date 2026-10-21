@@ -1,6 +1,6 @@
-import { getTranslations } from 'next-intl/server';
+import { getLocale, getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
-import type { HandReview } from '@/components/replay/review-panel';
+import type { HandReview, HandReviews } from '@/components/replay/review-panel';
 import { SessionDetail } from '@/components/session/session-detail';
 import { SyncStatus } from '@/components/hand/sync-status';
 import {
@@ -15,6 +15,7 @@ import { readMtt } from '@/lib/sessions/form';
 import { readSummary, STATS_COLUMNS, toStatsSession } from '@/lib/sessions/summary';
 import { loadUsage } from '@/lib/ai/quota';
 import { aiStatus } from '@/lib/ai/status';
+import { aiReviewState, REBUTTAL_COLUMNS, type RebuttalRow } from '@/lib/review/ai-state';
 import { REVIEW_COLUMNS, reviewInfoByHand, reviewsByHand } from '@/lib/review/review';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
@@ -32,23 +33,43 @@ export default async function SessionPage({ params, searchParams }: PageProps<'/
 
   const { data: hands } = await supabase
     .from('hands')
-    .select(HAND_ROW_COLUMNS)
+    .select(`${HAND_ROW_COLUMNS}, updated_at`)
     .eq('session_id', id)
     .order('num', { ascending: false });
   const ids = (hands ?? []).map((h) => h.id);
-  const { data: reviews } = ids.length
-    ? await supabase
-        .from('reviews')
-        .select(`hand_id, ${REVIEW_COLUMNS}`)
-        .eq('is_current', true)
-        .in('hand_id', ids)
-    : { data: [] };
+  const [{ data: reviews }, { data: rebuttals }, locale] = await Promise.all([
+    ids.length
+      ? supabase
+          .from('reviews')
+          .select(`hand_id, ${REVIEW_COLUMNS}, created_at`)
+          .eq('is_current', true)
+          .in('hand_id', ids)
+      : { data: [] },
+    ids.length
+      ? supabase.from('review_rebuttals').select(`hand_id, ${REBUTTAL_COLUMNS}`).in('hand_id', ids)
+      : { data: [] },
+    getLocale(),
+  ]);
 
   // A hand can have an AI review and its own review at the same time (DEC-064).
   const reviewOf = reviewInfoByHand(reviews ?? []);
-  const reviewRows = reviewsByHand(
-    (reviews ?? []) as unknown as (HandReview & { hand_id: string })[],
+  const byHand = reviewsByHand(
+    (reviews ?? []) as unknown as (HandReview & { hand_id: string; created_at: string })[],
   );
+  const rebuttalRows = (rebuttals ?? []) as (RebuttalRow & { hand_id: string })[];
+  const reviewRows: Record<string, HandReviews> = {};
+  for (const h of hands ?? []) {
+    const r = byHand[h.id] ?? { ai: null, manual: null };
+    reviewRows[h.id] = {
+      ...r,
+      ...aiReviewState(
+        r.ai,
+        rebuttalRows.filter((x) => x.hand_id === h.id),
+        h.updated_at,
+        locale,
+      ),
+    };
+  }
   const { data: claims } = await supabase.auth.getClaims();
   const userId = claims?.claims.sub;
   const status = userId ? aiStatus(await loadUsage(createAdminClient(), userId)) : null;

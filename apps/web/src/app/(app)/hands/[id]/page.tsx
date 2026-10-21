@@ -1,4 +1,4 @@
-import { getTranslations } from 'next-intl/server';
+import { getLocale, getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { Replayer } from '@/components/replay/replayer';
 import { ReviewPanel, type HandReview } from '@/components/replay/review-panel';
@@ -13,6 +13,7 @@ import {
   serializeHandFilter,
   type HandRowDb,
 } from '@/lib/hands/session-hands';
+import { aiReviewState, REBUTTAL_COLUMNS, type RebuttalRow } from '@/lib/review/ai-state';
 import { REVIEW_COLUMNS, reviewInfoByHand, splitReviews } from '@/lib/review/review';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
@@ -26,7 +27,7 @@ export default async function HandDetailPage({ params, searchParams }: PageProps
 
   const { data: hand } = await supabase
     .from('hands')
-    .select(HAND_ROW_COLUMNS)
+    .select(`${HAND_ROW_COLUMNS}, updated_at`)
     .eq('id', id)
     .maybeSingle();
   if (!hand) notFound();
@@ -38,16 +39,24 @@ export default async function HandDetailPage({ params, searchParams }: PageProps
     .maybeSingle();
   if (!session) notFound();
 
-  const [{ data: reviews }, t] = await Promise.all([
+  const [{ data: reviews }, { data: rebuttals }, t, locale] = await Promise.all([
     supabase
       .from('reviews')
-      .select(`hand_id, ${REVIEW_COLUMNS}`)
+      .select(`hand_id, ${REVIEW_COLUMNS}, created_at`)
       .eq('hand_id', id)
       .eq('is_current', true),
+    supabase.from('review_rebuttals').select(REBUTTAL_COLUMNS).eq('hand_id', id),
     getTranslations('hand'),
+    getLocale(),
   ]);
   // The AI review and the student's own one, side by side (DEC-064).
   const { ai: aiReview, manual: manualReview } = splitReviews(reviews ?? []);
+  const aiState = aiReviewState(
+    aiReview,
+    (rebuttals ?? []) as RebuttalRow[],
+    hand.updated_at,
+    locale,
+  );
 
   const { data: claims } = await supabase.auth.getClaims();
   const userId = claims?.claims.sub;
@@ -91,6 +100,7 @@ export default async function HandDetailPage({ params, searchParams }: PageProps
         reviews={{
           ai: (aiReview as HandReview | null) ?? null,
           manual: (manualReview as HandReview | null) ?? null,
+          ...aiState,
         }}
         hand={row.replay}
         isMtt={session.kind === 'mtt'}

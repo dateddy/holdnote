@@ -4,14 +4,24 @@ import { useLocale, useTranslations } from 'next-intl';
 import { potOddsAtDecisions, toBb } from 'poker-core';
 import { ReviewForm, type AiInfo, type MathHint } from '@/components/hand/review-form';
 import type { ReplayHand } from '@/lib/hands/replay';
+import type { AiReviewState } from '@/lib/review/ai-state';
 import { fromReviewRow, type ReviewRow } from '@/lib/review/review';
 
 export type HandReview = ReviewRow & { id: string; source: string; prompt_version: string | null };
 
-/** The current reviews of a hand: the AI's and the student's own, either may be missing (DEC-064). */
-export type HandReviews = { ai: HandReview | null; manual: HandReview | null };
+/**
+ * The current reviews of a hand: the AI's and the student's own, either may be missing (DEC-064),
+ * with the rebuttals of the AI analysis (task 5.1e).
+ */
+export type HandReviews = { ai: HandReview | null; manual: HandReview | null } & AiReviewState;
 
-export const NO_REVIEWS: HandReviews = { ai: null, manual: null };
+export const NO_REVIEWS: HandReviews = {
+  ai: null,
+  manual: null,
+  rebuttals: [],
+  freeRebuttal: true,
+  aiStale: false,
+};
 
 type Props = {
   handId: string;
@@ -47,7 +57,6 @@ export function ReviewPanel({ handId, reviews, hand, isMtt, ai }: Props) {
         reviews.ai
           ? {
               id: reviews.ai.id,
-              promptVersion: reviews.ai.prompt_version,
               draft: fromReviewRow(reviews.ai),
             }
           : null
@@ -55,6 +64,9 @@ export function ReviewPanel({ handId, reviews, hand, isMtt, ai }: Props) {
       manualReview={
         reviews.manual ? { id: reviews.manual.id, draft: fromReviewRow(reviews.manual) } : null
       }
+      rebuttals={reviews.rebuttals}
+      freeRebuttal={reviews.freeRebuttal}
+      aiStale={reviews.aiStale}
       ai={ai}
       isMtt={isMtt}
       mathHints={mathHints}
