@@ -90,6 +90,8 @@ export type PromptFields = {
   multiway: boolean;
   sidePots: boolean;
   uncalled: boolean;
+  /** Hero's made hand on each street, from the evaluator. */
+  heroHand: boolean;
 };
 
 /** One context line per field, in the order they appear in the message. */
@@ -102,6 +104,7 @@ const FIELD_LINES: Record<keyof PromptFields, string> = {
     '- Every opponent in a multiway pot with stack and any cards shown, and which one is the main opponent.',
   sidePots: '- Side pots (size and who can win each). Winners are never given.',
   uncalled: '- Uncalled bets returned to their owner, so they are not part of the pot.',
+  heroHand: "- Hero's made hand on each street, computed. Use it; do not re-read the cards.",
 };
 
 const FIELDS_ANCHOR = '- Game type, stakes, live or online, player count.\n';

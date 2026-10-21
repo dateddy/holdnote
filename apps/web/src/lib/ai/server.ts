@@ -65,7 +65,7 @@ export function spentOn(e: unknown): Usage {
  */
 export function failedUsageRow(opts: {
   userId: string;
-  kind: 'hand_review' | 'rebuttal' | 'session_summary';
+  kind: 'hand_review' | 'rebuttal' | 'rebuttal_free' | 'session_summary';
   model: string;
   billedTo: 'app' | 'user';
   spent: Usage;

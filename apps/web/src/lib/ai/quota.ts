@@ -49,6 +49,17 @@ export function decideAccess(i: AccessInput): Access {
   return { ok: true, billedTo: 'app', remaining: limit - i.monthCalls - 1 };
 }
 
+/**
+ * A rebuttal: the first one of an analysis is free on the free plan (it runs with no turns left
+ * and uses none), but the app budget still locks it. Later ones cost a turn like a review.
+ */
+export function decideRebuttalAccess(i: AccessInput, free: boolean): Access {
+  if (i.hasOwnKey || !free) return decideAccess(i);
+  if (i.appSpendUsd >= i.budgetUsd) return { ok: false, code: 'budget_locked' };
+  const limit = i.monthLimit ?? FREE_MONTHLY_LIMIT;
+  return { ok: true, billedTo: 'app', remaining: Math.max(0, limit - i.monthCalls) };
+}
+
 /** First instant of the UTC month of `now`. */
 export function monthStart(now: Date): Date {
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));

@@ -356,6 +356,7 @@ describe('prompt fields follow the hand (task 3.5b)', () => {
       multiway: false,
       sidePots: false,
       uncalled: false,
+      heroHand: true,
     });
     const prompt = systemPrompt('v1', promptFields);
     expect(prompt).toContain('Pot type and players left');
@@ -369,7 +370,12 @@ describe('prompt fields follow the hand (task 3.5b)', () => {
       actions: (hand.actions as Action[]).filter((a) => !a.act.startsWith('post_')),
     };
     const { promptFields } = request(old);
-    expect(promptFields).toBeNull();
-    expect(systemPrompt('v1', promptFields)).toBe(SYSTEM_PROMPT_V1_BASE);
+    expect(promptFields).toMatchObject({ flow: false, heroHand: true });
+    // Only the line for Hero's made hand is added to the old prompt.
+    expect(systemPrompt('v1', promptFields).replace(/^- Hero's made hand.*\n/m, '')).toBe(
+      SYSTEM_PROMPT_V1_BASE,
+    );
+    const noBoard = request({ ...old, board: [] });
+    expect(noBoard.promptFields).toBeNull();
   });
 });

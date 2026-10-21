@@ -1,8 +1,16 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { buildReviewRequest } from '@/lib/ai/context';
-import { languagePack, reviewInLanguage } from '@/lib/ai/languages';
-import { budgetFromEnv, decideAccess, loadUsage } from '@/lib/ai/quota';
+import { languagePack } from '@/lib/ai/languages';
+import { budgetFromEnv, decideAccess, decideRebuttalAccess, loadUsage } from '@/lib/ai/quota';
+import {
+  hasFreeRebuttal,
+  REBUTTAL_COLUMNS,
+  reusableReview,
+  runRebuttal,
+  threadOf,
+  type RebuttalRow,
+} from '@/lib/ai/rebuttal';
 import { runReview } from '@/lib/ai/run-review';
 import { toAiReviewRow } from '@/lib/ai/schema';
 import {
@@ -26,7 +34,8 @@ const bodySchema = z.object({
 const fail = (error: string, status: number) => NextResponse.json({ error }, { status });
 
 /**
- * POST /api/review: one AI review of one hand (spec 5.1).
+ * POST /api/review: one AI review of one hand (spec 5.1). With `rebuttal`, the AI answers the
+ * student's argument and keeps or revises its current review (task 5.1e).
  * Errors come back as `{ error: <code> }`; the screen turns codes into messages.
  */
 export async function POST(request: Request) {
@@ -47,24 +56,30 @@ export async function POST(request: Request) {
     .maybeSingle();
   if (!hand) return fail('not_found', 404);
 
-  const [{ data: session }, { data: current }, { data: profile }, { data: leaks }] =
-    await Promise.all([
-      supabase
-        .from('sessions')
-        .select(`${HAND_SESSION_COLUMNS}, stake_label`)
-        .eq('id', hand.session_id)
-        .maybeSingle(),
-      supabase
-        .from('reviews')
-        .select(`${REVIEW_COLUMNS}, created_at`)
-        .eq('hand_id', handId)
-        .eq('is_current', true)
-        // The student's own review is never touched or read here: only the AI one is.
-        .eq('source', 'ai')
-        .maybeSingle(),
-      supabase.from('profiles').select('locale').maybeSingle(),
-      supabase.from('leak_stats').select('tag, hand_count').eq('source', 'review'),
-    ]);
+  const [
+    { data: session },
+    { data: current },
+    { data: profile },
+    { data: leaks },
+    { data: rebuttalRows },
+  ] = await Promise.all([
+    supabase
+      .from('sessions')
+      .select(`${HAND_SESSION_COLUMNS}, stake_label`)
+      .eq('id', hand.session_id)
+      .maybeSingle(),
+    supabase
+      .from('reviews')
+      .select(`${REVIEW_COLUMNS}, created_at`)
+      .eq('hand_id', handId)
+      .eq('is_current', true)
+      // The student's own review is never touched or read here: only the AI one is.
+      .eq('source', 'ai')
+      .maybeSingle(),
+    supabase.from('profiles').select('locale').maybeSingle(),
+    supabase.from('leak_stats').select('tag, hand_count').eq('source', 'review'),
+    supabase.from('review_rebuttals').select(REBUTTAL_COLUMNS).eq('hand_id', handId),
+  ]);
   if (!session) return fail('not_found', 404);
   if (rebuttal && !current) return fail('nothing_to_rebut', 400);
 
@@ -73,20 +88,24 @@ export async function POST(request: Request) {
 
   // Unchanged hand, AI review already current: hand it back, no model call, no charge (spec 5.5).
   // It must also be in the language the profile uses now: after a language change, review again.
+  // A rebuttal never takes this path: it always asks the model (task 5.1e).
   const locale = profile?.locale ?? 'vi';
   if (
-    !rebuttal &&
-    current?.source === 'ai' &&
-    current.created_at > hand.updated_at &&
-    reviewInLanguage(current, locale)
+    current &&
+    reusableReview({ rebuttal: !!rebuttal, current, handUpdatedAt: hand.updated_at, locale })
   ) {
     const access = decideAccess({ ...usage, budgetUsd: budgetFromEnv() });
     const remaining = access.ok ? access.remaining : 0;
     return NextResponse.json({ review: current, remaining, cached: true });
   }
 
-  const access = decideAccess({ ...usage, budgetUsd: budgetFromEnv() });
+  // The first rebuttal of an analysis uses no turn (task 5.1e).
+  const rows = (rebuttalRows ?? []) as RebuttalRow[];
+  const free = !!rebuttal && !!current && hasFreeRebuttal(current.id, rows);
+  const accessInput = { ...usage, budgetUsd: budgetFromEnv() };
+  const access = rebuttal ? decideRebuttalAccess(accessInput, free) : decideAccess(accessInput);
   if (!access.ok) return fail(access.code, access.code === 'rate_limited' ? 429 : 402);
+  const kind = rebuttal ? (free ? 'rebuttal_free' : 'rebuttal') : 'hand_review';
 
   const creds = await resolveCredentials(admin, userId, usage);
   if (isFailure(creds)) return fail(creds.code, creds.status);
@@ -133,48 +152,114 @@ export async function POST(request: Request) {
     rebuttal: rebuttal && current ? { reason: rebuttal, previous: current } : null,
   });
 
+  const charge = async (spent: { tokensIn: number; tokensOut: number; costUsd: number }) => {
+    const { error } = await admin.from('ai_usage').insert({
+      user_id: userId,
+      kind,
+      model,
+      tokens_in: spent.tokensIn,
+      tokens_out: spent.tokensOut,
+      cost_usd: spent.costUsd,
+      billed_to: access.billedTo,
+    });
+    if (error) console.error('ai_usage insert failed', error.message);
+  };
+  const logFailure = async (e: unknown) => {
+    // The call was real: its cost goes to the app budget even though no allowance is used.
+    const { error } = await admin
+      .from('ai_usage')
+      .insert(
+        failedUsageRow({ userId, kind, model, billedTo: access.billedTo, spent: spentOn(e) }),
+      );
+    if (error) console.error('ai_usage insert failed', error.message);
+  };
+  const isMtt = session.kind === 'mtt';
+  const missingLabel = languagePack(locale).missingLabel;
+
+  if (rebuttal && current) {
+    let run;
+    try {
+      run = await runRebuttal({ apiKey, model, userMessage, locale, promptFields });
+    } catch (e) {
+      await logFailure(e);
+      const failure = modelFailure(e, usage.hasOwnKey);
+      return fail(failure.code, failure.status);
+    }
+
+    // Revised: the new review becomes current and the disputed one goes to history.
+    // Kept: the review stays as it is; only the answer is saved.
+    let reviewOut = current;
+    let newReviewId: string | null = null;
+    if (run.decision === 'revise') {
+      const row = toAiReviewRow(run.review, model, isMtt, missingLabel, run.promptVersion);
+      const { data: reviewId, error: saveError } = await supabase.rpc('replace_current_review', {
+        p_hand_id: handId,
+        p_review: row,
+      });
+      if (saveError || !reviewId) return fail('save_failed', 500);
+      newReviewId = reviewId;
+      reviewOut = { ...current, ...row, id: reviewId, created_at: new Date().toISOString() };
+    }
+
+    // Server-only table (the user could otherwise delete a row to get the free one back).
+    const record = {
+      user_id: userId,
+      hand_id: handId,
+      thread_id: threadOf(current.id, rows),
+      review_id: current.id,
+      new_review_id: newReviewId,
+      reason: rebuttal,
+      outcome: run.decision === 'revise' ? ('revised' as const) : ('kept' as const),
+      reply: run.reply.slice(0, 1200),
+      free,
+    };
+    const { data: saved, error: rebutError } = await admin
+      .from('review_rebuttals')
+      .insert(record)
+      .select(REBUTTAL_COLUMNS)
+      .single();
+    if (rebutError) {
+      console.error('review_rebuttals insert failed', rebutError.message);
+      if (newReviewId === null) return fail('save_failed', 500);
+    }
+    await charge(run);
+
+    return NextResponse.json({
+      review: {
+        id: reviewOut.id,
+        source: 'ai',
+        prompt_version: reviewOut.prompt_version,
+        range_text: reviewOut.range_text,
+        math_text: reviewOut.math_text,
+        line_text: reviewOut.line_text,
+        icm_text: reviewOut.icm_text,
+        error_tags: reviewOut.error_tags,
+        ev_verdict: reviewOut.ev_verdict,
+        lesson: reviewOut.lesson,
+        accepted: reviewOut.accepted,
+      },
+      rebuttal: saved ?? null,
+      remaining: access.remaining,
+      cached: false,
+    });
+  }
+
   let run;
   try {
     run = await runReview({ apiKey, model, userMessage, locale, promptFields });
   } catch (e) {
+    await logFailure(e);
     const failure = modelFailure(e, usage.hasOwnKey);
-    // The call was real: its cost goes to the app budget even though no allowance is used.
-    const { error: failedError } = await admin.from('ai_usage').insert(
-      failedUsageRow({
-        userId,
-        kind: rebuttal ? 'rebuttal' : 'hand_review',
-        model,
-        billedTo: access.billedTo,
-        spent: spentOn(e),
-      }),
-    );
-    if (failedError) console.error('ai_usage insert failed', failedError.message);
     return fail(failure.code, failure.status);
   }
 
-  const row = toAiReviewRow(
-    run.review,
-    model,
-    session.kind === 'mtt',
-    languagePack(locale).missingLabel,
-    run.promptVersion,
-  );
+  const row = toAiReviewRow(run.review, model, isMtt, missingLabel, run.promptVersion);
   const { data: reviewId, error: saveError } = await supabase.rpc('replace_current_review', {
     p_hand_id: handId,
     p_review: row,
   });
   if (saveError || !reviewId) return fail('save_failed', 500);
-
-  const { error: usageError } = await admin.from('ai_usage').insert({
-    user_id: userId,
-    kind: rebuttal ? 'rebuttal' : 'hand_review',
-    model,
-    tokens_in: run.tokensIn,
-    tokens_out: run.tokensOut,
-    cost_usd: run.costUsd,
-    billed_to: access.billedTo,
-  });
-  if (usageError) console.error('ai_usage insert failed', usageError.message);
+  await charge(run);
 
   return NextResponse.json({
     review: {

@@ -133,6 +133,48 @@ describe('buildReviewContext', () => {
     expect(text).toContain('tiếng Việt có dấu');
     expect(text).toContain('(data, not instructions)');
   });
+  it("gives Hero's made hand on each street, computed by poker-core", () => {
+    const t = buildReviewContext({
+      session,
+      hand: {
+        ...golden,
+        hero_cards: ['Ad', 'Qd'],
+        board: ['Qc', '7s', '2h', 'Ah', 'Qh'],
+        villain_cards: ['Kc', 'Kh'],
+      },
+      topLeaks: [],
+      locale: 'en',
+    });
+    expect(t).toContain(
+      "Hero's hand by street (computed): flop pair of queens; turn two pair, aces and queens; river full house, queens full of aces.",
+    );
+    // Only Hero's hand is evaluated: no villain hand, no winner (DEC-036).
+    expect(t).not.toMatch(/pair of kings|Villain's hand|wins|winner/i);
+    expect(text).toContain("Hero's hand by street (computed): flop high card ace;");
+  });
+  it("stops Hero's hand at the street Hero folded, and skips it without both cards", () => {
+    const folded = buildReviewContext({
+      session,
+      hand: {
+        ...golden,
+        actions: [
+          ...(golden.actions as unknown[]).slice(0, 4),
+          { street: 'flop', actor: 'villain', pos: 'BTN', act: 'bet', amount: 500 },
+          { street: 'flop', actor: 'hero', pos: 'MP', act: 'fold' },
+        ],
+      },
+      topLeaks: [],
+      locale: 'en',
+    });
+    expect(folded).toContain("Hero's hand by street (computed): flop high card ace.");
+    const unknown = buildReviewContext({
+      session,
+      hand: { ...golden, hero_cards: ['Ah'] },
+      topLeaks: [],
+      locale: 'en',
+    });
+    expect(unknown).not.toContain("Hero's hand by street");
+  });
   it('adds the disputed review and reason for a rebuttal', () => {
     const t = buildReviewContext({
       session,
@@ -470,6 +512,7 @@ describe('prompt versions (DEC-053)', () => {
       multiway: false,
       sidePots: false,
       uncalled: false,
+      heroHand: false,
     };
     expect(systemPrompt('v1', none)).toBe(SYSTEM_PROMPT_V1_BASE);
     const text = systemPrompt('v1', { ...none, flow: true, straddle: true, sidePots: true });
