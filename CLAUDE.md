@@ -27,6 +27,7 @@ Chủ dự án: Đạt (dateddy). Trao đổi với chủ dự án bằng **ti�
 7. **Hỏi chủ dự án trước khi:** đổi schema database đã chốt, thêm dependency lớn, đổi stack, hoặc làm việc ngoài task được giao.
 8. `poker-core`: viết test trước, code sau. Mọi thay đổi phải giữ test xanh.
 9. Commit nhỏ sau mỗi task chạy được, message dạng `feat(core): parse shorthand actions`.
+10. UI theo `docs/design.md`: chỉ dùng component trong `apps/web/src/components/ui` và token màu; không style tay `<button>`/`<input>`, không màu palette Tailwind hay mã hex — thiếu thì thêm vào `components/ui` trước.
 
 ## Lệnh
 - `pnpm install` — cài.
