@@ -37,6 +37,7 @@ export {
   type SettledPot,
 } from './engine/sidepot';
 export { potType, type PotType } from './engine/handfacts';
+export { actionChips, wentToShowdown, type ActionChip, type ActionChips } from './engine/chips';
 export { potOddsAtDecisions, type Decision } from './engine/odds';
 export { previewNext, suggestAmount, type NextSpot, type SizedAct } from './engine/sizing';
 export { formatShorthand } from './shorthand/format';
