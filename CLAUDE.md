@@ -28,6 +28,7 @@ Chủ dự án: Đạt (dateddy). Trao đổi với chủ dự án bằng **ti�
 8. `poker-core`: viết test trước, code sau. Mọi thay đổi phải giữ test xanh.
 9. Commit nhỏ sau mỗi task chạy được, message dạng `feat(core): parse shorthand actions`.
 10. UI theo `docs/design.md`: chỉ dùng component trong `apps/web/src/components/ui` và token màu; không style tay `<button>`/`<input>`, không màu palette Tailwind hay mã hex — thiếu thì thêm vào `components/ui` trước.
+11. Migration chỉ áp lên DB thật sau khi chủ dự án duyệt nội dung SQL. Trước đó chỉ chạy trên DB local hoặc chế độ thử.
 
 ## Lệnh
 - `pnpm install` — cài.

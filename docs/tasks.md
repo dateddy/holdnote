@@ -46,6 +46,7 @@ Mỗi task cỡ một phiên làm việc. Làm theo thứ tự trừ khi chủ d
 - [x] 4.4 Đối thủ, luật của bạn, trang chủ.
 - [ ] 4.5 Thống kê vị trí gom nhóm sớm / giữa / muộn / blind để cộng được các hand khác số người (hand lưu `players_dealt` từ 5.1c-5).
 - [ ] 4.6 Đổi tên và gộp hồ sơ đối thủ trùng (tạo nhanh từ màn Ghi hand dễ sinh trùng).
+- [ ] 4.7 Bảng leak ghi rõ nguồn: số hand tự review / số hand AI review, hiển thị riêng từng nguồn.
 
 ## Giai đoạn 5 — Beta
 - [x] 5.1 Onboarding 3 bước + hand mẫu.
