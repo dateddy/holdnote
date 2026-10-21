@@ -25,6 +25,17 @@ export interface ActionStep {
   level: number;
   /** Index of the last bet/raise on this street before this action, if any. */
   facingIndex: number | null;
+  /** Chips in front of each seat on this street just after this action. */
+  streetBets: Record<string, number>;
+  /** Everything each seat has put in the pot so far, this street's bets included. */
+  committed: Record<string, number>;
+}
+
+/** The table at one moment: the pot and what each seat has put in. */
+export interface PotSnapshot {
+  pot: number;
+  streetBets: Record<string, number>;
+  committed: Record<string, number>;
 }
 
 export interface StreetSummary {
@@ -41,6 +52,8 @@ export interface StreetSummary {
 
 export interface PotResult {
   steps: ActionStep[];
+  /** After the antes and blinds, before the first choice (preflop). */
+  start: PotSnapshot;
   /** Streets that have at least one action (preflop always). */
   streets: StreetSummary[];
   pot: number;
@@ -134,6 +147,7 @@ export function computePot(input: HandInput): PotResult {
 
   const steps: ActionStep[] = [];
   const streets: StreetSummary[] = [];
+  let start: PotSnapshot | null = null;
   const indexed = input.actions.map((action, index) => ({ action, index }));
 
   // Posted antes and later dead money go straight into the pot and count as invested.
@@ -166,6 +180,16 @@ export function computePot(input: HandInput): PotResult {
       return stack === undefined ? Infinity : roundMoney(stack - (priorInvested[key] ?? 0));
     };
     const streetSum = () => Object.values(bets).reduce((s, n) => s + n, 0);
+    const committedNow = (): Record<string, number> => {
+      const all: Record<string, number> = { ...priorInvested };
+      for (const [k, n] of Object.entries(bets)) all[k] = roundMoney((all[k] ?? 0) + n);
+      return all;
+    };
+    const snapshot = (): PotSnapshot => ({
+      pot: roundMoney(pot + streetSum()),
+      streetBets: { ...bets },
+      committed: committedNow(),
+    });
     let level = 0;
     let facingIndex: number | null = null;
 
@@ -181,6 +205,9 @@ export function computePot(input: HandInput): PotResult {
     }
 
     for (const { action, index } of streetActions) {
+      if (!start && street === 'preflop' && !isPostAct(action.act) && action.act !== 'dead') {
+        start = snapshot();
+      }
       const key = keyOf(action);
       const potBefore = roundMoney(pot + streetSum());
       const before = key ? (bets[key] ?? 0) : 0;
@@ -248,8 +275,11 @@ export function computePot(input: HandInput): PotResult {
         toCall: isPostAct(action.act) || action.act === 'dead' ? 0 : toCall,
         level,
         facingIndex: facing,
+        streetBets: { ...bets },
+        committed: committedNow(),
       });
     }
+    if (!start && street === 'preflop') start = snapshot();
 
     // Return the uncalled part of the largest bet.
     const sorted = Object.entries(bets).sort((a, b) => b[1] - a[1]);
@@ -269,6 +299,7 @@ export function computePot(input: HandInput): PotResult {
 
   return {
     steps,
+    start: start ?? { pot, streetBets: {}, committed: { ...invested } },
     streets,
     pot,
     invested,

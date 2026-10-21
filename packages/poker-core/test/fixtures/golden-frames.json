@@ -1,0 +1,50 @@
+{
+  "line": "H lp V o500 H c / H x V b500 H c / H x V b1k H c / H b5000 V ai H c",
+  "bb": 50,
+  "heroStack": 18000,
+  "villStack": 20000,
+  "frames": [
+    {
+      "index": null,
+      "street": "preflop",
+      "final": false,
+      "pot": 75,
+      "hero": 18000,
+      "villain": 20000
+    },
+    {
+      "index": 0,
+      "street": "preflop",
+      "final": false,
+      "pot": 125,
+      "hero": 17950,
+      "villain": 20000
+    },
+    {
+      "index": 1,
+      "street": "preflop",
+      "final": false,
+      "pot": 625,
+      "hero": 17950,
+      "villain": 19500
+    },
+    {
+      "index": 2,
+      "street": "preflop",
+      "final": false,
+      "pot": 1075,
+      "hero": 17500,
+      "villain": 19500
+    },
+    { "index": 3, "street": "flop", "final": false, "pot": 1075, "hero": 17500, "villain": 19500 },
+    { "index": 4, "street": "flop", "final": false, "pot": 1575, "hero": 17500, "villain": 19000 },
+    { "index": 5, "street": "flop", "final": false, "pot": 2075, "hero": 17000, "villain": 19000 },
+    { "index": 6, "street": "turn", "final": false, "pot": 2075, "hero": 17000, "villain": 19000 },
+    { "index": 7, "street": "turn", "final": false, "pot": 3075, "hero": 17000, "villain": 18000 },
+    { "index": 8, "street": "turn", "final": false, "pot": 4075, "hero": 16000, "villain": 18000 },
+    { "index": 9, "street": "river", "final": false, "pot": 9075, "hero": 11000, "villain": 18000 },
+    { "index": 10, "street": "river", "final": false, "pot": 27075, "hero": 11000, "villain": 0 },
+    { "index": 11, "street": "river", "final": false, "pot": 38075, "hero": 0, "villain": 0 },
+    { "index": null, "street": "river", "final": true, "pot": 36075, "hero": 0, "villain": 2000 }
+  ]
+}

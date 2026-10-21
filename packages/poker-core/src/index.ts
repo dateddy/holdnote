@@ -16,6 +16,7 @@ export {
   type ActionStep,
   type PotIssue,
   type PotResult,
+  type PotSnapshot,
   type StreetSummary,
 } from './engine/pot';
 export { computeResult, nextStack } from './engine/result';
@@ -37,6 +38,7 @@ export {
   type SettledPot,
 } from './engine/sidepot';
 export { potType, type PotType } from './engine/handfacts';
+export { replayFrames, type ReplayFrame, type ReplaySeat } from './engine/replay';
 export { actionChips, wentToShowdown, type ActionChip, type ActionChips } from './engine/chips';
 export { potOddsAtDecisions, type Decision } from './engine/odds';
 export { previewNext, suggestAmount, type NextSpot, type SizedAct } from './engine/sizing';
