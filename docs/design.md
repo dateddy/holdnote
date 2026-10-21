@@ -136,7 +136,7 @@ Bộ chọn bài, bàn phím số và bàn mini **trượt ra trong luồng tran
 | `SideNav`                  | Thanh điều hướng trái từ 1024px, cùng 3 mục và icon với `BottomNav` (`BottomNav` ẩn từ 1024px)                                |
 
 | `ActionTag`                | Chip action tĩnh trong hàng hand (không bấm được), cùng tone với `ActionPill`, cao 24px; `showWho={false}` trong bảng desktop (màu thay chữ, tên chỉ cho trình đọc màn hình) |
-| `Badge`                    | Nhãn nhỏ trên hàng: `warn` (Cần xem lại), `accent` (AI đã review), `muted` (Thiếu dữ liệu)                                    |
+| `Badge`                    | Nhãn nhỏ trên hàng: `warn` (Cần xem lại), `accent` (Có AI phân tích), `muted` (Thiếu dữ liệu)                                    |
 | `BoardRow` (trong `playing-card`) | Board với vạch mảnh ngăn flop \| turn \| river                                                                          |
 | `MoreMenu`                 | Nút `⋯` ở đầu màn hoặc cuối một hàng mở danh sách hành động phụ (link hoặc hành động, mục `danger` chữ đỏ); đóng khi chạm ngoài hoặc Escape. Hàng phiên: Sửa · Xóa |
 | `ConfirmDialog`            | Hộp xác nhận (`<dialog>` modal) cho việc không hoàn tác được, nút `danger` + Hủy                                              |
@@ -173,7 +173,8 @@ Sẽ thêm trong các task 5.1b-x: `Screen` (khung trang). `Icon`, `TopBar` tab/
 
 ## 9. Khối "AI phân tích"
 
-- Tiêu đề `text-lg` + `InfoTip icon="!"` ("Mang tính chất tham khảo") + nhãn phiên bản prompt. Không còn nhãn "Thử nghiệm".
-- Chưa có AI review: nút "AI review" và số lượt còn lại (lỗi hiện ngay dưới, có "Thử lại"), rồi "Bạn tự review".
-- Có review: Range đối thủ, Toán (kèm pot odds do poker-core tính), Line đề xuất, ICM (MTT), Lỗi, EV, Bài học hiện chỉ đọc; rồi công tắc "Đã review" (lưu ngay), rồi Phản biện. Có nút "Chạy lại AI review" hỏi xác nhận trước (trừ 1 lượt, còn bao nhiêu lượt).
-- "Bạn tự review" luôn hiện dưới khối AI: một hàng bấm để mở/thu gọn (thu gọn khi đã có AI review, kèm nhãn "Đã lưu" khi đã có review tay), trong đó các ô nhập, loại lỗi, EV, bài học, "Đã review" và nút Lưu. Chạy AI không đụng review tay. Hai bên cho EV khác nhau thì dưới hàng này có một dòng `text-xs text-muted`: "AI: Sai · Bạn: Đúng".
+- Tiêu đề `text-lg` + `InfoTip icon="!"` ("Mang tính chất tham khảo"). Không hiện phiên bản prompt (vẫn lưu trong DB), không nhãn "Thử nghiệm".
+- Chưa có AI review: nút "AI review" và số lượt còn lại (lỗi hiện ngay dưới, có "Thử lại").
+- Có review: Range đối thủ, Toán (kèm pot odds do poker-core tính), Line đề xuất, ICM (MTT), Lỗi, EV, Bài học hiện chỉ đọc; rồi công tắc "Tôi đã xem lại" (lưu ngay); rồi hội thoại phản biện (khung viền "Bạn" + lập luận, ngay dưới là khung `bg-accent/5` "AI" + nhãn "Giữ kết luận" `accent` / "Đã sửa kết luận" `warn` + câu trả lời); rồi khung Phản biện với dòng chi phí `text-xs text-muted` (miễn phí / trừ 1 lượt, còn bao nhiêu / key riêng) hiện trước khi gửi.
+- "Chạy lại AI review": nút `secondary`, chỉ hiện khi hand sửa sau lần AI review gần nhất (kèm dòng "Hand đã sửa sau lần AI review gần nhất."), hỏi xác nhận trước.
+- Thẻ "Bạn tự review" (`Card`, dưới khối AI): tiêu đề `text-base font-medium` + `Badge` trạng thái ("Chưa review" `muted` / "Đã lưu" `accent`). Chưa có: nút `secondary` "Tự review hand này" mở form. Đã có: cả hàng tiêu đề là `BarButton` (Sửa / Thu gọn), thu gọn vẫn hiện `Badge` EV và loại lỗi; mở ra là form (các ô, loại lỗi, EV, bài học, "Tôi đã xem lại", nút Lưu). Chạy AI không đụng review tay. Hai bên cho EV khác nhau thì có dòng `text-xs text-muted` "AI: Sai · Bạn: Đúng".
