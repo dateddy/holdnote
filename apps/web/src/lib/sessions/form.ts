@@ -11,6 +11,10 @@ import {
 export const KINDS = ['cash', 'mtt'] as const;
 export const MODES = ['live', 'online'] as const;
 export const CURRENCIES = ['VND', 'USD', 'EUR', 'KRW', 'JPY', 'THB', 'CHIP'] as const;
+/** Units offered on the form: Chip first (what a live game plays in), then the currencies. */
+export const UNIT_OPTIONS = ['CHIP', 'VND', 'USD', 'EUR', 'KRW', 'JPY', 'THB'] as const;
+/** Currencies a chip can be valued in. */
+export const CHIP_RATE_CURRENCIES = CURRENCIES.filter((c) => c !== 'CHIP');
 export const ANTE_MODES = ['none', 'each', 'bb'] as const;
 export const MTT_TYPES = ['regular', 'bounty', 'turbo', 'satellite'] as const;
 
@@ -24,6 +28,9 @@ export type SessionFormValues = {
   kind: string;
   mode: string;
   currency: string;
+  /** Optional "1 chip = …" rate of a CHIP session: the number and the currency it is in. */
+  chipValue: string;
+  chipCurrency: string;
   venue: string;
   /** Local date `YYYY-MM-DD` from the browser; empty = database default. */
   date: string;
@@ -65,6 +72,8 @@ export type SessionInsertRow = {
   kind: Kind;
   mode: (typeof MODES)[number];
   currency: Currency;
+  chip_value: number | null;
+  chip_currency: Currency | null;
   venue: string | null;
   date?: string;
   stake_label: string | null;
@@ -86,6 +95,8 @@ export const SESSION_FIELDS = [
   'kind',
   'mode',
   'currency',
+  'chipValue',
+  'chipCurrency',
   'venue',
   'date',
   'sb',
@@ -109,6 +120,8 @@ export function emptyForm(currency: string): SessionFormValues {
     kind: 'cash',
     mode: 'live',
     currency: isOneOf(CURRENCIES, currency) ? currency : 'VND',
+    chipValue: '',
+    chipCurrency: '',
     venue: '',
     date: '',
     sb: '',
@@ -189,6 +202,16 @@ export function parseSessionForm(v: SessionFormValues): ParseResult {
   }
   const straddle = kind === 'cash' ? amount('straddle') : null;
 
+  // "1 chip = …": only on a CHIP session, number and currency together; empty = no rate.
+  let chipValue: number | null = null;
+  let chipCurrency: Currency | null = null;
+  if (v.currency === 'CHIP' && v.chipValue.trim()) {
+    chipValue = rate(v.chipValue);
+    if (chipValue == null) fail('chipValue', 'positive');
+    if (isOneOf(CHIP_RATE_CURRENCIES, v.chipCurrency)) chipCurrency = v.chipCurrency;
+    else fail('chipCurrency', 'required');
+  }
+
   let seats: number | null = null;
   if (v.seats.trim()) {
     const n = Number(v.seats.trim());
@@ -225,6 +248,8 @@ export function parseSessionForm(v: SessionFormValues): ParseResult {
     kind,
     mode: v.mode as SessionInsertRow['mode'],
     currency: v.currency as Currency,
+    chip_value: chipValue,
+    chip_currency: chipCurrency,
     venue: v.venue.trim() || null,
     stake_label:
       kind === 'cash' && bb != null
@@ -244,11 +269,19 @@ export function parseSessionForm(v: SessionFormValues): ParseResult {
   return { ok: true, insert };
 }
 
+/** A rate such as `1000` or `0.5`: more than 0, four decimals at most (`sessions.chip_value`). */
+function rate(raw: string): number | null {
+  const n = parseAmount(raw.trim());
+  return n != null && n > 0 ? Math.round(n * 10000) / 10000 : null;
+}
+
 /** Fields of a previous session that pre-fill the form (spec 3.4). */
 export type PrefillSource = {
   kind: string;
   mode: string;
   currency: string;
+  chip_value?: number | null;
+  chip_currency?: string | null;
   venue: string | null;
   sb: number | null;
   bb: number | null;
@@ -263,7 +296,7 @@ export type PrefillSource = {
 
 /** Columns to select for {@link prefillFrom}. */
 export const PREFILL_COLUMNS =
-  'kind, mode, currency, venue, sb, bb, straddle, ante_mode, ante, seats, buyin, stop_loss, mtt';
+  'kind, mode, currency, chip_value, chip_currency, venue, sb, bb, straddle, ante_mode, ante, seats, buyin, stop_loss, mtt';
 
 /** Form values copied from the previous session of the same kind; never date or results. */
 export function prefillFrom(
@@ -279,6 +312,8 @@ export function prefillFrom(
     kind: isOneOf(KINDS, prev.kind) ? prev.kind : base.kind,
     mode: isOneOf(MODES, prev.mode) ? prev.mode : base.mode,
     currency: isOneOf(CURRENCIES, prev.currency) ? prev.currency : base.currency,
+    chipValue: str(prev.chip_value ?? null),
+    chipCurrency: isOneOf(CHIP_RATE_CURRENCIES, prev.chip_currency) ? prev.chip_currency : '',
     venue: prev.venue ?? '',
     sb: str(prev.sb),
     bb: str(prev.bb),
@@ -341,4 +376,46 @@ export function mergeMttUpdate(
       : {};
   delete old.blind_levels;
   return { ...old, ...next };
+}
+
+/**
+ * Unit a new session starts with: Chip for a live cash game, otherwise the profile's currency
+ * (a profile currency of CHIP means VND, since an online game is played in money).
+ */
+export function defaultUnit(kind: string, mode: string, profileCurrency: string): Currency {
+  if (kind === 'cash' && mode === 'live') return 'CHIP';
+  return isOneOf(CHIP_RATE_CURRENCIES, profileCurrency) ? profileCurrency : 'VND';
+}
+
+export type SummaryLabels = {
+  kind: Record<Kind, string>;
+  mode: Record<(typeof MODES)[number], string>;
+  chip: string;
+  straddle: string;
+  ante: string;
+  /** "1 chip = {value}", where value already carries the currency. */
+  chipRate: (value: string) => string;
+  formatMoney: (amount: number, currency: string) => string;
+};
+
+/**
+ * One line that says what the form will create, e.g. "Cash · Live · Chip · 20/50 · straddle 100".
+ * The units are named here once, so the fields themselves carry none.
+ */
+export function sessionSummaryLine(v: SessionFormValues, l: SummaryLabels): string {
+  const kind = isOneOf(KINDS, v.kind) ? v.kind : 'cash';
+  const mode = isOneOf(MODES, v.mode) ? v.mode : 'live';
+  const parts = [l.kind[kind], l.mode[mode], v.currency === 'CHIP' ? l.chip : v.currency];
+  const sb = v.sb.trim();
+  const bb = v.bb.trim();
+  if (bb) parts.push(sb ? `${sb}/${bb}` : bb);
+  if (kind === 'cash' && v.straddle.trim()) parts.push(`${l.straddle} ${v.straddle.trim()}`);
+  if (v.anteMode !== 'none' && v.ante.trim()) {
+    parts.push(`${l.ante} ${v.ante.trim()}${v.anteMode === 'bb' ? ' BB' : ''}`);
+  }
+  const n = v.currency === 'CHIP' ? rate(v.chipValue) : null;
+  if (n != null && isOneOf(CHIP_RATE_CURRENCIES, v.chipCurrency)) {
+    parts.push(l.chipRate(l.formatMoney(n, v.chipCurrency)));
+  }
+  return parts.join(' · ');
 }

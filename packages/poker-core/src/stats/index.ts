@@ -28,6 +28,8 @@ export interface StatsSession {
   stopLoss: number | null;
   selfState: string | null;
   mtt: StatsMtt | null;
+  /** What one chip is worth, for a CHIP session whose player said so. */
+  chipRate?: { value: number; currency: string } | null;
 }
 
 export interface SessionResult {
@@ -76,7 +78,7 @@ export interface SessionTotals {
   /** How many sessions bb/hour is computed on: cash with a result and both times. */
   rateSessions: number;
   /** Cash and MTT results in money, one entry per currency (money of different currencies never adds up). */
-  netMoney: { currency: string; money: number }[];
+  netMoney: { currency: string; money: number; converted?: { currency: string; money: number } }[];
   /** MTT results in money, one entry per currency. */
   mttMoney: { currency: string; money: number }[];
 }
@@ -90,6 +92,8 @@ export function sessionTotals(sessions: StatsSession[]): SessionTotals {
   let rateSessions = 0;
   const mttMoney = new Map<string, number>();
   const netMoney = new Map<string, number>();
+  // Chips only turn into money when every chip session with a result has the same rate.
+  const chipRates = new Map<string, { value: number; currency: string } | null>();
   const byCurrency = (m: Map<string, number>) =>
     [...m]
       .sort((x, y) => x[0].localeCompare(y[0]))
@@ -100,6 +104,12 @@ export function sessionTotals(sessions: StatsSession[]): SessionTotals {
     const result = sessionResult(s);
     if (!result) continue;
     netMoney.set(s.currency, (netMoney.get(s.currency) ?? 0) + result.money);
+    if (s.currency === 'CHIP') {
+      const rate = s.chipRate ?? null;
+      const seen = chipRates.get('CHIP');
+      const same = seen && rate && seen.value === rate.value && seen.currency === rate.currency;
+      chipRates.set('CHIP', chipRates.has('CHIP') ? (same ? seen : null) : rate);
+    }
     if (s.kind === 'mtt') {
       mttMoney.set(s.currency, (mttMoney.get(s.currency) ?? 0) + result.money);
     } else if (result.bb != null) {
@@ -117,7 +127,12 @@ export function sessionTotals(sessions: StatsSession[]): SessionTotals {
     netBb: roundMoney(netBb),
     bbPerHour: rateHours > 0 ? roundMoney(rateBb / rateHours) : null,
     rateSessions,
-    netMoney: byCurrency(netMoney),
+    netMoney: byCurrency(netMoney).map((m) => {
+      const rate = m.currency === 'CHIP' ? chipRates.get('CHIP') : null;
+      return rate
+        ? { ...m, converted: { currency: rate.currency, money: roundMoney(m.money * rate.value) } }
+        : m;
+    }),
     mttMoney: byCurrency(mttMoney),
   };
 }

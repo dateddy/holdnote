@@ -43,6 +43,7 @@ type Props = {
     title: string;
     subtitle: string;
     currency: string;
+    chipRate?: { value: number; currency: string };
   };
   stage: SessionStage;
   tiles: CashTiles | MttTiles;
@@ -163,7 +164,12 @@ export function SessionDetail({
 
   const explain = tCommon('explain');
   const money = (n: number) => formatMoney(n, session.currency, locale);
-  const signedMoney = (n: number) => `${n > 0 ? '+' : ''}${money(n)}`;
+  const signedMoney = (n: number) => {
+    const own = `${n > 0 ? '+' : ''}${money(n)}`;
+    const rate = session.chipRate;
+    if (!rate) return own;
+    return `${own} · ${n > 0 ? '+' : ''}${formatMoney(n * rate.value, rate.currency, locale)}`;
+  };
 
   const tileNodes =
     tiles.kind === 'cash' ? (

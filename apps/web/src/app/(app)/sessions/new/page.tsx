@@ -1,5 +1,12 @@
 import { getTranslations } from 'next-intl/server';
-import { isOneOf, KINDS, MODES, PREFILL_COLUMNS, prefillFrom } from '@/lib/sessions/form';
+import {
+  defaultUnit,
+  isOneOf,
+  KINDS,
+  MODES,
+  PREFILL_COLUMNS,
+  prefillFrom,
+} from '@/lib/sessions/form';
 import { TopBar } from '@/components/ui/top-bar';
 import { createClient } from '@/lib/supabase/server';
 import { SessionForm } from './session-form';
@@ -28,11 +35,14 @@ export default async function NewSessionPage({ searchParams }: PageProps<'/sessi
     .maybeSingle();
 
   const base = prefillFrom(previous, profile?.currency ?? 'VND');
+  // No earlier session to copy: use the onboarding answer for live/online, and the unit that goes
+  // with it (a live cash game is played in chips).
+  const mode = !previous && isOneOf(MODES, profile?.play_mode) ? profile.play_mode : base.mode;
   const initial = {
     ...base,
     kind,
-    // No earlier session to copy: use the onboarding answer for live/online.
-    ...(!previous && isOneOf(MODES, profile?.play_mode) && { mode: profile.play_mode }),
+    mode,
+    ...(!previous && { currency: defaultUnit(kind, mode, profile?.currency ?? 'VND') }),
   };
   const t = await getTranslations('sessions');
 
@@ -43,7 +53,7 @@ export default async function NewSessionPage({ searchParams }: PageProps<'/sessi
         back={{ href: '/', label: (await getTranslations('common'))('back') }}
       />
       {previous && <p className="text-sm text-muted">{t('prefilled')}</p>}
-      <SessionForm key={kind} initial={initial} />
+      <SessionForm key={kind} initial={initial} profileCurrency={profile?.currency ?? 'VND'} />
     </main>
   );
 }

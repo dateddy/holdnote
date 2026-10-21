@@ -11,6 +11,8 @@ export function BottomNav({ recordHref }: { recordHref: string }) {
   const path = usePathname();
   // Onboarding and the Ghi nhanh screen have their own bottom bar.
   if (path.startsWith('/onboarding') || /^\/sessions\/[^/]+\/record$/.test(path)) return null;
+  // The session form has its own Save bar at the bottom.
+  if (path === '/sessions/new' || /^\/sessions\/[^/]+\/edit$/.test(path)) return null;
 
   const tabs = navTabs(path, recordHref);
 

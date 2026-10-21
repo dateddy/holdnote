@@ -49,15 +49,9 @@ export function SessionRow({ item }: { item: SessionListItem }) {
             )}
             <span className={`block tabular-nums ${net.bb == null ? 'text-base' : 'text-xs'}`}>
               {net.bb == null ? (
-                <Result value={net.money}>
-                  {net.money > 0 ? '+' : ''}
-                  {x.money(net)}
-                </Result>
+                <Result value={net.money}>{x.moneyWithRate(net)}</Result>
               ) : (
-                <span className="text-muted">
-                  {net.money > 0 ? '+' : ''}
-                  {x.money(net)}
-                </span>
+                <span className="text-muted">{x.moneyWithRate(net)}</span>
               )}
             </span>
           </>

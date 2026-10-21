@@ -83,14 +83,21 @@ export function staleItems(
   });
 }
 
-export type Net = { bb: number | null; money: number; currency: string };
+export type Net = {
+  bb: number | null;
+  money: number;
+  currency: string;
+  /** What one chip is worth, for a CHIP session that has a rate. */
+  rate?: { value: number; currency: string };
+};
 
 /** Result shown on a row: the saved result, or for an open cash session what the hands add up to. */
 export function sessionNet(item: SessionListItem): Net | null {
   const { session } = item;
   const result = sessionResult(session);
-  if (result) return { bb: result.bb, money: result.money, currency: session.currency };
-  if (item.live) return { ...item.live, currency: session.currency };
+  const rate = session.chipRate ? { rate: session.chipRate } : {};
+  if (result) return { bb: result.bb, money: result.money, currency: session.currency, ...rate };
+  if (item.live) return { ...item.live, currency: session.currency, ...rate };
   return null;
 }
 
@@ -301,7 +308,12 @@ export function sortItems(
 
 // --- tiles ------------------------------------------------------------------------------------
 
-export type MoneyLine = { currency: string; money: number };
+export type MoneyLine = {
+  currency: string;
+  money: number;
+  /** The same money in a real currency, when every chip session has the same rate. */
+  converted?: { currency: string; money: number };
+};
 export type NetTile = { main: { bb: number } | MoneyLine | null; sub: MoneyLine[] };
 
 /**

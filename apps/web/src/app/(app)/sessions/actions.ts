@@ -6,7 +6,7 @@ import { readBlindLevels } from 'poker-core';
 import type { Json } from '@/lib/supabase/database.types';
 import { withBlindLevels } from '@/lib/sessions/structure';
 import { createClient } from '@/lib/supabase/server';
-import { fromIso } from '@/lib/sessions/end-time';
+import { resolveTimes } from '@/lib/sessions/times';
 import {
   mergeMttUpdate,
   parseSessionForm,
@@ -19,7 +19,7 @@ export type CreateSessionState = {
   values: SessionFormValues;
   errors: FormErrors;
   failed: boolean;
-  /** Edit only: the end time is not after the start time. */
+  /** The end time is not after the start time, or a time could not be read. */
   timeError?: boolean;
 };
 
@@ -36,15 +36,31 @@ export async function createSession(
   const parsed = parseSessionForm(values);
   if (!parsed.ok) return { values, errors: parsed.errors, failed: false };
 
+  const times = formTimes(formData, true);
+  if (times.error) return { values, errors: {}, failed: false, timeError: true };
+
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('sessions')
-    .insert(parsed.insert)
+    .insert({ ...parsed.insert, start_at: times.startAt, end_at: times.endAt })
     .select('id')
     .single();
   if (error || !data) return { values, errors: {}, failed: true };
 
-  redirect(`/sessions/${data.id}/before`);
+  revalidatePath('/', 'layout');
+  // Playing now: straight to the table. A session entered afterwards (it has an end) opens its page.
+  redirect(times.endAt ? `/sessions/${data.id}` : `/sessions/${data.id}/record`);
+}
+
+/** The `start_at` / `end_at` moments the form composed in the browser's time zone. */
+function formTimes(formData: FormData, startRequired: boolean) {
+  const text = (name: string) => {
+    const raw = formData.get(name);
+    return typeof raw === 'string' ? raw : '';
+  };
+  return resolveTimes(text('start_at'), text('end_at'), new Date().toISOString(), {
+    startRequired,
+  });
 }
 
 /**
@@ -116,15 +132,9 @@ export async function updateSession(
   const parsed = parseSessionForm(values);
   if (!parsed.ok) return { values, errors: parsed.errors, failed: false };
 
-  const time = (name: string): string | null => {
-    const raw = formData.get(name);
-    return typeof raw === 'string' ? fromIso(raw) : null;
-  };
-  const startAt = time('start_at');
-  const endAt = time('end_at');
-  if (startAt && endAt && Date.parse(endAt) <= Date.parse(startAt)) {
-    return { values, errors: {}, failed: false, timeError: true };
-  }
+  const times = formTimes(formData, false);
+  if (times.error) return { values, errors: {}, failed: false, timeError: true };
+  const { startAt, endAt } = times;
 
   const { mtt, ...row } = parsed.insert;
   const { error } = await supabase

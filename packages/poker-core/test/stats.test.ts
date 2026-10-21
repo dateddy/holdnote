@@ -368,3 +368,33 @@ describe('staleSession', () => {
     ).toBe(hours(30));
   });
 });
+
+describe('sessionTotals: chips with a rate', () => {
+  const chipSession = (id: string, rate: { value: number; currency: string } | null) => ({
+    ...cash({ id }),
+    currency: 'CHIP',
+    buyin: 5000,
+    cashout: 10000,
+    chipRate: rate,
+  });
+
+  it('adds the money value when every chip session has the same rate', () => {
+    const t = sessionTotals([
+      chipSession('a', { value: 1000, currency: 'VND' }),
+      chipSession('b', { value: 1000, currency: 'VND' }),
+    ]);
+    expect(t.netMoney).toEqual([
+      { currency: 'CHIP', money: 10000, converted: { currency: 'VND', money: 10_000_000 } },
+    ]);
+  });
+
+  it('leaves it out when a session has no rate or another rate', () => {
+    for (const other of [null, { value: 500, currency: 'VND' }, { value: 1000, currency: 'USD' }]) {
+      const t = sessionTotals([
+        chipSession('a', { value: 1000, currency: 'VND' }),
+        chipSession('b', other),
+      ]);
+      expect(t.netMoney).toEqual([{ currency: 'CHIP', money: 10000 }]);
+    }
+  });
+});

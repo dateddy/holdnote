@@ -45,6 +45,13 @@ export function useSessionText() {
     money(net: Net): string {
       return formatMoney(net.money, net.currency, locale);
     },
+    /** Chips and, for a chip session with a rate, the money they are worth: "+10.000 · 10.000.000 VND". */
+    moneyWithRate(net: Net): string {
+      const chips = `${net.money > 0 ? '+' : ''}${formatMoney(net.money, net.currency, locale)}`;
+      if (!net.rate) return chips;
+      const worth = formatMoney(net.money * net.rate.value, net.rate.currency, locale);
+      return `${chips} · ${net.money > 0 ? '+' : ''}${worth}`;
+    },
     net(item: SessionListItem): Net | null {
       return sessionNet(item);
     },

@@ -85,7 +85,7 @@ export function readMttResult(json: unknown): MttResult {
 
 /** The `sessions` columns {@link toStatsSession} needs. */
 export const STATS_COLUMNS =
-  'id, kind, mode, venue, stake_label, currency, bb, date, start_at, end_at, buyin, cashout, stop_loss, self_state, mtt';
+  'id, kind, mode, venue, stake_label, currency, chip_value, chip_currency, bb, date, start_at, end_at, buyin, cashout, stop_loss, self_state, mtt';
 
 export type StatsRow = {
   id: string;
@@ -94,6 +94,8 @@ export type StatsRow = {
   venue: string | null;
   stake_label: string | null;
   currency: string;
+  chip_value?: number | null;
+  chip_currency?: string | null;
   bb: number | null;
   date: string;
   start_at: string | null;
@@ -134,6 +136,9 @@ export function toStatsSession(r: StatsRow): StatsSession {
     stopLoss: r.stop_loss,
     selfState: r.self_state,
     mtt,
+    ...(r.currency === 'CHIP' &&
+      r.chip_value != null &&
+      r.chip_currency && { chipRate: { value: r.chip_value, currency: r.chip_currency } }),
   };
 }
 

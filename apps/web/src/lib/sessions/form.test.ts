@@ -3,8 +3,11 @@ import {
   editFormFrom,
   emptyForm,
   mergeMttUpdate,
+  defaultUnit,
   parseSessionForm,
   prefillFrom,
+  sessionSummaryLine,
+  type SummaryLabels,
   readMtt,
   type SessionFormValues,
 } from './form';
@@ -58,6 +61,8 @@ describe('parseSessionForm — cash', () => {
         kind: 'cash',
         mode: 'live',
         currency: 'VND',
+        chip_value: null,
+        chip_currency: null,
         venue: 'Chill',
         date: '2026-10-03',
         stake_label: '25/50',
@@ -154,6 +159,8 @@ describe('parseSessionForm — MTT', () => {
         kind: 'mtt',
         mode: 'online',
         currency: 'USD',
+        chip_value: null,
+        chip_currency: null,
         venue: 'N8',
         stake_label: null,
         sb: 175,
@@ -423,5 +430,88 @@ describe('mergeMttUpdate', () => {
   it('a missing or malformed old block starts from the new one', () => {
     expect(mergeMttUpdate(null, { ...next })).toEqual({ ...next });
     expect(mergeMttUpdate([1, 2], { ...next })).toEqual({ ...next });
+  });
+});
+
+describe('chip rate', () => {
+  const chip = (over: Partial<SessionFormValues> = {}) =>
+    cash({ currency: 'CHIP', sb: '20', bb: '50', ...over });
+
+  it('is optional: no value means no rate', () => {
+    const r = parseSessionForm(chip());
+    expect(r.ok && [r.insert.chip_value, r.insert.chip_currency]).toEqual([null, null]);
+  });
+
+  it('1 chip = 1000 VND is saved with its currency', () => {
+    const r = parseSessionForm(chip({ chipValue: '1k', chipCurrency: 'VND' }));
+    expect(r.ok && [r.insert.chip_value, r.insert.chip_currency]).toEqual([1000, 'VND']);
+  });
+
+  it('needs a positive number and a currency', () => {
+    expect(parseSessionForm(chip({ chipValue: '0', chipCurrency: 'VND' }))).toMatchObject({
+      ok: false,
+      errors: { chipValue: 'positive' },
+    });
+    expect(parseSessionForm(chip({ chipValue: '1000' }))).toMatchObject({
+      ok: false,
+      errors: { chipCurrency: 'required' },
+    });
+  });
+
+  it('is dropped when the unit is a currency', () => {
+    const r = parseSessionForm(cash({ chipValue: '1000', chipCurrency: 'VND' }));
+    expect(r.ok && [r.insert.chip_value, r.insert.chip_currency]).toEqual([null, null]);
+  });
+
+  it('comes back through the prefill', () => {
+    const r = parseSessionForm(chip({ chipValue: '1000', chipCurrency: 'VND' }));
+    if (!r.ok) throw new Error('parse failed');
+    expect(prefillFrom(r.insert, 'USD')).toMatchObject({ chipValue: '1000', chipCurrency: 'VND' });
+  });
+});
+
+describe('defaultUnit', () => {
+  it('a live cash game starts in chips; the rest in the profile currency', () => {
+    expect(defaultUnit('cash', 'live', 'VND')).toBe('CHIP');
+    expect(defaultUnit('cash', 'online', 'USD')).toBe('USD');
+    expect(defaultUnit('mtt', 'live', 'VND')).toBe('VND');
+    expect(defaultUnit('cash', 'online', 'CHIP')).toBe('VND');
+  });
+});
+
+describe('sessionSummaryLine', () => {
+  const labels: SummaryLabels = {
+    kind: { cash: 'Cash', mtt: 'MTT' },
+    mode: { live: 'Live', online: 'Online' },
+    chip: 'Chip',
+    straddle: 'straddle',
+    ante: 'ante',
+    chipRate: (value) => `1 chip = ${value}`,
+    formatMoney: (n, c) => `${n} ${c}`,
+  };
+
+  it('names kind, form, unit, blinds and straddle once', () => {
+    const v = cash({ currency: 'CHIP', sb: '20', bb: '50', straddle: '100' });
+    expect(sessionSummaryLine(v, labels)).toBe('Cash · Live · Chip · 20/50 · straddle 100');
+  });
+
+  it('adds the ante and the chip rate when they are filled in', () => {
+    const v = cash({
+      currency: 'CHIP',
+      sb: '20',
+      bb: '50',
+      anteMode: 'bb',
+      ante: '50',
+      chipValue: '1000',
+      chipCurrency: 'VND',
+    });
+    expect(sessionSummaryLine(v, labels)).toBe(
+      'Cash · Live · Chip · 20/50 · ante 50 BB · 1 chip = 1000 VND',
+    );
+  });
+
+  it('shows the currency code for a money session and skips an empty blind', () => {
+    const v = cash({ currency: 'USD', mode: 'online', sb: '', bb: '' });
+    expect(sessionSummaryLine(v, labels)).toBe('Cash · Online · USD');
   });
 });

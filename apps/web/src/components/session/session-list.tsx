@@ -26,6 +26,7 @@ import {
   EMPTY_FILTER,
   LIST_KINDS,
   type ListFilter,
+  type MoneyLine,
   type SessionListItem,
   type SortColumn,
   type SortDir,
@@ -143,8 +144,12 @@ export function SessionList({
   );
 
   const net = netTile(totals, filter.kind);
-  const moneyText = (m: { currency: string; money: number }) =>
-    `${m.money > 0 ? '+' : ''}${formatMoney(m.money, m.currency, locale)}`;
+  const moneyText = (m: MoneyLine) => {
+    const own = `${m.money > 0 ? '+' : ''}${formatMoney(m.money, m.currency, locale)}`;
+    if (!m.converted) return own;
+    const worth = formatMoney(m.converted.money, m.converted.currency, locale);
+    return `${own} · ${m.money > 0 ? '+' : ''}${worth}`;
+  };
   const netSub = net.sub.map(moneyText).join(' · ');
 
   const tiles = (

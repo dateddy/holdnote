@@ -78,7 +78,14 @@ export default async function SessionPage({ params, searchParams }: PageProps<'/
   return (
     <>
       <SessionDetail
-        session={{ id, kind: session.kind, title, subtitle, currency: session.currency }}
+        session={{
+          id,
+          kind: session.kind,
+          title,
+          subtitle,
+          currency: session.currency,
+          ...(session.chipRate && { chipRate: session.chipRate }),
+        }}
         stage={sessionStage(session, readSummary(row.summary))}
         tiles={detailTiles(session, rows, new Date().toISOString())}
         rows={rows}

@@ -169,6 +169,33 @@ describe('mtt result', () => {
 });
 
 describe('toStatsSession', () => {
+  it('keeps the chip rate of a CHIP session only', () => {
+    const row = {
+      id: 's',
+      kind: 'cash',
+      mode: 'live',
+      venue: null,
+      stake_label: null,
+      bb: 50,
+      date: '2026-10-01',
+      start_at: null,
+      end_at: null,
+      buyin: 100,
+      cashout: 150,
+      stop_loss: null,
+      self_state: null,
+      mtt: null,
+      chip_value: 1000,
+      chip_currency: 'VND',
+    };
+    expect(toStatsSession({ ...row, currency: 'CHIP' }).chipRate).toEqual({
+      value: 1000,
+      currency: 'VND',
+    });
+    expect(toStatsSession({ ...row, currency: 'VND' }).chipRate).toBeUndefined();
+    expect(toStatsSession({ ...row, currency: 'CHIP', chip_value: null }).chipRate).toBeUndefined();
+  });
+
   it('maps a cash row and an mtt row', () => {
     const base = {
       id: 's',

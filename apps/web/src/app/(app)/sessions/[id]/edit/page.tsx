@@ -15,6 +15,7 @@ export default async function EditSessionPage({ params }: PageProps<'/sessions/[
     .eq('id', id)
     .maybeSingle();
   if (!row) notFound();
+  const { data: profile } = await supabase.from('profiles').select('currency').single();
 
   const [t, tCommon] = await Promise.all([getTranslations('sessions'), getTranslations('common')]);
 
@@ -24,6 +25,7 @@ export default async function EditSessionPage({ params }: PageProps<'/sessions/[
       <SessionForm
         initial={editFormFrom(row, row.currency)}
         edit={{ sessionId: id, startAt: row.start_at, endAt: row.end_at }}
+        profileCurrency={profile?.currency ?? 'VND'}
       />
     </main>
   );
