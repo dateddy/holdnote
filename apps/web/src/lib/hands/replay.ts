@@ -1,4 +1,6 @@
-import { canonPos, tableOrder, toBb, type HandInput, type Position } from 'poker-core';
+import { canonPos, isPostAct, tableOrder, toBb, type HandInput, type Position } from 'poker-core';
+
+const isForced = isPostAct;
 import {
   boardCards,
   heroCards,
@@ -35,6 +37,11 @@ export type ReplayHand = {
   ranks: Record<string, string>;
   /** Pots, main first, with the seat keys that won each. */
   pots: { amount: number; eligible: string[]; winners: string[] }[];
+  /**
+   * `known`: `pots` is filled. `noShowdown`: the hand ended without one (a fold). `unknown`: a hand
+   * saved before pots were stored that cannot be priced again.
+   */
+  potStatus: 'known' | 'noShowdown' | 'unknown';
   result: number | null;
   resultBb: number | null;
 };
@@ -85,6 +92,32 @@ export function buildReplayHand(
     }
   }
 
+  let pots: ReplayHand['pots'] = (sd?.pots ?? []).map((p) => ({
+    amount: p.amount,
+    eligible: p.eligible.map(keyOf),
+    winners: (p.winners ?? []).map(keyOf),
+  }));
+  // An old hand has no showdown. Heads-up with a known pot it is one pot, paid by the saved outcome.
+  const headsUp =
+    picked.length <= 1 && !input.actions.some((a) => a.actor === 'other' && !isForced(a.act));
+  const winners =
+    derived.outcome === 'win'
+      ? ['hero']
+      : derived.outcome === 'lose'
+        ? ['villain']
+        : derived.outcome === 'split'
+          ? ['hero', 'villain']
+          : null;
+  if (pots.length === 0 && headsUp && winners && derived.potFinal != null) {
+    pots = [{ amount: derived.potFinal, eligible: ['hero', 'villain'], winners }];
+  }
+  const potStatus: ReplayHand['potStatus'] =
+    pots.length > 0
+      ? 'known'
+      : derived.decided || derived.outcome === 'fold'
+        ? 'noShowdown'
+        : 'unknown';
+
   return {
     bb,
     input: Object.keys(seatStacks).length > 0 ? { ...input, seatStacks } : input,
@@ -94,11 +127,8 @@ export function buildReplayHand(
     board: boardCards(draft),
     shown,
     ranks,
-    pots: (sd?.pots ?? []).map((p) => ({
-      amount: p.amount,
-      eligible: p.eligible.map(keyOf),
-      winners: (p.winners ?? []).map(keyOf),
-    })),
+    pots,
+    potStatus,
     result: derived.result,
     resultBb: derived.result == null ? null : toBb(derived.result, bb),
   };

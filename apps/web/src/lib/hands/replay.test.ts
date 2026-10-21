@@ -80,6 +80,49 @@ describe('buildReplayHand', () => {
     expect(end.seats.SB?.allIn).toBe(true);
   });
 
+  describe('pots of a hand saved before the pots were stored (legacy)', () => {
+    const legacy = (over: Partial<ReturnType<typeof goldenDraft>> = {}) => ({
+      ...goldenDraft(),
+      legacy: true,
+      opponents: [],
+      outcome: 'lose',
+      ...over,
+    });
+
+    it('heads-up: one pot, paid by the saved outcome', () => {
+      const r = replay(CASH, legacy());
+      expect(r.potStatus).toBe('known');
+      expect(r.pots).toEqual([
+        { amount: 36075, eligible: ['hero', 'villain'], winners: ['villain'] },
+      ]);
+      expect(replay(CASH, legacy({ outcome: 'win' })).pots[0]!.winners).toEqual(['hero']);
+      expect(replay(CASH, legacy({ outcome: 'split' })).pots[0]!.winners).toEqual([
+        'hero',
+        'villain',
+      ]);
+    });
+
+    it('a hand that ended without a showdown says so', () => {
+      const r = replay(CASH, legacy({ outcome: 'fold' }));
+      expect(r.pots).toEqual([]);
+      expect(r.potStatus).toBe('noShowdown');
+    });
+
+    it('a hand with a third player, or without the stacks to price it, has no pot data', () => {
+      const withOther = legacy();
+      withOther.actions = [
+        ...withOther.actions,
+        { street: 'preflop', actor: 'other', pos: 'CO', act: 'call' },
+      ];
+      expect(replay(CASH, withOther).potStatus).toBe('unknown');
+      expect(replay(CASH, legacy({ heroStack: '', villStack: '' })).potStatus).toBe('unknown');
+    });
+  });
+
+  it('a hand with a showdown knows its pots', () => {
+    expect(replay(CASH, goldenDraft()).potStatus).toBe('known');
+  });
+
   it('a hand without a big blind cannot be replayed', () => {
     const noBlind = { ...CASH, bb: null };
     const draft = goldenDraft();

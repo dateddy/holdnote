@@ -240,7 +240,9 @@ export function Replayer({ hand, meta, currency, onClose, showNum = true }: Prop
             </ul>
           )}
           {hand.pots.length === 0 ? (
-            <p className="text-sm text-muted">{t('noShowdown')}</p>
+            <p className="text-sm text-muted">
+              {hand.potStatus === 'unknown' ? t('potUnknown') : t('noShowdown')}
+            </p>
           ) : (
             <ul className="space-y-1" data-pots={hand.pots.length}>
               {hand.pots.map((p, n) => (

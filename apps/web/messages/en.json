@@ -215,7 +215,7 @@
     "editHand": "Edit hand"
   },
   "review": {
-    "title": "Hand review",
+    "title": "AI analysis",
     "range": "Opponent range",
     "math": "Math",
     "mathHint": "{street}: {act}, {toCall} to call, pot odds {odds}",
@@ -228,9 +228,6 @@
     "ev_unsure": "Unsure",
     "lesson": "Lesson",
     "done": "Reviewed",
-    "save": "Save review",
-    "saving": "Saving…",
-    "saved": "Review saved.",
     "saveFailed": "Could not save. Try again.",
     "tag_preflop_too_loose": "Preflop too loose",
     "tag_preflop_too_tight": "Preflop too tight",
@@ -277,10 +274,10 @@
     "rebutCancel": "Cancel",
     "rebutSend": "Send rebuttal",
     "ai_nothing_to_summarize": "No hands recorded in this session yet.",
-    "secondOpinion": "Second opinion",
-    "experimental": "Experimental",
     "promptLabel": "Prompt {version}",
-    "experimentalNote": "The AI only offers a suggestion and can be wrong. You make the call."
+    "referenceOnly": "For reference only",
+    "aiAgain": "Run AI review again",
+    "aiAgainNote": "Use it after editing the hand. An unchanged hand reuses the old review at no cost."
   },
   "settings": {
     "title": "Settings",
@@ -866,6 +863,7 @@
     "handNum": "Hand #{num}",
     "moneyLine": "{amount}",
     "notPriced": "Not enough data to replay this hand (no blinds).",
-    "thought": "Thought"
+    "thought": "Thought",
+    "potUnknown": "Saved before the update: no pot split data for this hand."
   }
 }

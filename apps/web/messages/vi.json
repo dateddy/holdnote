@@ -215,7 +215,7 @@
     "editHand": "Sửa hand"
   },
   "review": {
-    "title": "Review hand",
+    "title": "AI phân tích",
     "range": "Range đối thủ",
     "math": "Toán",
     "mathHint": "{street}: {act}, cần call {toCall}, pot odds {odds}",
@@ -228,9 +228,6 @@
     "ev_unsure": "Chưa chắc",
     "lesson": "Bài học",
     "done": "Đã review",
-    "save": "Lưu review",
-    "saving": "Đang lưu…",
-    "saved": "Đã lưu review.",
     "saveFailed": "Không lưu được. Thử lại.",
     "tag_preflop_too_loose": "Preflop quá lỏng",
     "tag_preflop_too_tight": "Preflop quá chặt",
@@ -277,10 +274,10 @@
     "rebutCancel": "Hủy",
     "rebutSend": "Gửi phản biện",
     "ai_nothing_to_summarize": "Phiên này chưa có hand nào.",
-    "secondOpinion": "Ý kiến thứ hai",
-    "experimental": "Thử nghiệm",
     "promptLabel": "Prompt {version}",
-    "experimentalNote": "AI chỉ gợi ý để tham khảo và có thể sai. Bạn là người quyết định."
+    "referenceOnly": "Mang tính chất tham khảo",
+    "aiAgain": "Chạy lại AI review",
+    "aiAgainNote": "Dùng sau khi sửa hand. Hand chưa đổi thì dùng lại review cũ, không trừ lượt."
   },
   "settings": {
     "title": "Cài đặt",
@@ -866,6 +863,7 @@
     "handNum": "Hand #{num}",
     "moneyLine": "{amount}",
     "notPriced": "Chưa đủ dữ liệu để chơi lại hand này (thiếu blind).",
-    "thought": "Suy nghĩ"
+    "thought": "Suy nghĩ",
+    "potUnknown": "Hand lưu trước bản cập nhật, chưa có dữ liệu chia pot."
   }
 }

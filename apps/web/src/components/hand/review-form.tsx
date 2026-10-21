@@ -3,27 +3,20 @@
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useRef, useState } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { InfoTip } from '@/components/ui/info-tip';
+import { Textarea } from '@/components/ui/textarea';
+import { Toggle } from '@/components/ui/toggle';
 import { createClient } from '@/lib/supabase/client';
 import {
   aiErrorCode,
-  contentChanged,
-  ERROR_TAGS,
-  EV_VERDICTS,
   fromReviewRow,
   isRetryable,
-  sameField,
-  toggleTag,
-  toReviewRow,
   type ReviewDraft,
-  type ReviewField,
   type ReviewRow,
 } from '@/lib/review/review';
-
-const AREA = 'w-full rounded-md border border-line bg-surface p-3 text-base';
-import { chipClass as chip } from '@/components/ui/chip';
 
 /** A pot-odds line the review can quote: computed by poker-core, shown read-only. */
 export type MathHint = {
@@ -64,7 +57,10 @@ type AiResponse = {
   error?: string;
 };
 
-/** Review block (spec 3.7): manual fields, AI review with an "AI" label, rebuttal. */
+/**
+ * "AI phân tích" (spec 3.7). No review yet: only the AI button and the turns left. With one: its
+ * fields read-only, the "Đã review" switch (saved at once) and the rebuttal. Nothing is typed in by hand.
+ */
 export function ReviewForm({
   handId,
   reviewId,
@@ -76,21 +72,13 @@ export function ReviewForm({
   ai,
 }: Props) {
   const t = useTranslations('review');
+  const tCommon = useTranslations('common');
   const router = useRouter();
   const [draft, setDraft] = useState(initial);
   const [id, setId] = useState(reviewId);
+  const [isAi, setIsAi] = useState(source === 'ai');
   const [prompt, setPrompt] = useState(initialPrompt);
-  // What the AI wrote, while the review is still the AI's. Fields equal to it carry the "AI" label.
-  const [aiText, setAiText] = useState<ReviewDraft | null>(
-    source === 'ai' && !initial.accepted ? initial : null,
-  );
-  // The saved AI review, kept to tell whether the student changed anything.
-  const [saved, setSaved] = useState<{ source: string | null; draft: ReviewDraft }>({
-    source,
-    draft: initial,
-  });
   const [remaining, setRemaining] = useState(ai.remaining);
-  const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'failed'>('idle');
   const [run, setRun] = useState<'idle' | 'busy'>('idle');
   const [aiError, setAiError] = useState<string | null>(null);
   /** The last request, so "Try again" repeats it (a rebuttal keeps its text). */
@@ -98,19 +86,7 @@ export function ReviewForm({
   const [notice, setNotice] = useState<string | null>(null);
   const [rebutOpen, setRebutOpen] = useState(false);
   const [reason, setReason] = useState('');
-
-  const set = <K extends keyof ReviewDraft>(key: K, value: ReviewDraft[K]) => {
-    setStatus('idle');
-    setDraft((d) => ({ ...d, [key]: value }));
-  };
-
-  const fromAi = (key: ReviewField) => aiText !== null && sameField(draft, aiText, key);
-  const aiTag = (key: ReviewField) =>
-    fromAi(key) && (
-      <span className="ml-2 rounded bg-accent/15 px-1.5 py-0.5 text-xs font-medium">
-        {t('aiLabel')}
-      </span>
-    );
+  const [doneFailed, setDoneFailed] = useState(false);
 
   const outOfTurns = ai.plan === 'free' && (ai.locked || remaining === 0);
 
@@ -130,14 +106,11 @@ export function ReviewForm({
         setAiError(aiErrorCode(data.error));
         return;
       }
-      const next = fromReviewRow(data.review);
-      setDraft(next);
-      setAiText(next.accepted ? null : next);
-      setSaved({ source: 'ai', draft: next });
+      setDraft(fromReviewRow(data.review));
       setId(data.review.id);
+      setIsAi(true);
       setPrompt(data.review.prompt_version ?? null);
       setRemaining(data.remaining ?? null);
-      setStatus('idle');
       setRebutOpen(false);
       setReason('');
       if (data.cached) setNotice(t('aiCached'));
@@ -149,266 +122,212 @@ export function ReviewForm({
     }
   }
 
-  async function save() {
-    setStatus('saving');
-    const supabase = createClient();
-    const row = toReviewRow(draft, isMtt);
-    let ok: boolean;
-
-    if (id && saved.source === 'ai' && contentChanged(draft, saved.draft)) {
-      // The student rewrote an AI review: keep the AI one as history, save theirs as manual.
-      const { data, error } = await supabase.rpc('replace_current_review', {
-        p_hand_id: handId,
-        p_review: { ...row, source: 'manual' },
-      });
-      ok = !error && !!data;
-      if (ok && data) {
-        setId(data);
-        setSaved({ source: 'manual', draft });
-        setAiText(null);
-      }
-    } else if (id) {
-      const { error } = await supabase.from('reviews').update(row).eq('id', id);
-      ok = !error;
-      if (ok) {
-        setSaved((s) => ({ ...s, draft }));
-        if (draft.accepted) setAiText(null);
-      }
-    } else {
-      const { data, error } = await supabase
-        .from('reviews')
-        .insert({ ...row, hand_id: handId, source: 'manual', is_current: true })
-        .select('id')
-        .single();
-      ok = !error;
-      if (data) {
-        setId(data.id);
-        setSaved({ source: 'manual', draft });
-      }
+  /** The "Đã review" switch: saved on the spot, put back if it fails. */
+  async function setAccepted(accepted: boolean) {
+    if (!id) return;
+    setDoneFailed(false);
+    setDraft((d) => ({ ...d, accepted }));
+    const { error } = await createClient().from('reviews').update({ accepted }).eq('id', id);
+    if (error) {
+      setDraft((d) => ({ ...d, accepted: !accepted }));
+      setDoneFailed(true);
+      return;
     }
-    setStatus(ok ? 'saved' : 'failed');
     router.refresh();
   }
 
-  const field = (key: 'range' | 'math' | 'line' | 'icmText', label: string) => (
-    <label className="flex flex-col gap-1 text-sm">
-      <span>
-        {label}
-        {aiTag(key)}
-      </span>
-      <textarea
-        rows={3}
-        value={draft[key]}
-        onChange={(e) => set(key, e.target.value)}
-        className={AREA}
-      />
-    </label>
+  const read = (label: string, value: string, extra?: ReactNode) =>
+    value.trim() === '' && !extra ? null : (
+      <div className="space-y-1">
+        <h3 className="text-sm text-muted">{label}</h3>
+        {extra}
+        {value.trim() !== '' && <p className="text-base whitespace-pre-line">{value}</p>}
+      </div>
+    );
+
+  const aiBlock = (
+    <div className="flex flex-col gap-2 rounded-md border border-line bg-surface p-3">
+      <Button onClick={() => callAi({})} disabled={run === 'busy' || outOfTurns}>
+        {run === 'busy' ? t('aiRunning') : t('aiButton')}
+      </Button>
+      <p className="text-sm">
+        {ai.plan === 'byok'
+          ? t('aiOwnKey')
+          : ai.locked
+            ? t('aiLocked')
+            : t('aiLeft', { n: remaining ?? 0 })}
+      </p>
+      {notice && (
+        <p role="status" className="text-sm">
+          {notice}
+        </p>
+      )}
+      {aiError && (
+        <p role="alert" className="text-sm text-loss">
+          {t(`ai_${aiErrorCode(aiError)}`)}{' '}
+          {(aiError === 'quota_exhausted' || aiError === 'budget_locked') && (
+            <Link href="/settings" className="underline underline-offset-4">
+              {t('aiUseOwnKey')}
+            </Link>
+          )}
+        </p>
+      )}
+      {aiError && isRetryable(aiErrorCode(aiError)) && (
+        <Button
+          variant="secondary"
+          onClick={() => callAi(lastBody.current)}
+          disabled={run === 'busy' || outOfTurns}
+        >
+          {t('aiRetry')}
+        </Button>
+      )}
+    </div>
   );
 
   return (
     <section className="flex flex-col gap-4">
-      <div className="space-y-1">
-        <h2 className="flex flex-wrap items-center gap-2 text-lg font-semibold">
-          {t('secondOpinion')}
-          <Badge tone="warn">{t('experimental')}</Badge>
-          {saved.source === 'ai' && prompt && (
-            <Badge tone="muted">
-              {prompt === 'v2' ? t('oldPromptLabel') : t('promptLabel', { version: prompt })}
-            </Badge>
-          )}
-        </h2>
-        <p className="text-sm text-muted">{t('experimentalNote')}</p>
-      </div>
-
-      <div className="flex flex-col gap-2 rounded-md border border-line bg-surface p-3">
-        <button
-          type="button"
-          onClick={() => callAi({})}
-          disabled={run === 'busy' || outOfTurns}
-          className="h-12 rounded-md bg-accent text-base font-medium text-accent-foreground disabled:opacity-40"
-        >
-          {run === 'busy' ? t('aiRunning') : t('aiButton')}
-        </button>
-        <p className="text-sm">
-          {ai.plan === 'byok'
-            ? t('aiOwnKey')
-            : ai.locked
-              ? t('aiLocked')
-              : t('aiLeft', { n: remaining ?? 0 })}
-        </p>
-        {notice && (
-          <p role="status" className="text-sm">
-            {notice}
-          </p>
+      <h2 className="flex flex-wrap items-center gap-2 text-lg font-semibold">
+        {t('title')}
+        <InfoTip icon="!" text={t('referenceOnly')} label={tCommon('explain')} />
+        {id && isAi && prompt && (
+          <Badge tone="muted">
+            {prompt === 'v2' ? t('oldPromptLabel') : t('promptLabel', { version: prompt })}
+          </Badge>
         )}
-        {aiError && (
-          <p role="alert" className="text-sm text-loss">
-            {t(`ai_${aiErrorCode(aiError)}`)}{' '}
-            {(aiError === 'quota_exhausted' || aiError === 'budget_locked') && (
-              <Link href="/settings" className="underline underline-offset-4">
-                {t('aiUseOwnKey')}
-              </Link>
-            )}
-          </p>
-        )}
-        {aiError && isRetryable(aiErrorCode(aiError)) && (
-          <Button
-            variant="secondary"
-            onClick={() => callAi(lastBody.current)}
-            disabled={run === 'busy' || outOfTurns}
-          >
-            {t('aiRetry')}
-          </Button>
-        )}
-      </div>
+      </h2>
 
-      {field('range', t('range'))}
-
-      {mathHints.length > 0 && (
-        <ul className="space-y-0.5 rounded-md bg-accent/5 p-3 text-sm">
-          {mathHints.map((m, i) => (
-            <li key={i}>
-              {t('mathHint', {
-                street: m.street,
-                act: m.act,
-                toCall: m.toCall,
-                odds: m.odds,
-              })}
-              {m.mdf ? ` · MDF ${m.mdf}` : ''}
-            </li>
-          ))}
-        </ul>
-      )}
-      {field('math', t('math'))}
-      {field('line', t('line'))}
-      {isMtt && field('icmText', t('icm'))}
-
-      <div className="space-y-2">
-        <h3 className="text-sm">
-          {t('errors')}
-          {aiTag('errorTags')}
-        </h3>
-        <div className="flex flex-wrap gap-1.5">
-          {ERROR_TAGS.map((tag) => (
-            <button
-              key={tag}
-              type="button"
-              aria-pressed={draft.errorTags.includes(tag)}
-              onClick={() => set('errorTags', toggleTag(draft.errorTags, tag))}
-              className={chip(draft.errorTags.includes(tag))}
-            >
-              {t(`tag_${tag}`)}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <h3 className="text-sm">
-          {t('ev')}
-          {aiTag('evVerdict')}
-        </h3>
-        <div className="grid grid-cols-3 gap-1.5">
-          {EV_VERDICTS.map((v) => (
-            <button
-              key={v}
-              type="button"
-              aria-pressed={draft.evVerdict === v}
-              onClick={() => set('evVerdict', draft.evVerdict === v ? '' : v)}
-              className={chip(draft.evVerdict === v)}
-            >
-              {t(`ev_${v}`)}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <label className="flex flex-col gap-1 text-sm">
-        <span>
-          {t('lesson')}
-          {aiTag('lesson')}
-        </span>
-        <textarea
-          rows={2}
-          value={draft.lesson}
-          onChange={(e) => set('lesson', e.target.value)}
-          className={AREA}
-        />
-      </label>
-
-      <label className="flex items-center gap-2 text-base">
-        <input
-          type="checkbox"
-          checked={draft.accepted}
-          onChange={(e) => set('accepted', e.target.checked)}
-          className="size-5"
-        />
-        {t('done')}
-      </label>
-
-      {status === 'saved' && (
-        <p role="status" className="text-sm">
-          {t('saved')}
-        </p>
-      )}
-      {status === 'failed' && (
-        <p role="alert" className="text-sm text-loss">
-          {t('saveFailed')}
-        </p>
-      )}
-      <button
-        type="button"
-        onClick={save}
-        disabled={status === 'saving'}
-        className="h-14 rounded-md bg-accent text-lg font-medium text-accent-foreground disabled:opacity-40"
-      >
-        {status === 'saving' ? t('saving') : t('save')}
-      </button>
+      {!id && aiBlock}
 
       {id && (
-        <div className="flex flex-col gap-2 rounded-md border border-line bg-surface p-3">
-          {!rebutOpen ? (
-            <button
-              type="button"
-              onClick={() => setRebutOpen(true)}
-              disabled={outOfTurns}
-              className="h-12 rounded-md border border-line bg-surface text-base disabled:opacity-40"
-            >
-              {t('rebutButton')}
-            </button>
-          ) : (
-            <>
-              <label className="flex flex-col gap-1 text-sm">
-                {t('rebutReason')}
-                <textarea
-                  rows={3}
-                  maxLength={600}
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                  className={AREA}
-                />
-              </label>
-              <p className="text-sm">{t('rebutCost')}</p>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setRebutOpen(false)}
-                  className="h-12 rounded-md border border-line bg-surface text-base"
-                >
-                  {t('rebutCancel')}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => callAi({ rebuttal: reason.trim() })}
-                  disabled={run === 'busy' || reason.trim().length < 3}
-                  className="h-12 rounded-md bg-accent text-base font-medium text-accent-foreground disabled:opacity-40"
-                >
-                  {run === 'busy' ? t('aiRunning') : t('rebutSend')}
-                </button>
-              </div>
-            </>
+        <>
+          {read(t('range'), draft.range)}
+          {read(
+            t('math'),
+            draft.math,
+            mathHints.length > 0 && (
+              <ul className="space-y-0.5 rounded-md bg-accent/5 p-3 text-sm">
+                {mathHints.map((m, i) => (
+                  <li key={i}>
+                    {t('mathHint', {
+                      street: m.street,
+                      act: m.act,
+                      toCall: m.toCall,
+                      odds: m.odds,
+                    })}
+                    {m.mdf ? ` · MDF ${m.mdf}` : ''}
+                  </li>
+                ))}
+              </ul>
+            ),
           )}
-        </div>
+          {read(t('line'), draft.line)}
+          {isMtt && read(t('icm'), draft.icmText)}
+          {draft.errorTags.length > 0 &&
+            read(
+              t('errors'),
+              '',
+              <div className="flex flex-wrap gap-1.5">
+                {draft.errorTags.map((tag) => (
+                  <Badge key={tag} tone={tag === 'none' ? 'accent' : 'warn'}>
+                    {t(`tag_${tag}` as 'tag_tilt')}
+                  </Badge>
+                ))}
+              </div>,
+            )}
+          {draft.evVerdict &&
+            read(
+              t('ev'),
+              '',
+              <div>
+                <Badge tone={draft.evVerdict === 'correct' ? 'accent' : 'muted'}>
+                  {t(`ev_${draft.evVerdict}` as 'ev_correct')}
+                </Badge>
+              </div>,
+            )}
+          {read(t('lesson'), draft.lesson)}
+
+          <div className="flex items-center justify-between gap-3 text-base">
+            <span>{t('done')}</span>
+            <Toggle
+              checked={draft.accepted}
+              aria-label={t('done')}
+              onClick={() => setAccepted(!draft.accepted)}
+            />
+          </div>
+          {doneFailed && (
+            <p role="alert" className="text-sm text-loss">
+              {t('saveFailed')}
+            </p>
+          )}
+
+          <div className="flex flex-col gap-2 rounded-md border border-line bg-surface p-3">
+            {!rebutOpen ? (
+              <Button variant="secondary" onClick={() => setRebutOpen(true)} disabled={outOfTurns}>
+                {t('rebutButton')}
+              </Button>
+            ) : (
+              <>
+                <label className="flex flex-col gap-1 text-sm">
+                  {t('rebutReason')}
+                  <Textarea
+                    rows={3}
+                    maxLength={600}
+                    value={reason}
+                    onChange={(e) => setReason(e.target.value)}
+                  />
+                </label>
+                <p className="text-sm">{t('rebutCost')}</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button variant="secondary" onClick={() => setRebutOpen(false)}>
+                    {t('rebutCancel')}
+                  </Button>
+                  <Button
+                    onClick={() => callAi({ rebuttal: reason.trim() })}
+                    disabled={run === 'busy' || reason.trim().length < 3}
+                  >
+                    {run === 'busy' ? t('aiRunning') : t('rebutSend')}
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
+
+          {(aiError || notice) && (
+            <div className="flex flex-col gap-2">
+              {notice && (
+                <p role="status" className="text-sm">
+                  {notice}
+                </p>
+              )}
+              {aiError && (
+                <p role="alert" className="text-sm text-loss">
+                  {t(`ai_${aiErrorCode(aiError)}`)}
+                </p>
+              )}
+              {aiError && isRetryable(aiErrorCode(aiError)) && (
+                <Button
+                  variant="secondary"
+                  onClick={() => callAi(lastBody.current)}
+                  disabled={run === 'busy' || outOfTurns}
+                >
+                  {t('aiRetry')}
+                </Button>
+              )}
+            </div>
+          )}
+
+          <div className="flex flex-col gap-1">
+            <Button
+              variant="ghost"
+              full={false}
+              onClick={() => callAi({})}
+              disabled={run === 'busy' || outOfTurns}
+            >
+              {t('aiAgain')}
+            </Button>
+            <p className="text-xs text-muted">{t('aiAgainNote')}</p>
+          </div>
+        </>
       )}
     </section>
   );
