@@ -8,6 +8,7 @@ describe('activeTab', () => {
     ['/sessions/abc/hands', 'sessions'],
     ['/sessions/abc/summary', 'sessions'],
     ['/hands/h1', 'sessions'],
+    ['/sessions/abc/edit', 'sessions'],
     ['/sessions/new', 'record'],
     ['/sessions/abc/before', 'record'],
     ['/sessions/abc/record', 'record'],

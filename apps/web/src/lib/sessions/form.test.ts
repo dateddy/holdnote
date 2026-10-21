@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { emptyForm, parseSessionForm, prefillFrom, readMtt, type SessionFormValues } from './form';
+import {
+  editFormFrom,
+  emptyForm,
+  mergeMttUpdate,
+  parseSessionForm,
+  prefillFrom,
+  readMtt,
+  type SessionFormValues,
+} from './form';
 
 const cash = (over: Partial<SessionFormValues> = {}): SessionFormValues => ({
   ...emptyForm('VND'),
@@ -334,5 +342,86 @@ describe('prefillFrom', () => {
     if (!r.ok) throw new Error('parse failed');
     const again = parseSessionForm(prefillFrom(r.insert, 'VND'));
     expect(again.ok && again.insert).toEqual({ ...r.insert, date: undefined });
+  });
+});
+
+describe('editFormFrom', () => {
+  const row = {
+    kind: 'cash',
+    mode: 'live',
+    currency: 'VND',
+    venue: 'Chill',
+    date: '2026-10-14',
+    sb: 25,
+    bb: 50,
+    straddle: null,
+    ante_mode: 'none',
+    ante: null,
+    seats: 9,
+    buyin: 10000,
+    stop_loss: 20000,
+    mtt: null,
+  };
+  it('fills every field of the form from the saved session, date included', () => {
+    expect(editFormFrom(row, 'USD')).toMatchObject({
+      kind: 'cash',
+      venue: 'Chill',
+      date: '2026-10-14',
+      sb: '25',
+      bb: '50',
+      buyin: '10000',
+      stopLoss: '20000',
+      currency: 'VND',
+    });
+  });
+  it('round trip: the form of a saved session parses back to the same numbers', () => {
+    const parsed = parseSessionForm(editFormFrom(row, 'VND'));
+    expect(parsed.ok && parsed.insert).toMatchObject({
+      sb: 25,
+      bb: 50,
+      buyin: 10000,
+      stop_loss: 20000,
+    });
+  });
+});
+
+describe('mergeMttUpdate', () => {
+  const next = {
+    name: 'New',
+    type: 'regular',
+    reentry: false,
+    start_level: 1,
+    start_stack: 10000,
+  } as const;
+  it('cash has no MTT block', () => {
+    expect(mergeMttUpdate({ prize: 1 }, null)).toBeNull();
+  });
+  it('keeps the result fields and replaces the setup', () => {
+    const old = { name: 'Old', prize: 2000, place: 12, reentries: 1, blind_levels: [{ level: 1 }] };
+    expect(mergeMttUpdate(old, { ...next })).toEqual({
+      name: 'New',
+      type: 'regular',
+      reentry: false,
+      start_level: 1,
+      start_stack: 10000,
+      prize: 2000,
+      place: 12,
+      reentries: 1,
+    });
+  });
+  it('a structure in the form replaces the saved one', () => {
+    const blind_levels = [{ level: 2, sb: 50, bb: 100 }];
+    expect(
+      (
+        mergeMttUpdate({ blind_levels: [{ level: 1 }] }, {
+          ...next,
+          blind_levels,
+        } as never) as never as { blind_levels: unknown }
+      ).blind_levels,
+    ).toEqual(blind_levels);
+  });
+  it('a missing or malformed old block starts from the new one', () => {
+    expect(mergeMttUpdate(null, { ...next })).toEqual({ ...next });
+    expect(mergeMttUpdate([1, 2], { ...next })).toEqual({ ...next });
   });
 });

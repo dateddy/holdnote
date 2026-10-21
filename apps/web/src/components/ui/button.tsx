@@ -1,11 +1,12 @@
 import type { ButtonHTMLAttributes } from 'react';
 
-type Variant = 'primary' | 'secondary' | 'ghost';
+type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
 type Size = 'lg' | 'md';
 
 const VARIANT: Record<Variant, string> = {
   primary: 'bg-accent text-accent-foreground font-medium disabled:opacity-40',
   secondary: 'border border-line bg-surface disabled:opacity-40',
+  danger: 'bg-loss text-background font-medium disabled:opacity-40',
   ghost: 'underline underline-offset-4 disabled:opacity-40',
 };
 const SIZE: Record<Size, string> = {

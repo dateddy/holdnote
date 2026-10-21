@@ -13,19 +13,24 @@ import {
   type SessionField,
   type SessionFormValues,
 } from '@/lib/sessions/form';
-import { createSession, type CreateSessionState } from '../actions';
+import { createSession, updateSession, type CreateSessionState } from '../actions';
+import { fromLocalInput, toLocalInput } from '@/lib/sessions/end-time';
 
-import { INPUT_CLASS as INPUT } from '@/components/ui/input';
+import { Input, INPUT_CLASS as INPUT } from '@/components/ui/input';
 import { Stepper } from '@/components/ui/stepper';
 
-export function SessionForm({ initial }: { initial: SessionFormValues }) {
+/** Edit mode: the same form on a saved session; the kind is fixed and the times can be changed. */
+export type SessionEdit = { sessionId: string; startAt: string | null; endAt: string | null };
+
+export function SessionForm({ initial, edit }: { initial: SessionFormValues; edit?: SessionEdit }) {
   const t = useTranslations('sessions');
   const tb = useTranslations('blinds');
-  const [state, action, pending] = useActionState<CreateSessionState, FormData>(createSession, {
-    values: initial,
-    errors: {},
-    failed: false,
-  });
+  const [state, action, pending] = useActionState<CreateSessionState, FormData>(
+    edit ? updateSession.bind(null, edit.sessionId) : createSession,
+    { values: initial, errors: {}, failed: false },
+  );
+  const [startLocal, setStartLocal] = useState(edit?.startAt ? toLocalInput(edit.startAt) : '');
+  const [endLocal, setEndLocal] = useState(edit?.endAt ? toLocalInput(edit.endAt) : '');
   const v = state.values;
   const [anteMode, setAnteMode] = useState(v.anteMode);
   const isMtt = v.kind === 'mtt';
@@ -74,21 +79,65 @@ export function SessionForm({ initial }: { initial: SessionFormValues }) {
     <form action={action} className="flex flex-col gap-5">
       <input type="hidden" name="kind" value={v.kind} />
       {/* The browser knows the player's local date; the server only knows UTC. */}
-      <input type="hidden" name="date" value={v.date || localDate()} suppressHydrationWarning />
+      {!edit && (
+        <input type="hidden" name="date" value={v.date || localDate()} suppressHydrationWarning />
+      )}
 
       <Segment legend={t('kind')}>
-        {(['cash', 'mtt'] as const).map((k) => (
-          <Link
-            key={k}
-            href={`/sessions/new?kind=${k}`}
-            replace
-            aria-current={v.kind === k ? 'true' : undefined}
-            className={chip(v.kind === k)}
-          >
-            {t(k)}
-          </Link>
-        ))}
+        {(['cash', 'mtt'] as const).map((k) =>
+          edit ? (
+            <span
+              key={k}
+              aria-current={v.kind === k ? 'true' : undefined}
+              className={chip(v.kind === k)}
+            >
+              {t(k)}
+            </span>
+          ) : (
+            <Link
+              key={k}
+              href={`/sessions/new?kind=${k}`}
+              replace
+              aria-current={v.kind === k ? 'true' : undefined}
+              className={chip(v.kind === k)}
+            >
+              {t(k)}
+            </Link>
+          ),
+        )}
       </Segment>
+
+      {edit && (
+        <>
+          <label className="flex flex-col gap-1 text-sm">
+            {t('dateField')}
+            <Input type="date" name="date" defaultValue={v.date} />
+          </label>
+          <input type="hidden" name="start_at" value={fromLocalInput(startLocal) ?? ''} />
+          <input type="hidden" name="end_at" value={fromLocalInput(endLocal) ?? ''} />
+          <label className="flex flex-col gap-1 text-sm">
+            {t('startAtField')}
+            <Input
+              type="datetime-local"
+              value={startLocal}
+              onChange={(e) => setStartLocal(e.target.value)}
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
+            {t('endAtField')}
+            <Input
+              type="datetime-local"
+              value={endLocal}
+              onChange={(e) => setEndLocal(e.target.value)}
+            />
+          </label>
+          {state.timeError && (
+            <span role="alert" className="text-sm text-loss">
+              {t('timeError')}
+            </span>
+          )}
+        </>
+      )}
 
       <Radios name="mode" legend={t('mode')} options={MODES} current={v.mode} label={(m) => t(m)} />
 
@@ -195,7 +244,7 @@ export function SessionForm({ initial }: { initial: SessionFormValues }) {
         disabled={pending}
         className="h-14 rounded-md bg-accent text-lg font-medium text-accent-foreground disabled:opacity-50"
       >
-        {pending ? t('creating') : t('create')}
+        {edit ? (pending ? t('saving') : t('save')) : pending ? t('creating') : t('create')}
       </button>
     </form>
   );

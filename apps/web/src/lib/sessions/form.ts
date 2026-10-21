@@ -317,3 +317,28 @@ export function readMtt(json: unknown): MttInfo | null {
 export function isOneOf<T extends string>(list: readonly T[], x: unknown): x is T {
   return typeof x === 'string' && (list as readonly string[]).includes(x);
 }
+
+/** Form values of a saved session, for editing: like {@link prefillFrom} but the date is kept. */
+export function editFormFrom(
+  row: PrefillSource & { date: string },
+  profileCurrency: string,
+): SessionFormValues {
+  return { ...prefillFrom(row, profileCurrency), date: row.date };
+}
+
+/**
+ * `sessions.mtt` after an edit: the setup comes from the form, the result fields (prize, place,
+ * re-entries...) stay. The blind structure is whatever the form carries, so an emptied editor removes it.
+ */
+export function mergeMttUpdate(
+  existing: unknown,
+  next: MttInfo | null,
+): Record<string, unknown> | null {
+  if (!next) return null;
+  const old =
+    existing && typeof existing === 'object' && !Array.isArray(existing)
+      ? { ...(existing as Record<string, unknown>) }
+      : {};
+  delete old.blind_levels;
+  return { ...old, ...next };
+}

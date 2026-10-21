@@ -12,9 +12,8 @@ import {
   HAND_SESSION_COLUMNS,
   heroCards,
 } from '@/lib/hands/build';
-import { HAND_FILTERS } from '@/lib/hands/list';
+import { parseHandFilter, serializeHandFilter } from '@/lib/hands/session-hands';
 import { sortOpponents } from '@/lib/hands/table';
-import { isOneOf } from '@/lib/sessions/form';
 import { loadUsage } from '@/lib/ai/quota';
 import { aiStatus } from '@/lib/ai/status';
 import { fromReviewRow, REVIEW_COLUMNS } from '@/lib/review/review';
@@ -25,9 +24,8 @@ import { createClient } from '@/lib/supabase/server';
 
 export default async function HandDetailPage({ params, searchParams }: PageProps<'/hands/[id]'>) {
   const [{ id }, query] = await Promise.all([params, searchParams]);
-  // The list filter the player came from, so Back returns to the same list.
-  const rawFilter = Array.isArray(query.f) ? query.f[0] : query.f;
-  const filter = isOneOf(HAND_FILTERS, rawFilter) && rawFilter !== 'all' ? rawFilter : null;
+  // The filter of the session page the player came from, so Back returns to the same list.
+  const backQuery = serializeHandFilter(parseHandFilter(query));
   const supabase = await createClient();
 
   const { data: hand } = await supabase
@@ -82,8 +80,8 @@ export default async function HandDetailPage({ params, searchParams }: PageProps
       <TopBar
         title={t('detailTitle', { num: hand.num })}
         back={{
-          href: `/sessions/${hand.session_id}/hands${filter ? `?f=${filter}` : ''}`,
-          label: t('handsList'),
+          href: `/sessions/${hand.session_id}${backQuery ? `?${backQuery}` : ''}`,
+          label: t('backToSession'),
         }}
       />
 

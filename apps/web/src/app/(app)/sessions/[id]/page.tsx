@@ -1,118 +1,80 @@
-import { getLocale, getTranslations } from 'next-intl/server';
-import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
-import { sessionResult } from 'poker-core';
+import { SessionDetail } from '@/components/session/session-detail';
 import { SyncStatus } from '@/components/hand/sync-status';
-import { buttonClass } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Result } from '@/components/ui/result';
-import { TopBar } from '@/components/ui/top-bar';
-import { handTotals } from '@/lib/home/home';
-import { formatMoney } from '@/lib/sessions/format';
-import { STATS_COLUMNS, toStatsSession } from '@/lib/sessions/summary';
+import {
+  buildHandRows,
+  HAND_ROW_COLUMNS,
+  parseHandFilter,
+  type HandReviewInfo,
+  type HandRowDb,
+} from '@/lib/hands/session-hands';
+import { detailTiles, sessionStage } from '@/lib/sessions/detail';
+import { formatDay } from '@/lib/sessions/format';
+import { readMtt } from '@/lib/sessions/form';
+import { readSummary, STATS_COLUMNS, toStatsSession } from '@/lib/sessions/summary';
 import { createClient } from '@/lib/supabase/server';
 
-/** One session: where it stands and the next step (record, end, review, summary). */
-export default async function SessionPage({ params }: PageProps<'/sessions/[id]'>) {
-  const { id } = await params;
+/** One session: tiles, the next step for its stage, and its hands with filters (spec 3.6). */
+export default async function SessionPage({ params, searchParams }: PageProps<'/sessions/[id]'>) {
+  const [{ id }, query] = await Promise.all([params, searchParams]);
   const supabase = await createClient();
   const { data: row } = await supabase
     .from('sessions')
-    .select(STATS_COLUMNS)
+    .select(`${STATS_COLUMNS}, summary, sb, straddle, ante_mode, ante, seats`)
     .eq('id', id)
     .maybeSingle();
   if (!row) notFound();
 
   const { data: hands } = await supabase
     .from('hands')
-    .select('result, level_bb')
-    .eq('session_id', id);
+    .select(HAND_ROW_COLUMNS)
+    .eq('session_id', id)
+    .order('num', { ascending: false });
+  const ids = (hands ?? []).map((h) => h.id);
+  const { data: reviews } = ids.length
+    ? await supabase
+        .from('reviews')
+        .select('hand_id, source, accepted')
+        .eq('is_current', true)
+        .in('hand_id', ids)
+    : { data: [] };
 
-  const [t, tHand, tCommon, locale] = await Promise.all([
-    getTranslations('sessions'),
-    getTranslations('hand'),
-    getTranslations('common'),
-    getLocale(),
-  ]);
+  const reviewOf = new Map<string, HandReviewInfo>(
+    (reviews ?? []).map((r) => [r.hand_id, { source: r.source, accepted: r.accepted }]),
+  );
   const session = toStatsSession(row);
-  const started = Boolean(session.startAt);
-  const ended = Boolean(session.endAt);
-  const time = (iso: string) =>
-    new Date(iso).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+  const rows = buildHandRows(row, (hands ?? []) as unknown as HandRowDb[], reviewOf);
 
-  // Ended: the real result (cash-out or prize). Open: what the hands add up to so far.
-  const final = ended ? sessionResult(session) : null;
-  const sofar = handTotals(hands ?? [], session.bb || null);
-  const money = final?.money ?? sofar.money;
-  const bb = final ? final.bb : session.kind === 'mtt' ? null : sofar.bb;
-  const num = (n: number) =>
-    new Intl.NumberFormat(locale, { maximumFractionDigits: 2, signDisplay: 'exceptZero' }).format(
-      n,
-    );
+  const [t, tSessions] = await Promise.all([
+    getTranslations('sessionList'),
+    getTranslations('sessions'),
+  ]);
+  const mtt = readMtt(row.mtt);
+  const title = mtt?.name ?? session.venue ?? tSessions(session.kind);
+  const subtitle = [
+    formatDay(session.date, true),
+    session.kind === 'cash'
+      ? session.stakeLabel
+      : [tSessions('mtt'), mtt?.name ? session.venue : null].filter(Boolean).join(' · '),
+    row.end_at ? null : t('playing'),
+    t('hands', { n: rows.length }),
+  ]
+    .filter(Boolean)
+    .join(' · ');
 
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-5 p-6">
-      <TopBar
-        title={t('title', { kind: t(session.kind) })}
-        subtitle={[session.venue, session.stakeLabel].filter(Boolean).join(' · ')}
-        back={{ href: '/', label: tCommon('back') }}
+    <>
+      <SessionDetail
+        session={{ id, kind: session.kind, title, subtitle, currency: session.currency }}
+        stage={sessionStage(session, readSummary(row.summary))}
+        tiles={detailTiles(session, rows, new Date().toISOString())}
+        rows={rows}
+        initialFilter={parseHandFilter(query)}
       />
-
-      <Card>
-        <p className="text-sm text-muted">
-          {ended && session.endAt
-            ? t('endedAt', { time: time(session.endAt) })
-            : session.startAt
-              ? t('startedAt', { time: time(session.startAt) })
-              : t('notStarted')}
-          {' · '}
-          {t('handsOnly', { count: hands?.length ?? 0 })}
-        </p>
-        {started && (
-          <p className="text-2xl font-semibold">
-            <Result value={money}>
-              {bb != null ? `${num(bb)} bb` : formatMoney(money, session.currency, locale)}
-            </Result>
-            {bb != null && (
-              <span className="ml-2 text-base font-normal text-muted">
-                {formatMoney(money, session.currency, locale)}
-              </span>
-            )}
-          </p>
-        )}
-      </Card>
-
-      <SyncStatus />
-
-      {!started && (
-        <Link href={`/sessions/${id}/before`} className={buttonClass({ size: 'lg' })}>
-          {t('goBefore')}
-        </Link>
-      )}
-      {started && !ended && (
-        <Link href={`/sessions/${id}/record`} className={buttonClass({ size: 'lg' })}>
-          {t('recordHand')}
-        </Link>
-      )}
-      {ended && (
-        <Link href={`/sessions/${id}/summary`} className={buttonClass({ size: 'lg' })}>
-          {t('goSummary')}
-        </Link>
-      )}
-      <Link
-        href={`/sessions/${id}/hands`}
-        className={buttonClass({ variant: 'secondary', size: 'md' })}
-      >
-        {ended ? t('reviewHands') : tHand('handsList')}
-      </Link>
-      {started && !ended && (
-        <Link
-          href={`/sessions/${id}/end`}
-          className={buttonClass({ variant: 'secondary', size: 'md' })}
-        >
-          {t('endSession')}
-        </Link>
-      )}
-    </main>
+      <div className="mx-auto w-full max-w-md px-6 pb-6 lg:max-w-none">
+        <SyncStatus />
+      </div>
+    </>
   );
 }

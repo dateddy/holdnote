@@ -14,7 +14,7 @@ export function activeTab(path: string): TabKey | null {
   if (m) {
     const sub = m[1];
     // The session page and its hand list / debrief are reading screens; the rest is at the table.
-    return !sub || sub === 'hands' || sub === 'summary' ? 'sessions' : 'record';
+    return !sub || sub === 'hands' || sub === 'summary' || sub === 'edit' ? 'sessions' : 'record';
   }
   return null;
 }

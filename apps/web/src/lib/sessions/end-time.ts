@@ -21,3 +21,10 @@ export function fromLocalInput(value: string): string | null {
   const d = new Date(value);
   return Number.isNaN(d.getTime()) ? null : d.toISOString();
 }
+
+/** Any date string → ISO time; null when empty or invalid. */
+export function fromIso(raw: string): string | null {
+  if (!raw) return null;
+  const d = new Date(raw);
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}

@@ -36,3 +36,20 @@ export function CardRow({ cards, size }: { cards: readonly string[]; size?: 'sm'
     </span>
   );
 }
+
+/** The board with a thin bar between flop, turn and river. */
+export function BoardRow({ cards, size = 'sm' }: { cards: readonly string[]; size?: 'sm' | 'md' }) {
+  const groups = [cards.slice(0, 3), cards.slice(3, 4), cards.slice(4, 5)].filter(
+    (g) => g.length > 0,
+  );
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      {groups.map((g, i) => (
+        <span key={i} className="inline-flex items-center gap-1.5">
+          {i > 0 && <span aria-hidden className="h-5 w-px bg-line" />}
+          <CardRow cards={g} size={size} />
+        </span>
+      ))}
+    </span>
+  );
+}
