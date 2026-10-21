@@ -197,11 +197,16 @@ describe('groupByMonth', () => {
   const sep = item({ s: { id: 'c', date: '2026-09-28' } });
   const open = item({ s: { id: 'o', date: '2026-10-20', cashout: null, endAt: null } });
 
-  it('open sessions first, then months newest first, items newest first', () => {
+  it('months newest first, items newest first; an open session sits in its month by date', () => {
     const g = groupByMonth([oct2, sep, open, oct1]);
-    expect(ids(g.open)).toEqual(['o']);
     expect(g.months.map((m) => m.month)).toEqual(['2026-10', '2026-09']);
-    expect(ids(g.months[0]!.items)).toEqual(['a', 'b']);
+    expect(ids(g.months[0]!.items)).toEqual(['o', 'a', 'b']);
+    expect(ids(g.months[1]!.items)).toEqual(['c']);
+  });
+  it('the same day keeps the incoming order (newest created first)', () => {
+    const x = item({ s: { id: 'x', date: '2026-10-14' } });
+    const y = item({ s: { id: 'y', date: '2026-10-14' } });
+    expect(ids(groupByMonth([y, x]).months[0]!.items)).toEqual(['y', 'x']);
   });
   it('month net adds the cash bb', () => {
     const g = groupByMonth([oct1, oct2]);

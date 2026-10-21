@@ -2,12 +2,15 @@
 
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useMemo, useState, useTransition } from 'react';
 import { sessionTotals, type SessionTotals } from 'poker-core';
+import { deleteSession } from '@/app/(app)/sessions/actions';
 import { Button, buttonClass } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
 import { ChipMenu } from '@/components/ui/chip-menu';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { FilterBar } from '@/components/ui/filter-bar';
 import { Input } from '@/components/ui/input';
 import { Result } from '@/components/ui/result';
@@ -77,17 +80,14 @@ export function SessionList({
   const filtered = useMemo(() => filterItems(items, filter), [items, filter]);
   const totals = useMemo(() => sessionTotals(filtered.map((i) => i.session)), [filtered]);
   const groups = useMemo(() => groupByMonth(filtered), [filtered]);
-  const tableRows = useMemo(
-    () => [
-      ...groups.open,
-      ...sortItems(
-        filtered.filter((i) => i.session.endAt),
-        sort.col,
-        sort.dir,
-      ),
-    ],
-    [filtered, groups.open, sort],
-  );
+  const tableRows = useMemo(() => sortItems(filtered, sort.col, sort.dir), [filtered, sort]);
+  // The newest session of the list gets the "+ Hand" button.
+  const latestId = groups.months[0]?.items[0]?.session.id;
+  const [toDelete, setToDelete] = useState<SessionListItem | null>(null);
+  const [deleteFailed, setDeleteFailed] = useState(false);
+  const [deleting, startDelete] = useTransition();
+  const router = useRouter();
+  const tDetail = useTranslations('sessionDetail');
 
   const num1 = (n: number) => new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(n);
   const explain = tCommon('explain');
@@ -265,15 +265,6 @@ export function SessionList({
           empty
         ) : (
           <div className="flex flex-col gap-6">
-            {groups.open.length > 0 && (
-              <ul className="space-y-2">
-                {groups.open.map((item) => (
-                  <li key={item.session.id}>
-                    <SessionRow item={item} />
-                  </li>
-                ))}
-              </ul>
-            )}
             {groups.months.map((g) => (
               <section key={g.month} className="space-y-2">
                 <div className="flex items-baseline justify-between gap-3">
@@ -287,7 +278,11 @@ export function SessionList({
                 <ul className="divide-y divide-line rounded-md border border-line bg-surface">
                   {g.items.map((item) => (
                     <li key={item.session.id}>
-                      <SessionRow item={item} />
+                      <SessionRow
+                        item={item}
+                        latest={item.session.id === latestId}
+                        onDelete={setToDelete}
+                      />
                     </li>
                   ))}
                 </ul>
@@ -330,6 +325,31 @@ export function SessionList({
           <SessionTable items={tableRows} sort={sort} onSort={onSort} explain={explain} />
         )}
       </div>
+
+      <ConfirmDialog
+        open={toDelete !== null}
+        title={tDetail('deleteTitle')}
+        confirmLabel={tDetail('deleteConfirm')}
+        cancelLabel={tDetail('deleteCancel')}
+        pending={deleting}
+        onCancel={() => setToDelete(null)}
+        onConfirm={() =>
+          startDelete(async () => {
+            if (!toDelete) return;
+            const res = await deleteSession(toDelete.session.id);
+            setToDelete(null);
+            setDeleteFailed(!res.ok);
+            if (res.ok) router.refresh();
+          })
+        }
+      >
+        {tDetail('deleteBody', { n: toDelete?.handCount ?? 0 })}
+      </ConfirmDialog>
+      {deleteFailed && (
+        <p role="alert" className="text-center text-sm text-loss">
+          {tDetail('deleteFailed')}
+        </p>
+      )}
     </main>
   );
 }

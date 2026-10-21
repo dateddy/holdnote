@@ -68,7 +68,6 @@
     "knownOpponents": "Đối thủ quen ở {venue}",
     "noOpponents": "Chưa có ghi chú đối thủ ở địa điểm này.",
     "enterTable": "Vào bàn",
-    "activeTitle": "Phiên đang chơi",
     "startedAt": "Vào bàn lúc {time}",
     "notStarted": "Chưa vào bàn",
     "goBefore": "Mở Trước phiên",
@@ -308,15 +307,18 @@
     "error_server_error": "Lỗi server. Thử lại sau.",
     "summaryRemaining": "Còn {remaining}/{limit} lượt AI tổng kết phiên tháng này.",
     "accountTitle": "Tài khoản",
-    "languageTitle": "Ngôn ngữ"
+    "languageTitle": "Ngôn ngữ",
+    "installTitle": "Cài app"
   },
   "sync": {
     "pending": "{count} hand đang chờ đồng bộ (đã lưu trên máy).",
     "failed": "{count} hand không đồng bộ được (phiên đã xóa hoặc dữ liệu sai)."
   },
   "pwa": {
-    "install": "Cài lên màn hình chính",
-    "iosHint": "Để cài: bấm nút Chia sẻ của Safari, rồi chọn “Thêm vào MH chính”."
+    "install": "Cài app",
+    "iosHint": "Để cài: bấm nút Chia sẻ của Safari, rồi chọn “Thêm vào màn hình chính”.",
+    "installed": "Đã cài app trên máy này.",
+    "otherHint": "Để cài: mở menu của trình duyệt rồi chọn “Cài đặt ứng dụng” hoặc “Thêm vào màn hình chính”."
   },
   "summary": {
     "title": "Tổng kết phiên",
@@ -711,7 +713,6 @@
     "tileSessions": "Phiên",
     "tileNet": "Net",
     "tileRate": "bb/giờ",
-    "playing": "Đang chơi",
     "hands": "{n} hand",
     "reviewCount": "{n} cần xem lại",
     "rank": "Hạng {place}/{entries}",
@@ -744,7 +745,9 @@
     "staleEnd": "Kết thúc phiên",
     "staleLater": "Để sau",
     "tipReview": "Hand đã gắn cờ mà chưa có review được chấp nhận.",
-    "hoursUnit": "{hours} giờ"
+    "hoursUnit": "{hours} giờ",
+    "notEnded": "Chưa kết thúc",
+    "addHand": "+ Hand"
   },
   "sessionDetail": {
     "more": "Thêm",

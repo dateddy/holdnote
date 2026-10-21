@@ -10,7 +10,7 @@ import type { SessionListItem, SortColumn, SortDir } from '@/lib/sessions/list';
 import { useSessionText } from './use-session-text';
 
 type Props = {
-  /** Open sessions first, then the rest in the chosen order. */
+  /** Rows in the chosen order. */
   items: SessionListItem[];
   sort: { col: SortColumn; dir: SortDir };
   onSort: (col: SortColumn) => void;
@@ -56,21 +56,21 @@ export function SessionTable({ items, sort, onSort, explain }: Props) {
             const net = x.net(item);
             const rate = sessionTotals([s]).bbPerHour;
             return (
-              <tr
-                key={s.id}
-                className={`border-t border-line ${open ? 'bg-accent/10' : ''}`.trim()}
-              >
+              <tr key={s.id} className="border-t border-line">
                 <td className="px-3 py-2 whitespace-nowrap">
                   <Link href={x.href(item)} className="underline-offset-4 hover:underline">
                     {formatDay(s.date, true)}
                   </Link>
-                  {open && <span className="ml-2 text-xs text-accent">{t('playing')}</span>}
                 </td>
                 <td className="px-3 py-2">{s.kind === 'mtt' ? t('kindMtt') : t('kindCash')}</td>
                 <td className="max-w-48 truncate px-3 py-2">{s.venue ?? '–'}</td>
                 <td className="px-3 py-2 whitespace-nowrap tabular-nums">{x.blindLabel(item)}</td>
                 <td className="px-3 py-2 text-right whitespace-nowrap tabular-nums">
-                  {open ? '' : x.duration(item) || '–'}
+                  {open ? (
+                    <span className="text-xs text-muted">{t('notEnded')}</span>
+                  ) : (
+                    x.duration(item) || '–'
+                  )}
                 </td>
                 <td className="px-3 py-2 text-right tabular-nums">{item.handCount}</td>
                 <td className="px-3 py-2 text-right whitespace-nowrap">

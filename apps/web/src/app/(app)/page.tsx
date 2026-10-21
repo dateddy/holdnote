@@ -1,5 +1,4 @@
 import { redirect } from 'next/navigation';
-import { InstallHint } from '@/components/pwa/install-hint';
 import { SessionList } from '@/components/session/session-list';
 import { buildListItems, parseListFilter, staleItems } from '@/lib/sessions/list';
 import { STATS_COLUMNS } from '@/lib/sessions/summary';
@@ -58,15 +57,10 @@ export default async function Home({ searchParams }: PageProps<'/'>) {
   const items = buildListItems(sessions, hands, new Set(reviews.map((r) => r.hand_id)));
 
   return (
-    <>
-      <SessionList
-        items={items}
-        initialFilter={parseListFilter(await searchParams)}
-        stale={staleItems(items, new Date().toISOString())}
-      />
-      <div className="mx-auto w-full max-w-md px-6 pb-6">
-        <InstallHint />
-      </div>
-    </>
+    <SessionList
+      items={items}
+      initialFilter={parseListFilter(await searchParams)}
+      stale={staleItems(items, new Date().toISOString())}
+    />
   );
 }

@@ -68,7 +68,6 @@
     "knownOpponents": "Opponents you know at {venue}",
     "noOpponents": "No opponent notes for this venue yet.",
     "enterTable": "Sit down",
-    "activeTitle": "Current session",
     "startedAt": "Seated at {time}",
     "notStarted": "Not seated yet",
     "goBefore": "Open pre-session",
@@ -308,15 +307,18 @@
     "error_server_error": "Server error. Try again later.",
     "summaryRemaining": "{remaining}/{limit} session summaries left this month.",
     "accountTitle": "Account",
-    "languageTitle": "Language"
+    "languageTitle": "Language",
+    "installTitle": "Install app"
   },
   "sync": {
     "pending": "{count} hand(s) waiting to sync (saved on this device).",
     "failed": "{count} hand(s) could not sync (session deleted or invalid data)."
   },
   "pwa": {
-    "install": "Install on home screen",
-    "iosHint": "To install: tap Safari's Share button, then “Add to Home Screen”."
+    "install": "Install app",
+    "iosHint": "To install: tap Safari’s Share button, then “Add to Home Screen”.",
+    "installed": "The app is installed on this device.",
+    "otherHint": "To install: open the browser menu and choose “Install app” or “Add to Home Screen”."
   },
   "summary": {
     "title": "Session summary",
@@ -711,7 +713,6 @@
     "tileSessions": "Sessions",
     "tileNet": "Net",
     "tileRate": "bb/hour",
-    "playing": "Playing",
     "hands": "{n} hands",
     "reviewCount": "{n} to review",
     "rank": "Place {place}/{entries}",
@@ -744,7 +745,9 @@
     "staleEnd": "End session",
     "staleLater": "Later",
     "tipReview": "Flagged hands that have no accepted review yet.",
-    "hoursUnit": "{hours} h"
+    "hoursUnit": "{hours} h",
+    "notEnded": "Not ended",
+    "addHand": "+ Hand"
   },
   "sessionDetail": {
     "more": "More",

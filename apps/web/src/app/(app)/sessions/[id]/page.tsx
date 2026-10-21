@@ -69,7 +69,7 @@ export default async function SessionPage({ params, searchParams }: PageProps<'/
     session.kind === 'cash'
       ? session.stakeLabel
       : [tSessions('mtt'), mtt?.name ? session.venue : null].filter(Boolean).join(' · '),
-    row.end_at ? null : t('playing'),
+    row.end_at ? null : t('notEnded'),
     t('hands', { n: rows.length }),
   ]
     .filter(Boolean)

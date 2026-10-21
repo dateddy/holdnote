@@ -21,15 +21,18 @@ const subscribe = (l: () => void) => {
 type Props = {
   /** One sentence, about 15 words at most. */
   text: string;
-  /** Accessible name of the "?" button, e.g. "Giải thích". */
+  /** Accessible name of the button, e.g. "Giải thích". */
   label: string;
+  /** `?` explains a figure or term; `!` marks a caution (AI analysis: "for reference only"). */
+  icon?: '?' | '!';
 };
 
 /**
- * "?" next to a figure or term. Touch: tap opens, tap elsewhere closes, one open at a time.
+ * "?" (or "!") next to a figure or term. The panel is centred on the icon, stays inside the
+ * screen and opens upward when there is no room below. Touch: tap opens, tap elsewhere closes, one open at a time.
  * Mouse: hover. Keyboard: focus.
  */
-export function InfoTip({ text, label }: Props) {
+export function InfoTip({ text, label, icon = '?' }: Props) {
   const id = useId();
   const anchor = useRef<HTMLSpanElement>(null);
   const current = useSyncExternalStore(
@@ -41,7 +44,8 @@ export function InfoTip({ text, label }: Props) {
   const [focus, setFocus] = useState(false);
   const open = current === id;
   const visible = open || hover || focus;
-  const style = useFloatingStyle(visible, anchor, 224);
+  const panel = useRef<HTMLSpanElement>(null);
+  const style = useFloatingStyle(visible, anchor, 224, { panel, align: 'center' });
 
   useEffect(() => {
     if (!open) return;
@@ -73,10 +77,11 @@ export function InfoTip({ text, label }: Props) {
         onBlur={() => setFocus(false)}
         className="relative inline-flex size-5 items-center justify-center rounded-full border border-line text-xs text-muted after:absolute after:-inset-3"
       >
-        ?
+        {icon}
       </button>
       {visible && (
         <span
+          ref={panel}
           id={id}
           role="tooltip"
           style={style}

@@ -20,7 +20,8 @@ type Props = {
 export function ChipMenu({ label, value, options, allLabel, onChange, className }: Props) {
   const [open, setOpen] = useState(false);
   const anchor = useRef<HTMLSpanElement>(null);
-  const style = useFloatingStyle(open, anchor, 224);
+  const panel = useRef<HTMLDivElement>(null);
+  const style = useFloatingStyle(open, anchor, 224, { panel });
   const chosen = options.find((o) => o.value === value);
 
   useEffect(() => {
@@ -70,6 +71,7 @@ export function ChipMenu({ label, value, options, allLabel, onChange, className 
       </Chip>
       {open && (
         <div
+          ref={panel}
           role="group"
           aria-label={label}
           style={style}

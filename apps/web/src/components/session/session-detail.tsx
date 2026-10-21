@@ -4,7 +4,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState, useTransition } from 'react';
-import { deleteSession } from '@/app/(app)/sessions/actions';
+import { deleteSession, enterTable } from '@/app/(app)/sessions/actions';
 import { setHandFlag } from '@/app/(app)/hands/actions';
 import type { AiInfo } from '@/components/hand/review-form';
 import { HandRow } from '@/components/hand-list/hand-row';
@@ -259,9 +259,12 @@ export function SessionDetail({
   const buttons = (
     <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
       {stage === 'notStarted' && (
-        <Link href={`/sessions/${id}/before`} className={buttonClass({ size: 'lg', full: false })}>
-          {t('goBefore')}
-        </Link>
+        // A session made before the form had a start time: starting it sets the start time now.
+        <form action={enterTable.bind(null, id)}>
+          <Button type="submit" size="lg" full={false}>
+            {t('recordHand')}
+          </Button>
+        </form>
       )}
       {stage === 'playing' && (
         <>

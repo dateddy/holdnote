@@ -222,23 +222,21 @@ export function serializeListFilter(f: ListFilter): string {
 
 export type MonthGroup = { month: string; items: SessionListItem[]; totals: SessionTotals };
 
-/** Open sessions first, then one group per month, newest first (stable within a day). */
-export function groupByMonth(items: readonly SessionListItem[]): {
-  open: SessionListItem[];
-  months: MonthGroup[];
-} {
+/**
+ * One group per month, newest first (stable within a day). A session that has not ended is not
+ * set apart: it sits in its month by date like the others (5.1d-3).
+ */
+export function groupByMonth(items: readonly SessionListItem[]): { months: MonthGroup[] } {
   const byDate = (a: SessionListItem, b: SessionListItem) =>
     b.session.date.localeCompare(a.session.date);
-  const open = items.filter((it) => !it.session.endAt).sort(byDate);
   const groups = new Map<string, SessionListItem[]>();
-  for (const it of [...items].filter((x) => x.session.endAt).sort(byDate)) {
+  for (const it of [...items].sort(byDate)) {
     const m = monthOf(it.session);
     const list = groups.get(m);
     if (list) list.push(it);
     else groups.set(m, [it]);
   }
   return {
-    open,
     months: [...groups]
       .sort((a, b) => b[0].localeCompare(a[0]))
       .map(([month, list]) => ({

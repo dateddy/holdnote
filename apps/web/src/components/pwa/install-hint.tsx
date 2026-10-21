@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useEffect, useState, useSyncExternalStore } from 'react';
+import { Button } from '@/components/ui/button';
 
 type InstallPromptEvent = Event & { prompt: () => Promise<void> };
 
@@ -11,8 +12,11 @@ const isStandalone = () =>
   (navigator as Navigator & { standalone?: boolean }).standalone === true;
 const isIos = () => /iphone|ipad|ipod/i.test(navigator.userAgent);
 
-/** "Add to home screen": the browser prompt where it exists, a how-to on iOS Safari. */
-export function InstallHint() {
+/**
+ * "Cài app" in Settings: the browser prompt where it exists, a how-to on iOS Safari, a plain
+ * note once the app is installed.
+ */
+export function InstallApp() {
   const t = useTranslations('pwa');
   // The server snapshot hides everything; the browser value takes over after hydration.
   const standalone = useSyncExternalStore(noSubscription, isStandalone, () => true);
@@ -34,21 +38,19 @@ export function InstallHint() {
     };
   }, []);
 
-  if (standalone || justInstalled) return null;
+  if (standalone || justInstalled) return <p className="text-sm">{t('installed')}</p>;
   if (prompt) {
     return (
-      <button
-        type="button"
+      <Button
+        variant="secondary"
         onClick={async () => {
           await prompt.prompt();
           setPrompt(null);
         }}
-        className="h-12 rounded-md border border-line bg-surface text-base"
       >
         {t('install')}
-      </button>
+      </Button>
     );
   }
-  if (ios) return <p className="text-sm text-muted">{t('iosHint')}</p>;
-  return null;
+  return <p className="text-sm text-muted">{ios ? t('iosHint') : t('otherHint')}</p>;
 }

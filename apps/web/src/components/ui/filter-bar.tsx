@@ -1,4 +1,6 @@
-import type { ReactNode } from 'react';
+'use client';
+
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 
 type Props = {
   /** `row`: one line that scrolls sideways (phone). `column`: stacked (desktop side column). */
@@ -10,18 +12,44 @@ type Props = {
 
 /**
  * Layout of filter controls: `Segmented`, `ChipMenu` and toggle `Chip`s. In a row, controls keep
- * their width and the bar scrolls sideways; in a column they stack.
+ * their width and the bar scrolls sideways with no scrollbar; the right edge fades out while more
+ * controls are hidden past it. In a column they stack.
  */
 export function FilterBar({ orientation = 'row', label, children }: Props) {
+  const row = useRef<HTMLDivElement>(null);
+  const [more, setMore] = useState(false);
+
+  useEffect(() => {
+    const el = row.current;
+    if (!el || orientation !== 'row') return;
+    const measure = () => setMore(el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
+    // The observer reports once when it starts, so the first measure needs no call of its own.
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    for (const child of Array.from(el.children)) observer.observe(child);
+    el.addEventListener('scroll', measure, { passive: true });
+    return () => {
+      observer.disconnect();
+      el.removeEventListener('scroll', measure);
+    };
+  }, [orientation, children]);
+
+  if (orientation === 'column') {
+    return (
+      <div role="group" aria-label={label} className="flex flex-col gap-3">
+        {children}
+      </div>
+    );
+  }
   return (
     <div
+      ref={row}
       role="group"
       aria-label={label}
-      className={
-        orientation === 'row'
-          ? 'flex items-center gap-2 overflow-x-auto [&>*]:shrink-0'
-          : 'flex flex-col gap-3'
-      }
+      data-hscroll
+      className={`flex items-center gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&>*]:shrink-0 ${
+        more ? '[mask-image:linear-gradient(to_right,black_calc(100%_-_2.5rem),transparent)]' : ''
+      }`}
     >
       {children}
     </div>

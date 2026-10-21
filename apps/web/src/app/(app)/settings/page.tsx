@@ -2,6 +2,7 @@ import { getTranslations } from 'next-intl/server';
 import { buttonClass } from '@/components/ui/button';
 import { LocaleSwitcher } from '@/i18n/locale-switcher';
 import { AiKeyForm } from '@/components/settings/ai-key-form';
+import { InstallApp } from '@/components/pwa/install-hint';
 import { loadUsage } from '@/lib/ai/quota';
 import { aiStatus } from '@/lib/ai/status';
 import { createAdminClient } from '@/lib/supabase/admin';
@@ -23,6 +24,11 @@ export default async function SettingsPage() {
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-semibold">{t('languageTitle')}</h2>
         <LocaleSwitcher />
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <h2 className="text-lg font-semibold">{t('installTitle')}</h2>
+        <InstallApp />
       </section>
 
       <section className="flex flex-col gap-3">

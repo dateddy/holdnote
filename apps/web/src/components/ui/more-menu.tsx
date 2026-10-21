@@ -20,7 +20,8 @@ export type MoreMenuItem = {
 export function MoreMenu({ label, items }: { label: string; items: readonly MoreMenuItem[] }) {
   const [open, setOpen] = useState(false);
   const anchor = useRef<HTMLSpanElement>(null);
-  const style = useFloatingStyle(open, anchor, 224);
+  const panel = useRef<HTMLDivElement>(null);
+  const style = useFloatingStyle(open, anchor, 224, { panel });
 
   useEffect(() => {
     if (!open) return;
@@ -46,6 +47,7 @@ export function MoreMenu({ label, items }: { label: string; items: readonly More
       <IconButton glyph="⋯" label={label} aria-expanded={open} onClick={() => setOpen((o) => !o)} />
       {open && (
         <div
+          ref={panel}
           role="menu"
           aria-label={label}
           style={style}
