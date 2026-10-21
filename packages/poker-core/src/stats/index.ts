@@ -73,6 +73,10 @@ export interface SessionTotals {
   netBb: number;
   /** Cash only: bb won over hours played, using the sessions that have both a result and hours. */
   bbPerHour: number | null;
+  /** How many sessions bb/hour is computed on: cash with a result and both times. */
+  rateSessions: number;
+  /** Cash and MTT results in money, one entry per currency (money of different currencies never adds up). */
+  netMoney: { currency: string; money: number }[];
   /** MTT results in money, one entry per currency. */
   mttMoney: { currency: string; money: number }[];
 }
@@ -83,12 +87,19 @@ export function sessionTotals(sessions: StatsSession[]): SessionTotals {
   let netBb = 0;
   let rateBb = 0;
   let rateHours = 0;
+  let rateSessions = 0;
   const mttMoney = new Map<string, number>();
+  const netMoney = new Map<string, number>();
+  const byCurrency = (m: Map<string, number>) =>
+    [...m]
+      .sort((x, y) => x[0].localeCompare(y[0]))
+      .map(([currency, money]) => ({ currency, money: roundMoney(money) }));
   for (const s of sessions) {
     const h = sessionHours(s);
     if (h != null) hours += h;
     const result = sessionResult(s);
     if (!result) continue;
+    netMoney.set(s.currency, (netMoney.get(s.currency) ?? 0) + result.money);
     if (s.kind === 'mtt') {
       mttMoney.set(s.currency, (mttMoney.get(s.currency) ?? 0) + result.money);
     } else if (result.bb != null) {
@@ -96,6 +107,7 @@ export function sessionTotals(sessions: StatsSession[]): SessionTotals {
       if (h != null) {
         rateBb += result.bb;
         rateHours += h;
+        rateSessions += 1;
       }
     }
   }
@@ -104,10 +116,35 @@ export function sessionTotals(sessions: StatsSession[]): SessionTotals {
     hours: roundMoney(hours),
     netBb: roundMoney(netBb),
     bbPerHour: rateHours > 0 ? roundMoney(rateBb / rateHours) : null,
-    mttMoney: [...mttMoney]
-      .sort((x, y) => x[0].localeCompare(y[0]))
-      .map(([currency, money]) => ({ currency, money: roundMoney(money) })),
+    rateSessions,
+    netMoney: byCurrency(netMoney),
+    mttMoney: byCurrency(mttMoney),
   };
+}
+
+/** A session left open this long is probably forgotten. */
+export const STALE_SESSION_HOURS = 16;
+const STALE_END_PAD_MS = 15 * 60_000;
+
+/**
+ * A session open for more than 16 hours: the app offers to end it, with the end time defaulting to
+ * the last hand plus 15 minutes (the start plus 15 minutes when there is no hand), never before the
+ * start and never after now. Times are ISO strings.
+ */
+export function staleSession(
+  s: Pick<StatsSession, 'startAt' | 'endAt'>,
+  lastHandAt: string | null,
+  now: string,
+): { suggestedEnd: string } | null {
+  if (!s.startAt || s.endAt) return null;
+  const start = Date.parse(s.startAt);
+  const nowMs = Date.parse(now);
+  if (!Number.isFinite(start) || !Number.isFinite(nowMs)) return null;
+  if (nowMs - start <= STALE_SESSION_HOURS * 3_600_000) return null;
+  const last = lastHandAt ? Date.parse(lastHandAt) : NaN;
+  const base = Number.isFinite(last) ? Math.max(last, start) : start;
+  const end = Math.min(base + STALE_END_PAD_MS, nowMs);
+  return { suggestedEnd: new Date(end).toISOString() };
 }
 
 /** Cash session whose loss went past the stop-loss (a loss equal to it is not a breach). */

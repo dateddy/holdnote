@@ -14,9 +14,9 @@ type Props = {
 /** Label with an optional "?", and one big figure. */
 export function StatTile({ label, tip, children, sub }: Props) {
   return (
-    <div className="min-w-0 space-y-1 rounded-md border border-line bg-surface p-3">
-      <div className="flex flex-wrap items-center gap-x-1 text-xs text-muted">
-        <span>{label}</span>
+    <div className="flex h-full min-w-0 flex-col gap-1 rounded-md border border-line bg-surface p-3">
+      <div className="flex items-center gap-x-1 text-xs text-muted">
+        <span className="truncate">{label}</span>
         {tip && <InfoTip text={tip.text} label={tip.label} />}
       </div>
       <div className="text-lg font-semibold tabular-nums lg:text-2xl">{children}</div>

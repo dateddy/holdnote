@@ -422,3 +422,9 @@ Append-only. Không sửa, không xóa mục cũ. Muốn đảo một quyết đ
 - Thêm component `InfoTip`, `StatTile`, `FilterBar`, `Segmented`, `ChipMenu`, `SortHeader`, `SideNav` (không thêm dependency; chưa dùng icon, chờ 5.1b-3). Ngoại lệ bề rộng desktop của trang Phiên ghi trong `docs/design.md`.
 - Chưa làm: hai cây giao diện (điện thoại và desktop) cùng nằm trong DOM, ẩn bằng CSS; chấp nhận được với vài trăm phiên. Chưa có lọc theo khoảng ngày tùy chọn. Phiên đã lưu có giờ vào/ra: trong DB thật chỉ 1 phiên cash đã kết thúc; dữ liệu cũ cần 5.2 để có giờ.
 - Ai quyết: Đạt (duyệt kế hoạch 2026-10-21)
+
+## DEC-059 — Net theo loại phiên, bb/giờ ghi số phiên, nhắc phiên mở quá 16 giờ (sửa nhỏ 5.1d-1)
+
+- Ngày: 2026-10-21
+- Quyết định: (1) Ô Net theo bộ lọc loại: Tất cả và MTT hiện tiền (mỗi đơn vị tiền một số, số đầu là số lớn), Cash hiện bb và dòng phụ là tiền; bb và tiền thưởng MTT không bao giờ cộng với nhau. `sessionTotals` thêm `netMoney` và `rateSessions`. (2) bb/giờ chỉ tính phiên cash có giờ kết thúc (đã đúng từ 5.1d-1); InfoTip ghi số phiên, cột bảng hiện "—" khi không tính được. (3) `staleSession` ở `poker-core`: phiên đã vào bàn, chưa kết thúc, mở quá 16 giờ thì trang chủ hiện thẻ nhắc; giờ ra gợi ý = giờ hand cuối + 15 phút (không có hand: giờ vào + 15 phút), kẹp trong [giờ vào, bây giờ]. Giờ chọn đi qua `/sessions/[id]/end?endAt=` và trường ẩn `end_at`; server dùng `resolveEndAt` (sai, trước giờ vào hoặc ở tương lai thì dùng bây giờ). Thời điểm "bây giờ" tính ở server để render không lệch giờ. (4) Nhãn ô "Phiên · giờ" thành "Phiên", `StatTile` cao bằng nhau.
+- Ai quyết: Đạt (2026-10-21)

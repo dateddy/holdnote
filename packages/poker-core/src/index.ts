@@ -93,6 +93,8 @@ export {
   sessionHours,
   sessionResult,
   sessionTotals,
+  STALE_SESSION_HOURS,
+  staleSession,
   stopLossBreached,
   type Discipline,
   type LeakLine,

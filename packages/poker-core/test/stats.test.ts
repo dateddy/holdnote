@@ -8,6 +8,7 @@ import {
   sessionHours,
   sessionResult,
   sessionTotals,
+  staleSession,
   stopLossBreached,
   type StatsSession,
 } from '../src/index';
@@ -303,7 +304,67 @@ describe('sessionTotals', () => {
       hours: 0,
       netBb: 0,
       bbPerHour: null,
+      rateSessions: 0,
+      netMoney: [],
       mttMoney: [],
     });
+  });
+
+  it('rateSessions counts only the sessions behind bb/hour (cash with result and both times)', () => {
+    const noTimes = cash({ id: 'c', buyin: 1, cashout: 101 });
+    expect(sessionTotals([a, b, noTimes]).rateSessions).toBe(2);
+    expect(sessionTotals([noTimes]).rateSessions).toBe(0);
+  });
+
+  it('netMoney adds cash and MTT money per currency', () => {
+    const m = mtt(); // +0.93 USD
+    const t = sessionTotals([a, b, m]); // a: -3.3, b: +4 (USD)
+    expect(t.netMoney).toEqual([{ currency: 'USD', money: 1.63 }]);
+    const vnd = mtt({
+      id: 'm2',
+      currency: 'VND',
+      buyin: 1000,
+      mtt: { ...m.mtt!, prize: 0, bounty: null },
+    });
+    expect(sessionTotals([a, vnd]).netMoney).toEqual([
+      { currency: 'USD', money: -3.3 },
+      { currency: 'VND', money: -1000 },
+    ]);
+  });
+});
+
+describe('staleSession', () => {
+  const start = '2026-10-20T10:00:00Z';
+  const hours = (h: number) => new Date(Date.parse(start) + h * 3_600_000).toISOString();
+
+  it('open for exactly 16 hours is not stale; past it is', () => {
+    expect(staleSession({ startAt: start, endAt: null }, null, hours(16))).toBeNull();
+    expect(staleSession({ startAt: start, endAt: null }, null, hours(16.5))).not.toBeNull();
+  });
+
+  it('never stale when ended or not started', () => {
+    expect(staleSession({ startAt: start, endAt: hours(3) }, null, hours(30))).toBeNull();
+    expect(staleSession({ startAt: null, endAt: null }, null, hours(30))).toBeNull();
+  });
+
+  it('suggests the last hand plus 15 minutes', () => {
+    expect(staleSession({ startAt: start, endAt: null }, hours(5), hours(30))).toEqual({
+      suggestedEnd: hours(5.25),
+    });
+  });
+
+  it('without hands suggests the start plus 15 minutes', () => {
+    expect(staleSession({ startAt: start, endAt: null }, null, hours(30))).toEqual({
+      suggestedEnd: hours(0.25),
+    });
+  });
+
+  it('a hand before the start is clamped to the start; never later than now', () => {
+    expect(staleSession({ startAt: start, endAt: null }, hours(-2), hours(30))?.suggestedEnd).toBe(
+      hours(0.25),
+    );
+    expect(
+      staleSession({ startAt: start, endAt: null }, hours(29.9), hours(30))?.suggestedEnd,
+    ).toBe(hours(30));
   });
 });

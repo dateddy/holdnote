@@ -1,6 +1,7 @@
 'use server';
 
 import { redirect } from 'next/navigation';
+import { resolveEndAt } from '@/lib/sessions/end-time';
 import { createClient } from '@/lib/supabase/server';
 import {
   END_FIELDS,
@@ -32,7 +33,7 @@ export async function endSession(
   const supabase = await createClient();
   const { data: session } = await supabase
     .from('sessions')
-    .select('id, kind, mtt, end_at')
+    .select('id, kind, mtt, start_at, end_at')
     .eq('id', sessionId)
     .maybeSingle();
   if (!session) return { values, errors: {}, failed: true };
@@ -49,7 +50,17 @@ export async function endSession(
       ...(kind === 'cash'
         ? { cashout: value.cashout }
         : { mtt: mergeMtt(session.mtt, value.mttResult) }),
-      ...(session.end_at ? {} : { end_at: new Date().toISOString() }),
+      ...(session.end_at
+        ? {}
+        : {
+            end_at: resolveEndAt(
+              typeof formData.get('end_at') === 'string'
+                ? (formData.get('end_at') as string)
+                : null,
+              session.start_at,
+              new Date().toISOString(),
+            ),
+          }),
     })
     .eq('id', sessionId);
   if (error) return { values, errors: {}, failed: true };

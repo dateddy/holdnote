@@ -1,4 +1,10 @@
-import { sessionResult, sessionTotals, type SessionTotals, type StatsSession } from 'poker-core';
+import {
+  sessionResult,
+  sessionTotals,
+  staleSession,
+  type SessionTotals,
+  type StatsSession,
+} from 'poker-core';
 import { handTotals } from '@/lib/home/home';
 import { isOneOf } from './form';
 import { toStatsSession, type StatsRow } from './summary';
@@ -14,6 +20,8 @@ export type SessionListItem = {
   /** Free text of the debrief (`summary.notes`), searched with the venue. */
   notes: string;
   tournamentName: string | null;
+  /** `created_at` of the newest hand, for the end-time suggestion of a forgotten session. */
+  lastHandAt: string | null;
 };
 
 export type ListSessionRow = StatsRow & { summary: unknown };
@@ -23,6 +31,7 @@ export type ListHandRow = {
   result: number | null;
   level_bb: number | null;
   flagged: boolean;
+  created_at?: string;
 };
 
 const record = (x: unknown): Record<string, unknown> =>
@@ -55,7 +64,22 @@ export function buildListItems(
           : null,
       notes: typeof notes === 'string' ? notes : '',
       tournamentName: typeof name === 'string' && name.trim() ? name.trim() : null,
+      lastHandAt: own.reduce<string | null>(
+        (best, h) => (h.created_at && (!best || h.created_at > best) ? h.created_at : best),
+        null,
+      ),
     };
+  });
+}
+
+/** Open sessions left for more than 16 hours, each with the end time the app suggests. */
+export function staleItems(
+  items: readonly SessionListItem[],
+  now: string,
+): { item: SessionListItem; suggestedEnd: string }[] {
+  return items.flatMap((item) => {
+    const stale = staleSession(item.session, item.lastHandAt, now);
+    return stale ? [{ item, suggestedEnd: stale.suggestedEnd }] : [];
   });
 }
 
@@ -273,4 +297,19 @@ export function sortItems(
       typeof x === 'number' && typeof y === 'number' ? x - y : String(x).localeCompare(String(y));
     return c * sign;
   });
+}
+
+// --- tiles ------------------------------------------------------------------------------------
+
+export type MoneyLine = { currency: string; money: number };
+export type NetTile = { main: { bb: number } | MoneyLine | null; sub: MoneyLine[] };
+
+/**
+ * The Net tile follows the kind filter: cash shows bb (money under it); all and MTT show money,
+ * because bb of cash and prize money of MTT cannot be added.
+ */
+export function netTile(totals: SessionTotals, kind: ListFilter['kind']): NetTile {
+  if (kind === 'cash') return { main: { bb: totals.netBb }, sub: totals.netMoney };
+  const [first, ...rest] = totals.netMoney;
+  return { main: first ?? null, sub: rest };
 }

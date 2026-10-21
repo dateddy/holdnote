@@ -20,6 +20,7 @@ import {
   groupByMonth,
   isFiltering,
   listOptions,
+  netTile,
   serializeListFilter,
   sortItems,
   EMPTY_FILTER,
@@ -31,6 +32,7 @@ import {
 } from '@/lib/sessions/list';
 import { SessionRow } from './session-row';
 import { SessionTable } from './session-table';
+import { StaleSessions, type StaleEntry } from './stale-sessions';
 import { useSessionText } from './use-session-text';
 
 /** Columns that start from the largest value when first chosen. */
@@ -47,9 +49,12 @@ const DESC_FIRST: readonly SortColumn[] = [
 export function SessionList({
   items,
   initialFilter,
+  stale = [],
 }: {
   items: SessionListItem[];
   initialFilter: ListFilter;
+  /** Open sessions past 16 hours (computed on the server so the render does not depend on the clock). */
+  stale?: StaleEntry[];
 }) {
   const { t, locale } = useSessionText();
   const tCommon = useTranslations('common');
@@ -137,6 +142,11 @@ export function SessionList({
     </>
   );
 
+  const net = netTile(totals, filter.kind);
+  const moneyText = (m: { currency: string; money: number }) =>
+    `${m.money > 0 ? '+' : ''}${formatMoney(m.money, m.currency, locale)}`;
+  const netSub = net.sub.map(moneyText).join(' · ');
+
   const tiles = (
     <>
       <StatTile
@@ -148,24 +158,36 @@ export function SessionList({
       </StatTile>
       <StatTile
         label={t('tileNet')}
-        tip={{ text: t('tipNet'), label: explain }}
-        sub={
-          totals.mttMoney.length > 0
-            ? totals.mttMoney
-                .map((m) =>
-                  t('mttNet', {
-                    amount: `${m.money > 0 ? '+' : ''}${formatMoney(m.money, m.currency, locale)}`,
-                  }),
-                )
-                .join(' · ')
-            : undefined
-        }
+        tip={{
+          text: t(
+            filter.kind === 'cash'
+              ? 'tipNetCash'
+              : filter.kind === 'mtt'
+                ? 'tipNetMtt'
+                : 'tipNetAll',
+          ),
+          label: explain,
+        }}
+        sub={netSub || undefined}
       >
-        <Result value={totals.netBb}>{signedNumber(totals.netBb, locale)}</Result>
+        {net.main == null ? (
+          '—'
+        ) : 'bb' in net.main ? (
+          <Result value={net.main.bb}>{signedNumber(net.main.bb, locale)} bb</Result>
+        ) : (
+          <Result value={net.main.money}>{moneyText(net.main)}</Result>
+        )}
       </StatTile>
-      <StatTile label={t('tileRate')} tip={{ text: t('tipRate'), label: explain }}>
+      <StatTile
+        label={t('tileRate')}
+        tip={{
+          text:
+            totals.rateSessions > 0 ? t('tipRate', { n: totals.rateSessions }) : t('tipRateNone'),
+          label: explain,
+        }}
+      >
         {totals.bbPerHour == null ? (
-          '–'
+          '—'
         ) : (
           <Result value={totals.bbPerHour}>{signedNumber(totals.bbPerHour, locale)}</Result>
         )}
@@ -208,6 +230,7 @@ export function SessionList({
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 p-6 lg:max-w-none">
       <TopBar title={t('title')} action={newSession} />
+      <StaleSessions entries={stale} />
 
       {/* Phone */}
       <div className="flex flex-col gap-3 lg:hidden">

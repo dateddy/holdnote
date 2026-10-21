@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import type { StatsSession } from 'poker-core';
+import type { SessionTotals, StatsSession } from 'poker-core';
 import {
   buildListItems,
+  staleItems,
+  netTile,
   EMPTY_FILTER,
   filterItems,
   groupByMonth,
@@ -46,6 +48,7 @@ function item(
     live: null,
     notes: '',
     tournamentName: null,
+    lastHandAt: null,
     ...rest,
   };
 }
@@ -87,6 +90,15 @@ describe('buildListItems', () => {
     expect(first!.toReview).toBe(1); // h1 flagged, no accepted review; h2 reviewed
     expect(first!.live).toEqual({ bb: 5, money: 250 });
     expect(first!.notes).toBe('Bàn rất loose');
+  });
+  it('lastHandAt is the newest created_at among the session hands', () => {
+    const timed = [
+      { ...hands[0]!, created_at: '2026-10-14T13:00:00Z' },
+      { ...hands[1]!, created_at: '2026-10-14T13:30:00Z' },
+      hands[2]!,
+    ];
+    expect(buildListItems(rows, timed, new Set())[0]!.lastHandAt).toBe('2026-10-14T13:30:00Z');
+    expect(buildListItems(rows, hands, new Set())[0]!.lastHandAt).toBeNull();
   });
   it('a finished session has no live result', () => {
     const [first] = buildListItems(
@@ -254,5 +266,62 @@ describe('filter in the URL', () => {
   });
   it('ignores junk', () => {
     expect(parseListFilter({ kind: 'sng', month: 'last', win: 'yes' })).toEqual(f());
+  });
+});
+
+describe('staleItems', () => {
+  const open = (id: string, startAt: string | null, lastHandAt: string | null = null) =>
+    item({ s: { id, startAt, endAt: null }, lastHandAt });
+  const now = '2026-10-21T10:00:00.000Z';
+
+  it('lists open sessions past 16 hours with the suggested end', () => {
+    const stale = staleItems(
+      [
+        open('old', '2026-10-20T10:00:00.000Z', '2026-10-20T15:00:00.000Z'),
+        open('fresh', '2026-10-21T02:00:00.000Z'),
+        open('later', null),
+        item({ s: { id: 'done' } }),
+      ],
+      now,
+    );
+    expect(stale.map((x) => [x.item.session.id, x.suggestedEnd])).toEqual([
+      ['old', '2026-10-20T15:15:00.000Z'],
+    ]);
+  });
+});
+
+describe('netTile', () => {
+  const totals = (over: Partial<SessionTotals> = {}): SessionTotals => ({
+    count: 2,
+    hours: 0,
+    netBb: 40,
+    bbPerHour: null,
+    rateSessions: 0,
+    netMoney: [{ currency: 'VND', money: 2000 }],
+    mttMoney: [],
+    ...over,
+  });
+
+  it('cash: the big number is bb, money goes under it', () => {
+    expect(netTile(totals(), 'cash')).toEqual({
+      main: { bb: 40 },
+      sub: [{ currency: 'VND', money: 2000 }],
+    });
+  });
+  it('all and MTT: the big number is money, other currencies go under it', () => {
+    const two = totals({
+      netMoney: [
+        { currency: 'USD', money: 5 },
+        { currency: 'VND', money: -1000 },
+      ],
+    });
+    expect(netTile(two, 'all')).toEqual({
+      main: { currency: 'USD', money: 5 },
+      sub: [{ currency: 'VND', money: -1000 }],
+    });
+    expect(netTile(two, 'mtt').main).toEqual({ currency: 'USD', money: 5 });
+  });
+  it('no result yet: no main figure', () => {
+    expect(netTile(totals({ netMoney: [] }), 'all')).toEqual({ main: null, sub: [] });
   });
 });

@@ -44,8 +44,8 @@ export function SessionTable({ items, sort, onSort, explain }: Props) {
             {header('blind', t('colBlind'))}
             {header('duration', t('colDuration'), 'right')}
             {header('hands', t('colHands'), 'right')}
-            {header('net', t('colNet'), 'right', t('tipNet'))}
-            {header('bbPerHour', t('colRate'), 'right', t('tipRate'))}
+            {header('net', t('colNet'), 'right', t('tipNetCol'))}
+            {header('bbPerHour', t('colRate'), 'right', t('tipRateCol'))}
             {header('review', t('colReview'), 'right', t('tipReview'))}
           </tr>
         </thead>
@@ -97,7 +97,7 @@ export function SessionTable({ items, sort, onSort, explain }: Props) {
                   )}
                 </td>
                 <td className="px-3 py-2 text-right tabular-nums">
-                  {rate == null ? '–' : <Result value={rate}>{signedNumber(rate, locale)}</Result>}
+                  {rate == null ? '—' : <Result value={rate}>{signedNumber(rate, locale)}</Result>}
                 </td>
                 <td className="px-3 py-2 text-right tabular-nums">
                   {item.toReview > 0 ? item.toReview : '–'}

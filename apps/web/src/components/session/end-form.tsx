@@ -21,10 +21,12 @@ type Props = {
   base: StatsSession;
   initial: SummaryFormValues;
   handCount: number;
+  /** End time to save (a session left open); null = now, or already ended. */
+  endAt?: string | null;
 };
 
 /** Leaving the table (DEC-044): cash-out or MTT result, and how you felt. Ten seconds, no essay. */
-export function EndForm({ sessionId, base, initial, handCount }: Props) {
+export function EndForm({ sessionId, base, initial, handCount, endAt = null }: Props) {
   const t = useTranslations('summary');
   const tSessions = useTranslations('sessions');
   const locale = useLocale();
@@ -68,6 +70,7 @@ export function EndForm({ sessionId, base, initial, handCount }: Props) {
 
   return (
     <form action={formAction} className="flex flex-col gap-5">
+      {endAt && <input type="hidden" name="end_at" value={endAt} />}
       <section className="space-y-1 rounded-md border border-line bg-surface p-4">
         <h2 className="font-medium">{t('resultTitle')}</h2>
         <p className="text-lg">
