@@ -186,6 +186,16 @@ async function seed(userId) {
     is_current: true,
   });
   if (reviewError) throw reviewError;
+  // The student's own review of the same hand, with the opposite verdict: both stay current.
+  const { error: ownError } = await admin.from('reviews').insert({
+    user_id: userId,
+    hand_id: first,
+    source: 'manual',
+    ev_verdict: 'mistake',
+    lesson: 'Mình nghĩ bet turn quá lớn.',
+    is_current: true,
+  });
+  if (ownError) throw ownError;
   return { ended, open, first, flat, pot };
 }
 
@@ -381,8 +391,19 @@ async function main() {
     (await page.getByRole('button', { name: 'AI review', exact: true }).count()) === 0,
     'hand with a review: no AI review button',
   );
-  check((await page.getByText('Range đối thủ').count()) === 1, 'hand with a review: range shown');
-  check((await page.locator('textarea').count()) === 0, 'hand with a review: nothing to type in');
+  check(
+    (await page.getByRole('heading', { name: 'Range đối thủ' }).count()) === 1,
+    'hand with a review: range shown',
+  );
+  check(
+    (await page.getByRole('button', { name: /Bạn tự review/ }).getAttribute('aria-expanded')) ===
+      'false',
+    'hand with a review: own review is collapsed',
+  );
+  check(
+    (await page.getByText('AI: Đúng · Bạn: Sai').count()) === 1,
+    'hand with both reviews: one line says they differ',
+  );
   await page.getByRole('button', { name: 'Giải thích' }).last().click();
   await page.waitForTimeout(200);
   check(

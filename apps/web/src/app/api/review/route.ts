@@ -59,6 +59,8 @@ export async function POST(request: Request) {
         .select(`${REVIEW_COLUMNS}, created_at`)
         .eq('hand_id', handId)
         .eq('is_current', true)
+        // The student's own review is never touched or read here: only the AI one is.
+        .eq('source', 'ai')
         .maybeSingle(),
       supabase.from('profiles').select('locale').maybeSingle(),
       supabase.from('leak_stats').select('tag, hand_count').eq('source', 'review'),

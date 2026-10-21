@@ -1,21 +1,27 @@
 'use client';
 
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useRef, useState, type ReactNode } from 'react';
 import { Badge } from '@/components/ui/badge';
+import { BarButton } from '@/components/ui/bar-button';
 import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
+import { Collapse } from '@/components/ui/collapse';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { Icon } from '@/components/ui/icon';
 import { InfoTip } from '@/components/ui/info-tip';
 import { Textarea } from '@/components/ui/textarea';
 import { Toggle } from '@/components/ui/toggle';
 import { createClient } from '@/lib/supabase/client';
 import {
   aiErrorCode,
+  emptyReview,
   ERROR_TAGS,
   EV_VERDICTS,
+  evDivergence,
   fromReviewRow,
   isRetryable,
   toggleTag,
@@ -44,13 +50,10 @@ export type AiInfo = {
 
 type Props = {
   handId: string;
-  /** Id of the current review, if any. */
-  reviewId: string | null;
-  /** `ai` or `manual`, of the current review. */
-  source: string | null;
-  /** Prompt that made the AI review (`v1`/`v2`); null for manual reviews. */
-  promptVersion?: string | null;
-  initial: ReviewDraft;
+  /** The current AI review, if any. */
+  aiReview: { id: string; promptVersion: string | null; draft: ReviewDraft } | null;
+  /** The student's own current review, if any. */
+  manualReview: { id: string; draft: ReviewDraft } | null;
   isMtt: boolean;
   mathHints: MathHint[];
   ai: AiInfo;
@@ -64,27 +67,20 @@ type AiResponse = {
 };
 
 /**
- * "AI phân tích" (spec 3.7). No AI review: the AI button with the turns left, and under it the
- * "Bạn tự review" form for the player's own words. With an AI review: its fields read-only, the
- * "Đã review" switch (saved at once) and the rebuttal.
+ * "AI phân tích" (spec 3.7) and, under it, "Bạn tự review". The two live side by side: running the
+ * AI never touches what the student wrote (DEC-064). AI part: no review yet → the AI button and the
+ * turns left; with one → read-only fields, the "Đã review" switch (saved at once), the rebuttal and a
+ * re-run that asks first. Own part: collapsed form with Save; when both give an EV verdict and they
+ * differ, one small line says so.
  */
-export function ReviewForm({
-  handId,
-  reviewId,
-  source,
-  promptVersion: initialPrompt = null,
-  initial,
-  isMtt,
-  mathHints,
-  ai,
-}: Props) {
+export function ReviewForm({ handId, aiReview, manualReview, isMtt, mathHints, ai }: Props) {
   const t = useTranslations('review');
   const tCommon = useTranslations('common');
   const router = useRouter();
-  const [draft, setDraft] = useState(initial);
-  const [id, setId] = useState(reviewId);
-  const [isAi, setIsAi] = useState(source === 'ai');
-  const [prompt, setPrompt] = useState(initialPrompt);
+
+  const [aiDraft, setAiDraft] = useState(aiReview?.draft ?? emptyReview());
+  const [aiId, setAiId] = useState(aiReview?.id ?? null);
+  const [prompt, setPrompt] = useState(aiReview?.promptVersion ?? null);
   const [remaining, setRemaining] = useState(ai.remaining);
   const [run, setRun] = useState<'idle' | 'busy'>('idle');
   const [aiError, setAiError] = useState<string | null>(null);
@@ -95,6 +91,11 @@ export function ReviewForm({
   const [reason, setReason] = useState('');
   const [doneFailed, setDoneFailed] = useState(false);
   const [confirmAgain, setConfirmAgain] = useState(false);
+
+  const [draft, setDraft] = useState(manualReview?.draft ?? emptyReview());
+  const [manualId, setManualId] = useState(manualReview?.id ?? null);
+  // Collapsed once the AI has spoken; open while it is the only thing to fill in.
+  const [manualOpen, setManualOpen] = useState(!aiReview);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'failed'>('idle');
 
   const outOfTurns = ai.plan === 'free' && (ai.locked || remaining === 0);
@@ -118,9 +119,8 @@ export function ReviewForm({
         setAiError(aiErrorCode(data.error));
         return;
       }
-      setDraft(fromReviewRow(data.review));
-      setId(data.review.id);
-      setIsAi(true);
+      setAiDraft(fromReviewRow(data.review));
+      setAiId(data.review.id);
       setPrompt(data.review.prompt_version ?? null);
       setRemaining(data.remaining ?? null);
       setRebutOpen(false);
@@ -134,14 +134,14 @@ export function ReviewForm({
     }
   }
 
-  /** The "Đã review" switch: saved on the spot, put back if it fails. */
+  /** The AI review's "Đã review" switch: saved on the spot, put back if it fails. */
   async function setAccepted(accepted: boolean) {
-    if (!id) return;
+    if (!aiId) return;
     setDoneFailed(false);
-    setDraft((d) => ({ ...d, accepted }));
-    const { error } = await createClient().from('reviews').update({ accepted }).eq('id', id);
+    setAiDraft((d) => ({ ...d, accepted }));
+    const { error } = await createClient().from('reviews').update({ accepted }).eq('id', aiId);
     if (error) {
-      setDraft((d) => ({ ...d, accepted: !accepted }));
+      setAiDraft((d) => ({ ...d, accepted: !accepted }));
       setDoneFailed(true);
       return;
     }
@@ -153,14 +153,14 @@ export function ReviewForm({
     setDraft((d) => ({ ...d, [key]: value }));
   };
 
-  /** "Bạn tự review": one manual review per hand, inserted the first time and updated after. */
+  /** "Bạn tự review": one per hand, inserted the first time and updated after. */
   async function saveManual() {
     setSaveStatus('saving');
     const supabase = createClient();
     const row = toReviewRow(draft, isMtt);
     let ok: boolean;
-    if (id) {
-      const { error } = await supabase.from('reviews').update(row).eq('id', id);
+    if (manualId) {
+      const { error } = await supabase.from('reviews').update(row).eq('id', manualId);
       ok = !error;
     } else {
       const { data, error } = await supabase
@@ -169,7 +169,7 @@ export function ReviewForm({
         .select('id')
         .single();
       ok = !error;
-      if (data) setId(data.id);
+      if (data) setManualId(data.id);
     }
     setSaveStatus(ok ? 'saved' : 'failed');
     router.refresh();
@@ -183,24 +183,21 @@ export function ReviewForm({
     </label>
   );
 
+  const hints = mathHints.length > 0 && (
+    <ul className="space-y-0.5 rounded-md bg-accent/5 p-3 text-sm">
+      {mathHints.map((m, i) => (
+        <li key={i}>
+          {t('mathHint', { street: m.street, act: m.act, toCall: m.toCall, odds: m.odds })}
+          {m.mdf ? ` · MDF ${m.mdf}` : ''}
+        </li>
+      ))}
+    </ul>
+  );
+
   const manualForm = (
-    <div className="flex flex-col gap-3">
-      <h3 className="text-base font-medium">{t('selfReview')}</h3>
+    <div className="flex flex-col gap-3 pt-3">
       {area('range', t('range'))}
-      {area(
-        'math',
-        t('math'),
-        mathHints.length > 0 && (
-          <ul className="space-y-0.5 rounded-md bg-accent/5 p-3 text-sm">
-            {mathHints.map((m, i) => (
-              <li key={i}>
-                {t('mathHint', { street: m.street, act: m.act, toCall: m.toCall, odds: m.odds })}
-                {m.mdf ? ` · MDF ${m.mdf}` : ''}
-              </li>
-            ))}
-          </ul>
-        ),
-      )}
+      {area('math', t('math'), hints)}
       {area('line', t('line'))}
       {isMtt && area('icmText', t('icm'))}
       <div className="space-y-1">
@@ -307,9 +304,11 @@ export function ReviewForm({
     </div>
   );
 
+  const divergence = aiId && manualId ? evDivergence(aiDraft.evVerdict, draft.evVerdict) : null;
+
   return (
     <section className="flex flex-col gap-4">
-      {isAi && (
+      {aiId && (
         <ConfirmDialog
           open={confirmAgain}
           tone="primary"
@@ -329,70 +328,51 @@ export function ReviewForm({
       <h2 className="flex flex-wrap items-center gap-2 text-lg font-semibold">
         {t('title')}
         <InfoTip icon="!" text={t('referenceOnly')} label={tCommon('explain')} />
-        {id && isAi && prompt && (
+        {aiId && prompt && (
           <Badge tone="muted">
             {prompt === 'v2' ? t('oldPromptLabel') : t('promptLabel', { version: prompt })}
           </Badge>
         )}
       </h2>
 
-      {!isAi && aiBlock}
-      {!isAi && manualForm}
+      {!aiId && aiBlock}
 
-      {id && isAi && (
+      {aiId && (
         <>
-          {read(t('range'), draft.range)}
-          {read(
-            t('math'),
-            draft.math,
-            mathHints.length > 0 && (
-              <ul className="space-y-0.5 rounded-md bg-accent/5 p-3 text-sm">
-                {mathHints.map((m, i) => (
-                  <li key={i}>
-                    {t('mathHint', {
-                      street: m.street,
-                      act: m.act,
-                      toCall: m.toCall,
-                      odds: m.odds,
-                    })}
-                    {m.mdf ? ` · MDF ${m.mdf}` : ''}
-                  </li>
-                ))}
-              </ul>
-            ),
-          )}
-          {read(t('line'), draft.line)}
-          {isMtt && read(t('icm'), draft.icmText)}
-          {draft.errorTags.length > 0 &&
+          {read(t('range'), aiDraft.range)}
+          {read(t('math'), aiDraft.math, hints)}
+          {read(t('line'), aiDraft.line)}
+          {isMtt && read(t('icm'), aiDraft.icmText)}
+          {aiDraft.errorTags.length > 0 &&
             read(
               t('errors'),
               '',
               <div className="flex flex-wrap gap-1.5">
-                {draft.errorTags.map((tag) => (
+                {aiDraft.errorTags.map((tag) => (
                   <Badge key={tag} tone={tag === 'none' ? 'accent' : 'warn'}>
                     {t(`tag_${tag}` as 'tag_tilt')}
                   </Badge>
                 ))}
               </div>,
             )}
-          {draft.evVerdict &&
+          {aiDraft.evVerdict &&
             read(
               t('ev'),
               '',
               <div>
-                <Badge tone={draft.evVerdict === 'correct' ? 'accent' : 'muted'}>
-                  {t(`ev_${draft.evVerdict}` as 'ev_correct')}
+                <Badge tone={aiDraft.evVerdict === 'correct' ? 'accent' : 'muted'}>
+                  {t(`ev_${aiDraft.evVerdict}` as 'ev_correct')}
                 </Badge>
               </div>,
             )}
-          {read(t('lesson'), draft.lesson)}
+          {read(t('lesson'), aiDraft.lesson)}
 
           <div className="flex items-center justify-between gap-3 text-base">
             <span>{t('done')}</span>
             <Toggle
-              checked={draft.accepted}
+              checked={aiDraft.accepted}
               aria-label={t('done')}
-              onClick={() => setAccepted(!draft.accepted)}
+              onClick={() => setAccepted(!aiDraft.accepted)}
             />
           </div>
           {doneFailed && (
@@ -470,6 +450,29 @@ export function ReviewForm({
           </div>
         </>
       )}
+
+      <div className="flex flex-col gap-1 border-t border-line pt-3">
+        <BarButton
+          aria-expanded={manualOpen}
+          onClick={() => setManualOpen((o) => !o)}
+          className="justify-between text-base font-medium"
+        >
+          <span className="flex items-center gap-2">
+            {t('selfReview')}
+            {manualId && <Badge tone="accent">{t('selfReviewSaved')}</Badge>}
+          </span>
+          <Icon icon={manualOpen ? ChevronUp : ChevronDown} size={20} />
+        </BarButton>
+        {divergence && (
+          <p className="text-xs text-muted">
+            {t('evDivergence', {
+              ai: t(`ev_${divergence.ai}` as 'ev_correct'),
+              you: t(`ev_${divergence.manual}` as 'ev_correct'),
+            })}
+          </p>
+        )}
+        <Collapse open={manualOpen}>{manualForm}</Collapse>
+      </div>
     </section>
   );
 }

@@ -162,3 +162,66 @@ const RETRYABLE: readonly string[] = [
 ];
 
 export const isRetryable = (code: string): boolean => RETRYABLE.includes(code);
+
+// --- an AI review and the student's own review live side by side (DEC-064) ---------------------
+
+/** The current review of each kind: a hand may have both. */
+export function splitReviews<T extends { source: string }>(
+  rows: readonly T[],
+): { ai: T | null; manual: T | null } {
+  return {
+    ai: rows.find((r) => r.source === 'ai') ?? null,
+    manual: rows.find((r) => r.source === 'manual') ?? null,
+  };
+}
+
+/** What the lists need to know about a hand's reviews: is there an AI one, is any accepted. */
+export type HandReviewInfo = { hasAi: boolean; accepted: boolean };
+
+export function reviewInfoByHand(
+  rows: readonly { hand_id: string; source: string; accepted: boolean }[],
+): Map<string, HandReviewInfo> {
+  const out = new Map<string, HandReviewInfo>();
+  for (const r of rows) {
+    const before = out.get(r.hand_id);
+    out.set(r.hand_id, {
+      hasAi: (before?.hasAi ?? false) || r.source === 'ai',
+      accepted: (before?.accepted ?? false) || r.accepted,
+    });
+  }
+  return out;
+}
+
+/** One review per hand for a summary: the student's own wins over the AI's. */
+export function effectiveReviews<T extends { hand_id: string; source: string }>(
+  rows: readonly T[],
+): T[] {
+  const byHand = new Map<string, T>();
+  for (const r of rows) {
+    const seen = byHand.get(r.hand_id);
+    if (!seen || (r.source === 'manual' && seen.source !== 'manual')) byHand.set(r.hand_id, r);
+  }
+  return [...byHand.values()];
+}
+
+/** Both reviews give an EV verdict and they differ: the pair to show as "AI: Sai · Bạn: Đúng". */
+export function evDivergence(
+  ai: string | null | undefined,
+  manual: string | null | undefined,
+): { ai: string; manual: string } | null {
+  if (!isOneOf(EV_VERDICTS, ai) || !isOneOf(EV_VERDICTS, manual) || ai === manual) return null;
+  return { ai, manual };
+}
+
+/** The current reviews of many hands: `{ ai, manual }` by hand id. */
+export function reviewsByHand<T extends { hand_id: string; source: string }>(
+  rows: readonly T[],
+): Record<string, { ai: T | null; manual: T | null }> {
+  const out: Record<string, { ai: T | null; manual: T | null }> = {};
+  for (const r of rows) {
+    const entry = (out[r.hand_id] ??= { ai: null, manual: null });
+    if (r.source === 'ai') entry.ai = r;
+    else if (r.source === 'manual') entry.manual = r;
+  }
+  return out;
+}

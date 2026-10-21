@@ -11,7 +11,7 @@ import { HandRow } from '@/components/hand-list/hand-row';
 import { HandTable } from '@/components/hand-list/hand-table';
 import { useHandText } from '@/components/hand-list/use-hand-text';
 import { Replayer } from '@/components/replay/replayer';
-import { ReviewPanel, type HandReview } from '@/components/replay/review-panel';
+import { NO_REVIEWS, ReviewPanel, type HandReviews } from '@/components/replay/review-panel';
 import { Button, buttonClass } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
@@ -52,7 +52,7 @@ type Props = {
   /** Hand open in the replayer when the page loads (`?hand=`). */
   initialHandId: string | null;
   /** Current review of each hand, by hand id. */
-  reviews: Record<string, HandReview | null>;
+  reviews: Record<string, HandReviews>;
   ai: AiInfo;
 };
 
@@ -427,7 +427,7 @@ export function SessionDetail({
                   ) : null}
                   <ReviewPanel
                     handId={active.id}
-                    review={reviews[active.id] ?? null}
+                    reviews={reviews[active.id] ?? NO_REVIEWS}
                     hand={active.replay}
                     isMtt={session.kind === 'mtt'}
                     ai={ai}

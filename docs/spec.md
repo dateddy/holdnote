@@ -117,7 +117,7 @@ Postgres trên Supabase, 8 bảng. Mọi bảng dữ liệu người dùng có `
 | `ai_usage` | `id`, `user_id`, `kind` (hand_review/rebuttal/session_summary), `model`, `tokens_in`, `tokens_out`, `cost_usd`, `billed_to` (app/user), `failed` (lượt gọi hỏng: cộng ngân sách app, không trừ lượt), `created_at` |
 | `user_api_keys` | `user_id`, `provider`, `model` (null = mặc định), `vault_secret_id` (uuid trỏ tới secret trong Supabase Vault; key không nằm trong bảng), `created_at`. Client không bao giờ đọc lại key. |
 
-Quan hệ: user → nhiều phiên → nhiều hand → nhiều review (chỉ một `is_current = true`). Hand có thể trỏ tới một đối thủ. Xóa phiên thì xóa theo hand và review.
+Quan hệ: user → nhiều phiên → nhiều hand → nhiều review (mỗi loại `source` chỉ một `is_current = true`: một review AI và một review tay hiện hành, DEC-064). Hand có thể trỏ tới một đối thủ. Xóa phiên thì xóa theo hand và review.
 
 ### 4.2 `hands.actions`
 ```json

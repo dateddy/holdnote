@@ -25,4 +25,4 @@
 
 ## Sức khỏe repo
 
-- test: 1091 pass / 0 fail (core 623, web 468) - typecheck: ok - lint: ok (1 cảnh báo `_fix` chưa dùng trong `recheck-results.test.ts`, có từ trước)
+- test: 1099 pass / 0 fail (core 623, web 476) - typecheck: ok - lint: ok (1 cảnh báo `_fix` chưa dùng trong `recheck-results.test.ts`, có từ trước)

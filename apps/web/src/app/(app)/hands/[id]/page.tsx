@@ -13,7 +13,7 @@ import {
   serializeHandFilter,
   type HandRowDb,
 } from '@/lib/hands/session-hands';
-import { REVIEW_COLUMNS } from '@/lib/review/review';
+import { REVIEW_COLUMNS, reviewInfoByHand, splitReviews } from '@/lib/review/review';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 
@@ -38,15 +38,16 @@ export default async function HandDetailPage({ params, searchParams }: PageProps
     .maybeSingle();
   if (!session) notFound();
 
-  const [{ data: review }, t] = await Promise.all([
+  const [{ data: reviews }, t] = await Promise.all([
     supabase
       .from('reviews')
-      .select(REVIEW_COLUMNS)
+      .select(`hand_id, ${REVIEW_COLUMNS}`)
       .eq('hand_id', id)
-      .eq('is_current', true)
-      .maybeSingle(),
+      .eq('is_current', true),
     getTranslations('hand'),
   ]);
+  // The AI review and the student's own one, side by side (DEC-064).
+  const { ai: aiReview, manual: manualReview } = splitReviews(reviews ?? []);
 
   const { data: claims } = await supabase.auth.getClaims();
   const userId = claims?.claims.sub;
@@ -55,7 +56,7 @@ export default async function HandDetailPage({ params, searchParams }: PageProps
   const [row] = buildHandRows(
     session,
     [hand as unknown as HandRowDb],
-    new Map(review ? [[id, { source: review.source, accepted: review.accepted }]] : []),
+    reviewInfoByHand(reviews ?? []),
   );
   if (!row) notFound();
 
@@ -87,7 +88,10 @@ export default async function HandDetailPage({ params, searchParams }: PageProps
 
       <ReviewPanel
         handId={id}
-        review={(review as HandReview | null) ?? null}
+        reviews={{
+          ai: (aiReview as HandReview | null) ?? null,
+          manual: (manualReview as HandReview | null) ?? null,
+        }}
         hand={row.replay}
         isMtt={session.kind === 'mtt'}
         ai={{

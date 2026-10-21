@@ -174,5 +174,6 @@ Sẽ thêm trong các task 5.1b-x: `Screen` (khung trang). `Icon`, `TopBar` tab/
 ## 9. Khối "AI phân tích"
 
 - Tiêu đề `text-lg` + `InfoTip icon="!"` ("Mang tính chất tham khảo") + nhãn phiên bản prompt. Không còn nhãn "Thử nghiệm".
-- Chưa có AI review: nút "AI review" và số lượt còn lại (lỗi hiện ngay dưới, có "Thử lại"), rồi form "Bạn tự review" (các ô nhập, loại lỗi, EV, bài học, "Đã review", Lưu).
+- Chưa có AI review: nút "AI review" và số lượt còn lại (lỗi hiện ngay dưới, có "Thử lại"), rồi "Bạn tự review".
 - Có review: Range đối thủ, Toán (kèm pot odds do poker-core tính), Line đề xuất, ICM (MTT), Lỗi, EV, Bài học hiện chỉ đọc; rồi công tắc "Đã review" (lưu ngay), rồi Phản biện. Có nút "Chạy lại AI review" hỏi xác nhận trước (trừ 1 lượt, còn bao nhiêu lượt).
+- "Bạn tự review" luôn hiện dưới khối AI: một hàng bấm để mở/thu gọn (thu gọn khi đã có AI review, kèm nhãn "Đã lưu" khi đã có review tay), trong đó các ô nhập, loại lỗi, EV, bài học, "Đã review" và nút Lưu. Chạy AI không đụng review tay. Hai bên cho EV khác nhau thì dưới hàng này có một dòng `text-xs text-muted`: "AI: Sai · Bạn: Đúng".

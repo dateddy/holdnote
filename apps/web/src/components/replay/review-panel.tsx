@@ -8,10 +8,14 @@ import { fromReviewRow, type ReviewRow } from '@/lib/review/review';
 
 export type HandReview = ReviewRow & { id: string; source: string; prompt_version: string | null };
 
+/** The current reviews of a hand: the AI's and the student's own, either may be missing (DEC-064). */
+export type HandReviews = { ai: HandReview | null; manual: HandReview | null };
+
+export const NO_REVIEWS: HandReviews = { ai: null, manual: null };
+
 type Props = {
   handId: string;
-  /** The current review of the hand, as saved; null when there is none yet. */
-  review: HandReview | null;
+  reviews: HandReviews;
   /** Null when the hand cannot be replayed; the pot odds hints are then left out. */
   hand: ReplayHand | null;
   isMtt: boolean;
@@ -19,10 +23,9 @@ type Props = {
 };
 
 /**
- * "Ý kiến thứ hai": the review block under the replayer. A saved review shows its text, the prompt
- * version and the rebuttal; without one the AI button (by quota) is there. Pot odds come from poker-core.
+ * "AI phân tích" under the replayer, with "Bạn tự review" below it. Pot odds come from poker-core.
  */
-export function ReviewPanel({ handId, review, hand, isMtt, ai }: Props) {
+export function ReviewPanel({ handId, reviews, hand, isMtt, ai }: Props) {
   const t = useTranslations('hand');
   const locale = useLocale();
   const fmt = (n: number) => new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(n);
@@ -40,10 +43,18 @@ export function ReviewPanel({ handId, review, hand, isMtt, ai }: Props) {
     <ReviewForm
       key={handId}
       handId={handId}
-      reviewId={review?.id ?? null}
-      source={review?.source ?? null}
-      promptVersion={review?.prompt_version ?? null}
-      initial={fromReviewRow(review)}
+      aiReview={
+        reviews.ai
+          ? {
+              id: reviews.ai.id,
+              promptVersion: reviews.ai.prompt_version,
+              draft: fromReviewRow(reviews.ai),
+            }
+          : null
+      }
+      manualReview={
+        reviews.manual ? { id: reviews.manual.id, draft: fromReviewRow(reviews.manual) } : null
+      }
       ai={ai}
       isMtt={isMtt}
       mathHints={mathHints}

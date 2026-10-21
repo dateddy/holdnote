@@ -285,7 +285,9 @@
     "selfReview": "Bạn tự review",
     "save": "Lưu review",
     "saving": "Đang lưu…",
-    "saved": "Đã lưu review."
+    "saved": "Đã lưu review.",
+    "selfReviewSaved": "Đã lưu",
+    "evDivergence": "AI: {ai} · Bạn: {you}"
   },
   "settings": {
     "title": "Cài đặt",

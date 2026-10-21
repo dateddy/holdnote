@@ -63,7 +63,7 @@ export default async function SessionSummaryPage({ params }: PageProps<'/session
         base={shown}
         initial={summaryFormFrom(row)}
         handCount={ids.length}
-        reviewedCount={reviews?.length ?? 0}
+        reviewedCount={new Set((reviews ?? []).map((r) => r.hand_id)).size}
         leakHints={leakHints}
         ai={{
           plan: status?.plan ?? 'free',

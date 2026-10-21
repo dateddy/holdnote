@@ -77,13 +77,13 @@ describe('buildHandRows', () => {
     const accepted = buildHandRows(
       cash,
       [row],
-      new Map([['h7', { source: 'ai', accepted: true }]]),
+      new Map([['h7', { hasAi: true, accepted: true }]]),
     )[0]!;
     expect([accepted.needsReview, accepted.aiReviewed]).toEqual([false, true]);
     const draftAi = buildHandRows(
       cash,
       [row],
-      new Map([['h7', { source: 'ai', accepted: false }]]),
+      new Map([['h7', { hasAi: true, accepted: false }]]),
     )[0]!;
     expect([draftAi.needsReview, draftAi.aiReviewed]).toEqual([true, true]);
   });

@@ -11,6 +11,7 @@ import {
   spentOn,
 } from '@/lib/ai/server';
 import { toSummaryDraft } from '@/lib/ai/summary-schema';
+import { effectiveReviews } from '@/lib/review/review';
 import { applyFormToStats, STATS_COLUMNS, toStatsSession } from '@/lib/sessions/summary';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
@@ -59,7 +60,7 @@ export async function POST(request: Request) {
 
   const { data: reviews } = await supabase
     .from('reviews')
-    .select('hand_id, error_tags, ev_verdict, lesson')
+    .select('hand_id, source, error_tags, ev_verdict, lesson')
     .eq('is_current', true)
     .in(
       'hand_id',
@@ -92,7 +93,8 @@ export async function POST(request: Request) {
   const userMessage = buildSummaryContext({
     session,
     handCount: hands.length,
-    reviews: (reviews ?? [])
+    // One review per hand: the student's own when there is one.
+    reviews: effectiveReviews(reviews ?? [])
       .map((r) => ({
         num: numOf.get(r.hand_id) ?? 0,
         verdict: r.ev_verdict,

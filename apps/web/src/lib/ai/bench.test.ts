@@ -6,6 +6,7 @@ import {
   groupRecall,
   groupsOfTags,
   inSplit,
+  manualLabel,
   styleStats,
   summarize,
   verdictErrors,
@@ -132,5 +133,42 @@ describe('spread and runStats', () => {
     expect(r.evMatch).toBeCloseTo(1 / 3);
     expect(r.falseMistake).toBe(0.5);
     expect(r.missedMistake).toBe(1);
+  });
+});
+
+describe('manualLabel: the label a database benchmark compares with', () => {
+  const ai = {
+    source: 'ai',
+    is_current: true,
+    error_tags: ['sizing_too_small'],
+    ev_verdict: 'mistake',
+  };
+  const mine = {
+    source: 'manual',
+    is_current: true,
+    error_tags: ['call_too_loose'],
+    ev_verdict: 'correct',
+  };
+
+  it('is the own current review, whatever else the hand has', () => {
+    expect(manualLabel([ai, mine])).toEqual({ groups: ['Khác'], ev: 'correct' });
+    expect(manualLabel([mine, ai])).toEqual({ groups: ['Khác'], ev: 'correct' });
+  });
+
+  it('never the AI review, and never history', () => {
+    expect(manualLabel([ai])).toBeNull();
+    expect(manualLabel([ai, { ...mine, is_current: false }])).toBeNull();
+    expect(manualLabel([])).toBeNull();
+  });
+
+  it('maps the codes onto the old groups and an empty verdict to null, ready for compareReviews', () => {
+    const label = manualLabel([
+      { ...mine, error_tags: ['preflop_too_loose', 'tilt'], ev_verdict: '' },
+    ]);
+    expect(label).toEqual({ groups: ['Preflop', 'Cảm xúc'], ev: null });
+    expect(compareReviews(label!, { tags: ['preflop_too_tight'], ev: 'mistake' })).toMatchObject({
+      groupsOverlap: true,
+      evMatch: null,
+    });
   });
 });

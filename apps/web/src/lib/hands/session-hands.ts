@@ -7,6 +7,7 @@ import {
   type Street,
   toBb,
 } from 'poker-core';
+import type { HandReviewInfo } from '@/lib/review/review';
 import { isOneOf } from '@/lib/sessions/form';
 import { buildReplayHand, type ReplayHand } from './replay';
 import {
@@ -28,8 +29,7 @@ export type HandRowDb = HandRowIn & {
   created_at: string;
 };
 
-/** The current review of a hand, as far as the table cares. */
-export type HandReviewInfo = { source: string; accepted: boolean };
+export type { HandReviewInfo };
 
 export const POT_TYPES = ['limped', 'iso', 'single_raised', 'three_bet', 'four_bet_plus'] as const;
 
@@ -112,7 +112,7 @@ export function buildHandRows(
       flagged: h.flagged,
       accepted: review?.accepted === true,
       needsReview: h.flagged && !review?.accepted,
-      aiReviewed: review?.source === 'ai',
+      aiReviewed: review?.hasAi === true,
       missing: h.missing_data,
       thought: (h.thought ?? '').trim(),
       level: h.level ?? null,

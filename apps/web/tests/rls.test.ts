@@ -342,7 +342,7 @@ describe.skipIf(!configured)('RLS', () => {
       expect(after.data ?? []).toHaveLength(0);
     });
 
-    it('replace_current_review keeps one current review and keeps history', async () => {
+    it('replace_current_review keeps one current review per kind and keeps history', async () => {
       const id = await a.rpc('replace_current_review', {
         p_hand_id: ids.hands,
         p_review: { source: 'ai', model: 'm', error_tags: ['bad_bluff'], lesson: 'l' },
@@ -352,16 +352,50 @@ describe.skipIf(!configured)('RLS', () => {
         .from('reviews')
         .select('id, source, is_current, error_tags')
         .eq('hand_id', ids.hands);
-      expect(data?.filter((r) => r.is_current)).toHaveLength(1);
-      expect(data?.find((r) => r.is_current)).toMatchObject({
+      // The AI review is the current one of its kind; the student's own review stays current too.
+      expect(data?.filter((r) => r.is_current && r.source === 'ai')).toHaveLength(1);
+      expect(data?.filter((r) => r.is_current && r.source === 'manual')).toHaveLength(1);
+      expect(data?.find((r) => r.is_current && r.source === 'ai')).toMatchObject({
         id: id.data,
-        source: 'ai',
         error_tags: ['bad_bluff'],
       });
-      expect(data?.length).toBeGreaterThanOrEqual(2);
+      // A second AI review retires only the first one.
+      const again = await a.rpc('replace_current_review', {
+        p_hand_id: ids.hands,
+        p_review: { source: 'ai', model: 'm2', error_tags: ['tilt'] },
+      });
+      expect(again.error).toBeNull();
+      const after = await a.from('reviews').select('source, is_current').eq('hand_id', ids.hands);
+      expect(after.data?.filter((r) => r.is_current && r.source === 'ai')).toHaveLength(1);
+      expect(after.data?.filter((r) => r.is_current && r.source === 'manual')).toHaveLength(1);
+      expect(after.data?.length).toBeGreaterThanOrEqual(3);
+    });
+
+    it('two current reviews of the same kind are refused', async () => {
+      const dup = await a
+        .from('reviews')
+        .insert({ hand_id: ids.hands, source: 'manual', is_current: true });
+      expect(dup.error).not.toBeNull();
+    });
+
+    it('the leak table counts the own review of a hand, not the AI one', async () => {
+      const { data } = await a
+        .from('leak_stats')
+        .select('tag, source')
+        .eq('source', 'review')
+        .eq('session_id', ids.sessions);
+      const tags = (data ?? []).map((r) => r.tag);
+      expect(tags).toContain('sizing_too_small');
+      expect(tags).not.toContain('tilt');
+      expect(tags).not.toContain('bad_bluff');
     });
 
     it('B cannot replace the review of A hand', async () => {
+      const before = await a
+        .from('reviews')
+        .select('id')
+        .eq('hand_id', ids.hands)
+        .eq('is_current', true);
       const { error } = await b.rpc('replace_current_review', {
         p_hand_id: ids.hands,
         p_review: { source: 'manual' },
@@ -372,7 +406,7 @@ describe.skipIf(!configured)('RLS', () => {
         .select('id')
         .eq('hand_id', ids.hands)
         .eq('is_current', true);
-      expect(data).toHaveLength(1);
+      expect(data).toHaveLength(before.data?.length ?? -1);
     });
 
     it('signed-out callers cannot call replace_current_review', async () => {

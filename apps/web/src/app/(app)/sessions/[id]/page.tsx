@@ -7,7 +7,6 @@ import {
   buildHandRows,
   HAND_ROW_COLUMNS,
   parseHandFilter,
-  type HandReviewInfo,
   type HandRowDb,
 } from '@/lib/hands/session-hands';
 import { detailTiles, sessionStage } from '@/lib/sessions/detail';
@@ -16,7 +15,7 @@ import { readMtt } from '@/lib/sessions/form';
 import { readSummary, STATS_COLUMNS, toStatsSession } from '@/lib/sessions/summary';
 import { loadUsage } from '@/lib/ai/quota';
 import { aiStatus } from '@/lib/ai/status';
-import { REVIEW_COLUMNS } from '@/lib/review/review';
+import { REVIEW_COLUMNS, reviewInfoByHand, reviewsByHand } from '@/lib/review/review';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 
@@ -45,11 +44,10 @@ export default async function SessionPage({ params, searchParams }: PageProps<'/
         .in('hand_id', ids)
     : { data: [] };
 
-  const reviewOf = new Map<string, HandReviewInfo>(
-    (reviews ?? []).map((r) => [r.hand_id, { source: r.source, accepted: r.accepted }]),
-  );
-  const reviewRows: Record<string, HandReview> = Object.fromEntries(
-    (reviews ?? []).map((r) => [r.hand_id, r as unknown as HandReview]),
+  // A hand can have an AI review and its own review at the same time (DEC-064).
+  const reviewOf = reviewInfoByHand(reviews ?? []);
+  const reviewRows = reviewsByHand(
+    (reviews ?? []) as unknown as (HandReview & { hand_id: string })[],
   );
   const { data: claims } = await supabase.auth.getClaims();
   const userId = claims?.claims.sub;

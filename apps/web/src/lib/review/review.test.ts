@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
   aiErrorCode,
+  effectiveReviews,
+  evDivergence,
   isRetryable,
+  reviewInfoByHand,
+  reviewsByHand,
+  splitReviews,
   contentChanged,
   emptyReview,
   ERROR_TAGS,
@@ -109,5 +114,61 @@ describe('AI review helpers', () => {
       'not_found',
     ])
       expect(isRetryable(c)).toBe(false);
+  });
+});
+
+describe('AI and own review side by side', () => {
+  const rows = [
+    { hand_id: 'h1', source: 'ai', accepted: false, ev_verdict: 'mistake' },
+    { hand_id: 'h1', source: 'manual', accepted: true, ev_verdict: 'correct' },
+    { hand_id: 'h2', source: 'ai', accepted: false, ev_verdict: 'correct' },
+    { hand_id: 'h3', source: 'manual', accepted: false, ev_verdict: null },
+  ];
+
+  it('splitReviews picks the current review of each kind', () => {
+    const { ai, manual } = splitReviews(rows.slice(0, 2));
+    expect([ai?.ev_verdict, manual?.ev_verdict]).toEqual(['mistake', 'correct']);
+    expect(splitReviews([])).toEqual({ ai: null, manual: null });
+    expect(splitReviews(rows.slice(2, 3)).manual).toBeNull();
+  });
+
+  it('reviewInfoByHand: an AI review exists, any accepted review counts', () => {
+    const info = reviewInfoByHand(rows);
+    expect(info.get('h1')).toEqual({ hasAi: true, accepted: true });
+    expect(info.get('h2')).toEqual({ hasAi: true, accepted: false });
+    expect(info.get('h3')).toEqual({ hasAi: false, accepted: false });
+  });
+
+  it('effectiveReviews: the own review wins over the AI one, in either order', () => {
+    const pick = (list: typeof rows) =>
+      effectiveReviews(list)
+        .map((r) => `${r.hand_id}:${r.source}`)
+        .sort();
+    expect(pick(rows)).toEqual(['h1:manual', 'h2:ai', 'h3:manual']);
+    expect(pick([rows[1]!, rows[0]!])).toEqual(['h1:manual']);
+  });
+
+  it('evDivergence: only when both say something and they differ', () => {
+    expect(evDivergence('mistake', 'correct')).toEqual({ ai: 'mistake', manual: 'correct' });
+    expect(evDivergence('correct', 'correct')).toBeNull();
+    expect(evDivergence('mistake', null)).toBeNull();
+    expect(evDivergence(undefined, 'correct')).toBeNull();
+    expect(evDivergence('mistake', '')).toBeNull();
+  });
+});
+
+describe('reviewsByHand', () => {
+  it('groups the current reviews of many hands by kind', () => {
+    const out = reviewsByHand([
+      { hand_id: 'a', source: 'ai', n: 1 },
+      { hand_id: 'b', source: 'manual', n: 2 },
+      { hand_id: 'a', source: 'manual', n: 3 },
+    ]);
+    expect(out.a).toEqual({
+      ai: { hand_id: 'a', source: 'ai', n: 1 },
+      manual: { hand_id: 'a', source: 'manual', n: 3 },
+    });
+    expect(out.b?.ai).toBeNull();
+    expect(out.c).toBeUndefined();
   });
 });

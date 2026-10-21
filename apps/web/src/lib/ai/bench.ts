@@ -36,6 +36,26 @@ export function evOfOld(label: string | undefined): string | null {
   return (label && OLD_EV[label]) || null;
 }
 
+/** A saved review row, as far as a benchmark label needs it. */
+export type LabelRow = {
+  source: string;
+  is_current: boolean;
+  error_tags: readonly string[];
+  ev_verdict: string | null;
+};
+
+/**
+ * The label a benchmark compares an AI review with, read from the database (after the old hands
+ * are migrated, task 5.2): the student's own current review, never the AI's and never history.
+ * Same shape as the old-app label (`groups`, `ev`), so `compareReviews` takes it as it is.
+ */
+export function manualLabel(
+  rows: readonly LabelRow[],
+): { groups: string[]; ev: string | null } | null {
+  const own = rows.find((r) => r.source === 'manual' && r.is_current);
+  return own ? { groups: groupsOfTags(own.error_tags), ev: own.ev_verdict || null } : null;
+}
+
 const hasError = (groups: readonly string[]) => groups.some((g) => g !== 'Không lỗi');
 
 export type Comparison = {
