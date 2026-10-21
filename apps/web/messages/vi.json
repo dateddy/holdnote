@@ -556,7 +556,8 @@
     "sessions": "Phiên",
     "record": "Ghi hand",
     "stats": "Thống kê",
-    "settings": "Cài đặt"
+    "settings": "Cài đặt",
+    "home": "Trang chủ"
   },
   "record": {
     "editSetup": "Sửa thiết lập",

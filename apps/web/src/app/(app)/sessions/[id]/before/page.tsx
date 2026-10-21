@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { toBb } from 'poker-core';
 import { buttonClass } from '@/components/ui/button';
+import { TopBar } from '@/components/ui/top-bar';
 import { sessionLevels } from '@/lib/hands/level';
 import { formatMoney } from '@/lib/sessions/format';
 import { createClient } from '@/lib/supabase/server';
@@ -28,23 +29,23 @@ export default async function BeforeSessionPage({ params }: PageProps<'/sessions
       : Promise.resolve({ data: [] }),
   ]);
 
-  const [t, tb, locale] = await Promise.all([
+  const [t, tb, tCommon, locale] = await Promise.all([
     getTranslations('sessions'),
     getTranslations('blinds'),
+    getTranslations('common'),
     getLocale(),
   ]);
   const stopLoss = session.stop_loss;
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 p-6">
-      <header className="space-y-1">
-        <h1 className="text-2xl font-semibold">{t('beforeTitle')}</h1>
-        <p className="text-sm text-muted">
-          {[t(session.kind === 'mtt' ? 'mtt' : 'cash'), session.venue, session.stake_label]
-            .filter(Boolean)
-            .join(' · ')}
-        </p>
-      </header>
+      <TopBar
+        title={t('beforeTitle')}
+        subtitle={[t(session.kind === 'mtt' ? 'mtt' : 'cash'), session.venue, session.stake_label]
+          .filter(Boolean)
+          .join(' · ')}
+        back={{ href: `/sessions/${id}`, label: tCommon('back') }}
+      />
 
       <section className="space-y-2">
         <h2 className="font-medium">{t('stopLoss')}</h2>

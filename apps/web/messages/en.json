@@ -556,7 +556,8 @@
     "sessions": "Sessions",
     "record": "Record",
     "stats": "Stats",
-    "settings": "Settings"
+    "settings": "Settings",
+    "home": "Home"
   },
   "record": {
     "editSetup": "Edit setup",

@@ -1,20 +1,28 @@
 'use client';
 
+import { ChartColumn, House, Settings, type LucideIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { navTabs } from '@/lib/nav';
+import { navTabs, type TabKey } from '@/lib/nav';
+import { Icon } from './icon';
 
-/** Fixed bottom bar with four tabs (DEC-044), phone only. Hidden during onboarding. */
-export function BottomNav({ recordHref }: { recordHref: string }) {
+export const TAB_ICONS: Record<TabKey, LucideIcon> = {
+  home: House,
+  stats: ChartColumn,
+  settings: Settings,
+};
+
+/** Fixed bottom bar with three tabs (DEC-044, 5.1d-3), phone only. Hidden during onboarding. */
+export function BottomNav() {
   const t = useTranslations('nav');
   const path = usePathname();
-  // Onboarding and the Ghi nhanh screen have their own bottom bar.
+  // Onboarding and the working screens have their own bottom bar.
   if (path.startsWith('/onboarding') || /^\/sessions\/[^/]+\/record$/.test(path)) return null;
   // The session form has its own Save bar at the bottom.
   if (path === '/sessions/new' || /^\/sessions\/[^/]+\/edit$/.test(path)) return null;
 
-  const tabs = navTabs(path, recordHref);
+  const tabs = navTabs(path);
 
   return (
     <>
@@ -23,19 +31,23 @@ export function BottomNav({ recordHref }: { recordHref: string }) {
         aria-label={t('label')}
         className="fixed inset-x-0 bottom-0 z-10 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] lg:hidden"
       >
-        <ul className="mx-auto grid max-w-md grid-cols-4">
+        <ul className="mx-auto grid max-w-md grid-cols-3">
           {tabs.map((tab) => (
             <li key={tab.key}>
               <Link
                 href={tab.href}
                 aria-current={tab.active ? 'page' : undefined}
-                className={`flex h-16 flex-col items-center justify-center gap-1 text-xs ${
+                className={`relative flex h-16 flex-col items-center justify-center gap-1 text-xs ${
                   tab.active ? 'font-medium text-accent' : 'text-muted'
                 }`}
               >
                 <span
-                  className={`h-1 w-6 rounded-full ${tab.active ? 'bg-accent' : 'bg-transparent'}`}
+                  aria-hidden
+                  className={`absolute top-0 h-1 w-8 rounded-full ${
+                    tab.active ? 'bg-accent' : 'bg-transparent'
+                  }`}
                 />
+                <Icon icon={TAB_ICONS[tab.key]} />
                 {t(tab.key)}
               </Link>
             </li>

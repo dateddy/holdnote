@@ -3,17 +3,17 @@ import { activeTab, navTabs } from './nav';
 
 describe('activeTab', () => {
   it.each([
-    ['/', 'sessions'],
-    ['/sessions/abc', 'sessions'],
-    ['/sessions/abc/hands', 'sessions'],
-    ['/sessions/abc/summary', 'sessions'],
-    ['/hands/h1', 'sessions'],
-    ['/sessions/abc/edit', 'sessions'],
-    ['/sessions/new', 'record'],
-    ['/sessions/abc/before', 'record'],
-    ['/sessions/abc/record', 'record'],
-    ['/sessions/abc/structure', 'record'],
-    ['/sessions/abc/end', 'record'],
+    ['/', 'home'],
+    ['/sessions/abc', 'home'],
+    ['/sessions/abc/hands', 'home'],
+    ['/sessions/abc/summary', 'home'],
+    ['/hands/h1', 'home'],
+    ['/sessions/abc/edit', 'home'],
+    ['/sessions/new', 'home'],
+    ['/sessions/abc/before', 'home'],
+    ['/sessions/abc/record', 'home'],
+    ['/sessions/abc/structure', 'home'],
+    ['/sessions/abc/end', 'home'],
     ['/stats', 'stats'],
     ['/rules', 'stats'],
     ['/opponents', 'stats'],
@@ -31,10 +31,10 @@ describe('activeTab', () => {
 });
 
 describe('navTabs', () => {
-  it('four tabs in order, the Record tab points where the layout says, one is active', () => {
-    const tabs = navTabs('/stats', '/sessions/x/record');
-    expect(tabs.map((t) => t.key)).toEqual(['sessions', 'record', 'stats', 'settings']);
-    expect(tabs.map((t) => t.href)).toEqual(['/', '/sessions/x/record', '/stats', '/settings']);
+  it('three tabs in order, one of them active', () => {
+    const tabs = navTabs('/stats');
+    expect(tabs.map((t) => t.key)).toEqual(['home', 'stats', 'settings']);
+    expect(tabs.map((t) => t.href)).toEqual(['/', '/stats', '/settings']);
     expect(tabs.filter((t) => t.active).map((t) => t.key)).toEqual(['stats']);
   });
 });

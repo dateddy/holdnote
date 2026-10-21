@@ -1,7 +1,7 @@
 import { getTranslations } from 'next-intl/server';
-import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { SummaryForm } from '@/components/session/summary-form';
+import { TopBar } from '@/components/ui/top-bar';
 import { loadUsage } from '@/lib/ai/quota';
 import { aiStatus } from '@/lib/ai/status';
 import { STATS_COLUMNS, summaryFormFrom, toStatsSession } from '@/lib/sessions/summary';
@@ -51,19 +51,13 @@ export default async function SessionSummaryPage({ params }: PageProps<'/session
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-5 p-6">
-      <header className="space-y-1">
-        <div className="flex items-center justify-between gap-4">
-          <h1 className="text-2xl font-semibold">{t('title')}</h1>
-          <Link href={`/sessions/${id}`} className="text-sm underline underline-offset-4">
-            {t('back')}
-          </Link>
-        </div>
-        <p className="text-sm text-muted">
-          {[tSessions(row.kind === 'mtt' ? 'mtt' : 'cash'), row.venue, row.stake_label]
-            .filter(Boolean)
-            .join(' · ')}
-        </p>
-      </header>
+      <TopBar
+        title={t('title')}
+        subtitle={[tSessions(row.kind === 'mtt' ? 'mtt' : 'cash'), row.venue, row.stake_label]
+          .filter(Boolean)
+          .join(' · ')}
+        back={{ href: `/sessions/${id}`, label: t('back') }}
+      />
       <SummaryForm
         sessionId={id}
         base={shown}

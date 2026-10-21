@@ -77,6 +77,7 @@ export default async function RecordPage({ params }: PageProps<'/sessions/[id]/r
       <TopBar
         title={t('screenTitle')}
         back={{ href: `/sessions/${id}`, label: t('backToSession') }}
+        compact
       />
       <SyncStatus />
       <HandForm
