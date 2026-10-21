@@ -317,6 +317,8 @@ export type Database = {
           bb: number | null;
           buyin: number | null;
           cashout: number | null;
+          chip_currency: string | null;
+          chip_value: number | null;
           created_at: string;
           currency: string;
           date: string;
@@ -344,6 +346,8 @@ export type Database = {
           bb?: number | null;
           buyin?: number | null;
           cashout?: number | null;
+          chip_currency?: string | null;
+          chip_value?: number | null;
           created_at?: string;
           currency: string;
           date?: string;
@@ -371,6 +375,8 @@ export type Database = {
           bb?: number | null;
           buyin?: number | null;
           cashout?: number | null;
+          chip_currency?: string | null;
+          chip_value?: number | null;
           created_at?: string;
           currency?: string;
           date?: string;

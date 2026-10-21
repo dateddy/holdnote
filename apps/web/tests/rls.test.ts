@@ -124,6 +124,32 @@ describe.skipIf(!configured)('RLS', () => {
       expect(bad.error).not.toBeNull();
     });
 
+    it('chip rate needs both columns and a CHIP session; another user cannot change it', async () => {
+      const only = await a.from('sessions').update({ chip_value: 1000 }).eq('id', ids.sessions);
+      expect(only.error).not.toBeNull();
+      const notChip = await a
+        .from('sessions')
+        .update({ chip_value: 1000, chip_currency: 'VND' })
+        .eq('id', ids.sessions);
+      expect(notChip.error).not.toBeNull();
+      const ok = await a
+        .from('sessions')
+        .update({ currency: 'CHIP', chip_value: 1000, chip_currency: 'VND' })
+        .eq('id', ids.sessions);
+      expect(ok.error).toBeNull();
+      const theirs = await b
+        .from('sessions')
+        .update({ chip_value: 1 })
+        .eq('id', ids.sessions)
+        .select('id');
+      expect(theirs.data ?? []).toEqual([]);
+      const reset = await a
+        .from('sessions')
+        .update({ chip_value: null, chip_currency: null, currency: 'VND' })
+        .eq('id', ids.sessions);
+      expect(reset.error).toBeNull();
+    });
+
     it('session without currency takes the profile currency', async () => {
       const { data } = await a.from('sessions').select('currency').eq('id', ids.sessions).single();
       const { data: profile } = await a.from('profiles').select('currency').single();
