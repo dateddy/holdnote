@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { Replayer } from '@/components/replay/replayer';
 import { ReviewPanel, type HandReview } from '@/components/replay/review-panel';
 import { TopBar } from '@/components/ui/top-bar';
+import { cardFactsOf, type ReviewHand } from '@/lib/ai/context';
 import { loadUsage } from '@/lib/ai/quota';
 import { aiStatus } from '@/lib/ai/status';
 import { HAND_SESSION_COLUMNS } from '@/lib/hands/build';
@@ -56,6 +57,7 @@ export default async function HandDetailPage({ params, searchParams }: PageProps
     (rebuttals ?? []) as RebuttalRow[],
     hand.updated_at,
     locale,
+    cardFactsOf(session, hand as unknown as ReviewHand),
   );
 
   const { data: claims } = await supabase.auth.getClaims();

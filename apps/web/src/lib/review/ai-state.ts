@@ -1,3 +1,4 @@
+import { cardMistake, type CardFacts } from '@/lib/ai/card-check';
 import { reviewInLanguage } from '@/lib/ai/languages';
 
 /**
@@ -37,6 +38,8 @@ export type RebuttalRow = {
   reply: string;
   free: boolean;
   created_at: string;
+  /** Screen only: the answer names cards that are not in the hand (task 5.1f). */
+  card_flag?: boolean;
 };
 
 export const REBUTTAL_COLUMNS =
@@ -71,6 +74,8 @@ export type AiReviewState = {
   freeRebuttal: boolean;
   /** The hand changed (or the language did) since the AI review: running it again is useful. */
   aiStale: boolean;
+  /** The current AI review names cards that are not in the hand (task 5.1f). */
+  aiCardFlag: boolean;
 };
 
 export function aiReviewState(
@@ -81,16 +86,30 @@ export function aiReviewState(
     range_text: string | null;
     math_text: string | null;
     line_text: string | null;
+    icm_text?: string | null;
     lesson: string | null;
   } | null,
   rebuttals: readonly RebuttalRow[],
   handUpdatedAt: string,
   locale: string,
+  /** The real cards; without them nothing is flagged. */
+  cards?: CardFacts,
 ): AiReviewState {
-  if (!ai) return { rebuttals: [], freeRebuttal: true, aiStale: false };
+  if (!ai) return { rebuttals: [], freeRebuttal: true, aiStale: false, aiCardFlag: false };
+  // Same check as the server ran on the reply: a review saved with wrong cards is flagged here.
+  const wrong = (texts: (string | null | undefined)[]) =>
+    !!cards &&
+    cardMistake(
+      texts.map((t) => t ?? ''),
+      cards,
+    ) != null;
   return {
-    rebuttals: threadRebuttals(ai.id, rebuttals),
+    rebuttals: threadRebuttals(ai.id, rebuttals).map((r) => ({
+      ...r,
+      card_flag: wrong([r.reply]),
+    })),
     freeRebuttal: hasFreeRebuttal(ai.id, rebuttals),
     aiStale: !reusableReview({ rebuttal: false, current: ai, handUpdatedAt, locale }),
+    aiCardFlag: wrong([ai.range_text, ai.math_text, ai.line_text, ai.icm_text, ai.lesson]),
   };
 }

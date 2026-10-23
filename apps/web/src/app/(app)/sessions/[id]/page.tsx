@@ -13,6 +13,7 @@ import { detailTiles, sessionStage } from '@/lib/sessions/detail';
 import { formatDay } from '@/lib/sessions/format';
 import { readMtt } from '@/lib/sessions/form';
 import { readSummary, STATS_COLUMNS, toStatsSession } from '@/lib/sessions/summary';
+import { cardFactsOf, type ReviewHand } from '@/lib/ai/context';
 import { loadUsage } from '@/lib/ai/quota';
 import { aiStatus } from '@/lib/ai/status';
 import { aiReviewState, REBUTTAL_COLUMNS, type RebuttalRow } from '@/lib/review/ai-state';
@@ -67,6 +68,7 @@ export default async function SessionPage({ params, searchParams }: PageProps<'/
         rebuttalRows.filter((x) => x.hand_id === h.id),
         h.updated_at,
         locale,
+        cardFactsOf(row, h as unknown as ReviewHand),
       ),
     };
   }

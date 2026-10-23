@@ -21,6 +21,7 @@ export const NO_REVIEWS: HandReviews = {
   rebuttals: [],
   freeRebuttal: true,
   aiStale: false,
+  aiCardFlag: false,
 };
 
 type Props = {
@@ -67,6 +68,7 @@ export function ReviewPanel({ handId, reviews, hand, isMtt, ai }: Props) {
       rebuttals={reviews.rebuttals}
       freeRebuttal={reviews.freeRebuttal}
       aiStale={reviews.aiStale}
+      aiCardFlag={reviews.aiCardFlag}
       ai={ai}
       isMtt={isMtt}
       mathHints={mathHints}

@@ -299,7 +299,8 @@
     "selfReviewEmpty": "Not reviewed",
     "selfReviewStart": "Review this hand yourself",
     "selfReviewEdit": "Edit",
-    "selfReviewCollapse": "Collapse"
+    "selfReviewCollapse": "Collapse",
+    "cardFlag": "The AI may have misread the cards. Check them against the table above."
   },
   "settings": {
     "title": "Settings",
@@ -763,7 +764,7 @@
     "staleEndAt": "End time",
     "staleEnd": "End session",
     "staleLater": "Later",
-    "tipReview": "Flagged hands that have no accepted review yet.",
+    "tipReview": "Flagged hands where \"I've reviewed it\" is not on yet.",
     "hoursUnit": "{hours} h",
     "notEnded": "Not ended",
     "addHand": "+ Hand"
@@ -785,7 +786,7 @@
     "tileRate": "bb/hour",
     "tipRate": "Net bb over hours played, only when the session has an end time.",
     "tileReview": "To review",
-    "tipReview": "Flagged hands without an accepted review.",
+    "tipReview": "Flagged hands where \"I've reviewed it\" is not on.",
     "tileBuyin": "Buy-in",
     "tipBuyin": "Tournament entry, re-entries not included.",
     "reentries": "{n} re-entries",

@@ -62,6 +62,8 @@ type Props = {
   freeRebuttal: boolean;
   /** The hand changed since the AI review: offer to run it again. */
   aiStale: boolean;
+  /** The AI review names cards that are not in the hand. */
+  aiCardFlag: boolean;
   isMtt: boolean;
   mathHints: MathHint[];
   ai: AiInfo;
@@ -70,6 +72,8 @@ type Props = {
 type AiResponse = {
   review?: ReviewRow & { id: string };
   rebuttal?: RebuttalRow | null;
+  /** The reply still named wrong cards after the retry. */
+  card_flag?: boolean;
   remaining?: number | null;
   cached?: boolean;
   error?: string;
@@ -89,6 +93,7 @@ export function ReviewForm({
   rebuttals: initialRebuttals,
   freeRebuttal: initialFree,
   aiStale: initialStale,
+  aiCardFlag: initialCardFlag,
   isMtt,
   mathHints,
   ai,
@@ -111,6 +116,7 @@ export function ReviewForm({
   const [rebuttals, setRebuttals] = useState(initialRebuttals);
   const [freeRebuttal, setFreeRebuttal] = useState(initialFree);
   const [aiStale, setAiStale] = useState(initialStale);
+  const [aiCardFlag, setAiCardFlag] = useState(initialCardFlag);
   const [doneFailed, setDoneFailed] = useState(false);
   const [confirmAgain, setConfirmAgain] = useState(false);
 
@@ -151,7 +157,7 @@ export function ReviewForm({
       }
       setRemaining(data.remaining ?? null);
       if (body.rebuttal) {
-        const answer = data.rebuttal;
+        const answer = data.rebuttal && { ...data.rebuttal, card_flag: data.card_flag === true };
         if (answer) {
           setRebuttals((rows) => [...rows, answer]);
           if (answer.free) setFreeRebuttal(false);
@@ -160,12 +166,14 @@ export function ReviewForm({
           setAiDraft(fromReviewRow(data.review));
           setAiId(data.review.id);
           setAiStale(false);
+          setAiCardFlag(data.card_flag === true);
         }
       } else {
         const fresh = data.review.id !== aiId;
         setAiDraft(fromReviewRow(data.review));
         setAiId(data.review.id);
         if (fresh) {
+          setAiCardFlag(data.card_flag === true);
           // A new run is a new analysis: its own conversation and its own free rebuttal.
           setRebuttals([]);
           setFreeRebuttal(true);
@@ -395,6 +403,7 @@ export function ReviewForm({
             {r.outcome === 'revised' && (
               <p className="text-xs text-muted">{t('rebutRevisedNote')}</p>
             )}
+            {r.card_flag && <p className="text-xs text-warn">{t('cardFlag')}</p>}
           </div>
         </li>
       ))}
@@ -479,6 +488,11 @@ export function ReviewForm({
 
         {aiId && (
           <>
+            {aiCardFlag && (
+              <p role="note" className="rounded-md bg-warn/10 p-3 text-sm text-warn">
+                {t('cardFlag')}
+              </p>
+            )}
             {read(t('range'), aiDraft.range)}
             {read(t('math'), aiDraft.math, hints)}
             {read(t('line'), aiDraft.line)}
