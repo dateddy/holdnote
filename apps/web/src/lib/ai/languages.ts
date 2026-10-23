@@ -14,7 +14,7 @@ export type LanguagePack = {
   fixRequest: string;
   /** Prefix for the missing-info line appended to the math field. */
   missingLabel: string;
-  /** True when every long text is in this language. */
+  /** True when the fields, taken together, are in this language. */
   check: (texts: readonly string[]) => boolean;
 };
 
@@ -23,7 +23,24 @@ const VIETNAMESE = /[àáảãạăằắẳẵặâầấẩẫậèéẻẽẹ
 
 /** Short texts ("none", a range like "QQ+, AK") carry no language signal. */
 const LONG = 40;
-const long = (texts: readonly string[]) => texts.filter((t) => t.trim().length >= LONG);
+
+/**
+ * Share of the words with a Vietnamese letter, over all the fields joined (task 5.1g). Judged
+ * together because one field may hold only English poker terms ("Preflop raise 3bb. Flop c-bet
+ * 4bb…") inside an otherwise Vietnamese review. Null when the text is too short to tell.
+ */
+function vietnameseShare(texts: readonly string[]): number | null {
+  const joined = texts.join(' ').trim();
+  if (joined.length < LONG) return null;
+  const words = joined.split(/\s+/).filter((w) => /\p{L}/u.test(w));
+  if (!words.length) return null;
+  return words.filter((w) => VIETNAMESE.test(w)).length / words.length;
+}
+
+/** Vietnamese prose has accents on most words; poker terms in English dilute it, never to this. */
+const VI_MIN_SHARE = 0.15;
+/** An English review may quote a Vietnamese word or two, not more. */
+const EN_MAX_SHARE = 0.05;
 
 const vi: LanguagePack = {
   code: 'vi',
@@ -41,7 +58,7 @@ const vi: LanguagePack = {
   fixRequest:
     'Some text fields were not in Vietnamese with full diacritics. Rewrite every text field in Vietnamese with diacritics (tiếng Việt có dấu). Keep the same judgement.',
   missingLabel: 'Thiếu',
-  check: (texts) => long(texts).every((t) => VIETNAMESE.test(t)),
+  check: (texts) => (vietnameseShare(texts) ?? 1) >= VI_MIN_SHARE,
 };
 
 const en: LanguagePack = {
@@ -55,7 +72,7 @@ const en: LanguagePack = {
   fixRequest:
     'Some text fields were not in English. Rewrite every text field in English. Keep the same judgement.',
   missingLabel: 'Missing',
-  check: (texts) => long(texts).every((t) => !VIETNAMESE.test(t)),
+  check: (texts) => (vietnameseShare(texts) ?? 0) <= EN_MAX_SHARE,
 };
 
 const PACKS: Record<string, LanguagePack> = { vi, en };

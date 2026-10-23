@@ -371,10 +371,12 @@ describe('prompt fields follow the hand (task 3.5b)', () => {
     };
     const { promptFields } = request(old);
     expect(promptFields).toMatchObject({ flow: false, heroHand: true });
-    // Only the line for Hero's made hand is added to the old prompt.
-    expect(systemPrompt('v1', promptFields).replace(/^- Hero's made hand.*\n/m, '')).toBe(
-      SYSTEM_PROMPT_V1_BASE,
-    );
+    // Only the line for Hero's made hand and its rule (5.1g) are added to the old prompt.
+    expect(
+      systemPrompt('v1', promptFields)
+        .replace(/^- Hero's made hand.*\n/m, '')
+        .replace(/^13\. Use exactly the names of Hero's hand.*\n/m, ''),
+    ).toBe(SYSTEM_PROMPT_V1_BASE);
     const noBoard = request({ ...old, board: [] });
     expect(noBoard.promptFields).toBeNull();
   });

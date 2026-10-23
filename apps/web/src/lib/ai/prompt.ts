@@ -120,10 +120,16 @@ export function v1Prompt(fields?: PromptFields | null): string {
         .map((k) => `${FIELD_LINES[k]}\n`)
         .join('')
     : '';
-  return lines
+  const text = lines
     ? SYSTEM_PROMPT_V1_BASE.replace(FIELDS_ANCHOR, FIELDS_ANCHOR + lines)
     : SYSTEM_PROMPT_V1_BASE;
+  // Task 5.1g: the model misnamed Hero's hand even with the computed names in the context.
+  return fields?.heroHand ? text.replace(RULES_END, `\n${HERO_HAND_RULE}${RULES_END}`) : text;
 }
+
+const RULES_END = '\n\nReturn ONLY JSON matching the provided schema.';
+const HERO_HAND_RULE =
+  "13. Use exactly the names of Hero's hand on each street given in the context (Hero's hand by street).";
 
 export const PROMPT_VERSIONS = ['v1', 'v2'] as const;
 export type PromptVersion = (typeof PROMPT_VERSIONS)[number];

@@ -392,6 +392,20 @@ describe('language packs', () => {
     expect(languagePack('vi').check([longEn])).toBe(false);
     expect(languagePack('vi').check([longViNoMarks])).toBe(false);
   });
+  it('judges all fields together: a line of English poker terms passes next to Vietnamese (5.1g)', () => {
+    const line =
+      'Preflop raise 3bb. Flop c-bet 4bb (53% pot). Turn check, call bet 8bb. River check, call 30bb.';
+    const range =
+      'Đối thủ call ở BTN với range rộng: broadway, đôi nhỏ và suited connector; bet lớn river thường là two pair trở lên.';
+    const lesson =
+      '1. Có full house ở river thì raise để lấy value. 2. Kiểm soát pot khi board ướt.';
+    expect(languagePack('vi').check([range, 'Pot odds 33%.', line, '', lesson])).toBe(true);
+    // English everywhere is still wrong, even with a Vietnamese word or two.
+    expect(languagePack('vi').check([longEn, line, `${longEn} Mình.`])).toBe(false);
+    // And Vietnamese is still wrong for an English profile.
+    expect(languagePack('en').check([longEn, line, range])).toBe(false);
+    expect(languagePack('en').check([longEn, line, 'Pot odds 33%.'])).toBe(true);
+  });
   it('short texts carry no language signal', () => {
     expect(languagePack('vi').check(['QQ+, AK', ''])).toBe(true);
   });
@@ -428,8 +442,12 @@ describe('runReview language check', () => {
     line: 'Check lại, giữ pot nhỏ khi bài chỉ có showdown value.',
     lesson: 'Đừng bet mỏng vào nhiều người khi bài không có equity.',
   };
+  // The whole reply in English: fields are judged together (5.1g), so one English field is not enough.
   const english = {
     ...viReply,
+    range: 'Villain range is wide from late position, with many weak hands.',
+    math: 'Pot odds 33%, so you need that much equity to call.',
+    line: 'Check back and keep the pot small with only showdown value.',
     lesson: 'Do not bet thin into several players without equity here.',
   };
   const run = (f: unknown, locale = 'vi') =>
@@ -526,6 +544,25 @@ describe('prompt versions (DEC-053)', () => {
     expect(text.replace(/^- (Pot type|Straddle size|Side pots).*\n/gm, '')).toBe(
       SYSTEM_PROMPT_V1_BASE,
     );
+  });
+  it("v1 tells the model to use Hero's hand names from the context, only when they are given", () => {
+    const none = {
+      flow: false,
+      straddle: false,
+      ante: false,
+      level: false,
+      multiway: false,
+      sidePots: false,
+      uncalled: false,
+      heroHand: false,
+    };
+    const rule =
+      "13. Use exactly the names of Hero's hand on each street given in the context (Hero's hand by street).";
+    const text = systemPrompt('v1', { ...none, heroHand: true });
+    expect(text).toContain(rule);
+    expect(text.indexOf(rule)).toBeLessThan(text.indexOf('Return ONLY JSON'));
+    expect(systemPrompt('v1', none)).not.toContain(rule);
+    expect(systemPrompt('v1')).toBe(SYSTEM_PROMPT_V1_BASE);
   });
   it('stores the prompt version on the review row', () => {
     const row = toAiReviewRow(aiReviewSchema.parse(valid), 'm/x', false, 'Missing', 'v1');
