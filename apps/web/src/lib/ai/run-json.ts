@@ -27,6 +27,10 @@ function sum(calls: ChatResult[]): Usage {
  * when it does not (spec 5.1). Tokens and cost of both calls are added up. `parse` turns the raw
  * reply into the value, or says what is wrong with it (shape or language). Throws
  * {@link InvalidOutputError} when the second reply is wrong too.
+ *
+ * `check` looks at a valid value for softer mistakes (wrong cards, task 5.1f): a problem triggers
+ * the same single retry with its message; if the retry still has one, or brings nothing usable,
+ * the value comes back with `flag` set instead of failing.
  */
 export async function runJson<T>(opts: {
   apiKey: string;
@@ -36,9 +40,10 @@ export async function runJson<T>(opts: {
   schema: Record<string, unknown>;
   schemaName: string;
   parse: (content: string) => Parsed<T>;
+  check?: (value: T) => string | null;
   reasoningEffort?: 'low' | 'medium' | 'high';
   fetchImpl?: typeof fetch;
-}): Promise<Usage & { value: T; attempts: 1 | 2 }> {
+}): Promise<Usage & { value: T; attempts: 1 | 2; flag: string | null }> {
   const messages: ChatMessage[] = [
     { role: 'system', content: opts.system },
     { role: 'user', content: opts.userMessage },
@@ -53,10 +58,13 @@ export async function runJson<T>(opts: {
       reasoningEffort: opts.reasoningEffort,
       fetchImpl: opts.fetchImpl,
     });
+  const checked = (value: T) => opts.check?.(value) ?? null;
 
   const first = await call(messages);
   const a = opts.parse(first.content);
-  if (a.ok) return { value: a.value, attempts: 1, ...sum([first]) };
+  const firstFlag = a.ok ? checked(a.value) : null;
+  if (a.ok && !firstFlag) return { value: a.value, attempts: 1, flag: null, ...sum([first]) };
+  const problem = a.ok ? (firstFlag as string) : a.error;
 
   let second: ChatResult;
   try {
@@ -65,16 +73,21 @@ export async function runJson<T>(opts: {
       { role: 'assistant', content: first.content.slice(0, 4000) },
       {
         role: 'user',
-        content: `Your reply did not match the schema: ${a.error}\nReturn ONLY corrected JSON.`,
+        content: a.ok
+          ? `${problem}\nReturn ONLY corrected JSON.`
+          : `Your reply did not match the schema: ${problem}\nReturn ONLY corrected JSON.`,
       },
     ]);
   } catch (e) {
+    // The first reply was usable apart from the check: keep it, flagged.
+    if (a.ok) return { value: a.value, attempts: 1, flag: firstFlag, ...sum([first]) };
     // The first call was paid for even though the retry failed.
     if (e instanceof OpenRouterError) e.paid = sum([first]);
     throw e;
   }
   const b = opts.parse(second.content);
-  if (b.ok) return { value: b.value, attempts: 2, ...sum([first, second]) };
+  if (b.ok) return { value: b.value, attempts: 2, flag: checked(b.value), ...sum([first, second]) };
+  if (a.ok) return { value: a.value, attempts: 2, flag: firstFlag, ...sum([first, second]) };
   throw new InvalidOutputError(b.error, sum([first, second]));
 }
 

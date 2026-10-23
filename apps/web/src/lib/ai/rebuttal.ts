@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { cardMistake, type CardFacts } from './card-check';
 import { languagePack } from './languages';
 import { normalizeReview } from './normalize';
 import {
@@ -63,6 +64,8 @@ export type RebuttalRun = Usage & {
   review: AiReview;
   attempts: 1 | 2;
   promptVersion: PromptVersion;
+  /** Wrong cards still named after the retry (task 5.1f). */
+  flag: string | null;
 };
 
 /**
@@ -75,6 +78,8 @@ export async function runRebuttal(opts: {
   userMessage: string;
   locale?: string;
   promptFields?: PromptFields | null;
+  /** The real cards: an answer naming others is sent back once (task 5.1f). */
+  cards?: CardFacts | null;
   fetchImpl?: typeof fetch;
 }): Promise<RebuttalRun> {
   const promptVersion = configuredPromptVersion();
@@ -96,6 +101,10 @@ export async function runRebuttal(opts: {
     schema: aiRebuttalJsonSchema as Record<string, unknown>,
     schemaName: 'hand_rebuttal',
     parse,
+    check: opts.cards
+      ? ({ reply, review: v }) =>
+          cardMistake([reply, v.range, v.math, v.line, v.icm, v.lesson], opts.cards!)
+      : undefined,
     fetchImpl: opts.fetchImpl,
   });
   return { ...value, reply: value.reply.trim(), promptVersion, ...rest };

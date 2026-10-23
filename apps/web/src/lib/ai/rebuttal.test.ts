@@ -278,6 +278,59 @@ describe('aiReviewState: what the hand screen shows around the AI review', () =>
       rebuttals: [],
       freeRebuttal: true,
       aiStale: false,
+      aiCardFlag: false,
     });
+  });
+});
+
+describe('app budget spent: even the free rebuttal is blocked', () => {
+  it('free rebuttal, turns left, budget reached or passed → budget_locked', () => {
+    for (const appSpendUsd of [20, 20.01, 35]) {
+      expect(
+        decideRebuttalAccess(
+          { hasOwnKey: false, monthCalls: 0, appSpendUsd, budgetUsd: 20, lastHourCalls: 0 },
+          true,
+        ),
+      ).toEqual({ ok: false, code: 'budget_locked' });
+    }
+  });
+  it('just under the budget the free rebuttal still runs', () => {
+    expect(
+      decideRebuttalAccess(
+        { hasOwnKey: false, monthCalls: 0, appSpendUsd: 19.99, budgetUsd: 20, lastHourCalls: 0 },
+        true,
+      ),
+    ).toMatchObject({ ok: true, billedTo: 'app' });
+  });
+});
+
+describe('aiReviewState flags wrong cards in the saved text', () => {
+  const cards = { hero: ['Ad', 'Qd'], board: ['Qc', '7s', '2h', 'Ah', 'Qh'], villain: [] };
+  const ai = {
+    id: 'A',
+    source: 'ai',
+    created_at: '2026-10-21T10:00:00Z',
+    range_text: 'Villain calls wide.',
+    math_text: null,
+    line_text: 'With full house (QhQc on board AhQh), raise.',
+    lesson: null,
+  };
+  it('review and rebuttal reply', () => {
+    const s = aiReviewState(
+      ai,
+      [
+        row({ id: '1', reply: 'Mình cầm AdQd, full house ở river.' }),
+        row({ id: '2', reply: 'Hero holds QhQc.' }),
+      ],
+      '2026-10-21T09:00:00Z',
+      'en',
+      cards,
+    );
+    expect(s.aiCardFlag).toBe(true);
+    expect(s.rebuttals.map((r) => r.card_flag)).toEqual([false, true]);
+    expect(
+      aiReviewState({ ...ai, line_text: 'Raise river.' }, [], '2026-10-21T09:00:00Z', 'en', cards)
+        .aiCardFlag,
+    ).toBe(false);
   });
 });

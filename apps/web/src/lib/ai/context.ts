@@ -13,8 +13,15 @@ import {
   type HandInput,
   type Street,
 } from 'poker-core';
-import { deriveHand, fromHandRow, type HandRowIn, type HandSession } from '@/lib/hands/build';
+import {
+  deriveHand,
+  fromHandRow,
+  opponentCards,
+  type HandRowIn,
+  type HandSession,
+} from '@/lib/hands/build';
 import { ERROR_TAGS } from '@/lib/review/review';
+import type { CardFacts } from './card-check';
 import { languagePack } from './languages';
 import type { PromptFields } from './prompt';
 import { buildTableFacts, type OpponentInfo, type TableFacts } from './table-facts';
@@ -404,4 +411,17 @@ export function renderReviewContext(f: ReviewFacts): string {
 
   lines.push('', pack.reminder);
   return lines.join('\n');
+}
+
+/** The real cards of a hand, to check the cards the AI names (task 5.1f). */
+export function cardFactsOf(session: ReviewSession, hand: ReviewHand): CardFacts {
+  const draft = fromHandRow(session, hand);
+  return {
+    hero: hand.hero_cards ?? [],
+    board: hand.board ?? [],
+    villain: [
+      ...(hand.villain_cards ?? []),
+      ...draft.opponents.flatMap((o) => opponentCards(o).filter(Boolean)),
+    ],
+  };
 }

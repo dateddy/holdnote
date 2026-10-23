@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { buildReviewRequest } from '@/lib/ai/context';
+import { buildReviewRequest, cardFactsOf } from '@/lib/ai/context';
 import { languagePack } from '@/lib/ai/languages';
 import { budgetFromEnv, decideAccess, decideRebuttalAccess, loadUsage } from '@/lib/ai/quota';
 import {
@@ -174,12 +174,15 @@ export async function POST(request: Request) {
     if (error) console.error('ai_usage insert failed', error.message);
   };
   const isMtt = session.kind === 'mtt';
+  // A reply naming cards that are not in the hand is sent back once; still wrong, it is saved and
+  // the hand screen warns (the check runs again there on the saved text, task 5.1f).
+  const cards = cardFactsOf(session, hand);
   const missingLabel = languagePack(locale).missingLabel;
 
   if (rebuttal && current) {
     let run;
     try {
-      run = await runRebuttal({ apiKey, model, userMessage, locale, promptFields });
+      run = await runRebuttal({ apiKey, model, userMessage, locale, promptFields, cards });
     } catch (e) {
       await logFailure(e);
       const failure = modelFailure(e, usage.hasOwnKey);
@@ -239,6 +242,7 @@ export async function POST(request: Request) {
         accepted: reviewOut.accepted,
       },
       rebuttal: saved ?? null,
+      card_flag: run.flag != null,
       remaining: access.remaining,
       cached: false,
     });
@@ -246,7 +250,7 @@ export async function POST(request: Request) {
 
   let run;
   try {
-    run = await runReview({ apiKey, model, userMessage, locale, promptFields });
+    run = await runReview({ apiKey, model, userMessage, locale, promptFields, cards });
   } catch (e) {
     await logFailure(e);
     const failure = modelFailure(e, usage.hasOwnKey);
@@ -277,6 +281,7 @@ export async function POST(request: Request) {
     },
     remaining: access.remaining,
     cached: false,
+    card_flag: run.flag != null,
     key_mistake_street: run.review.key_mistake_street,
     repeats_known_leak: run.review.repeats_known_leak,
   });

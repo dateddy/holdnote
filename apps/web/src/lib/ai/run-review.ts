@@ -1,3 +1,4 @@
+import { cardMistake, type CardFacts } from './card-check';
 import { languagePack } from './languages';
 import {
   configuredPromptVersion,
@@ -17,7 +18,12 @@ export type ReviewRun = Usage & {
   attempts: 1 | 2;
   /** The prompt the review was made with; stored in `reviews.prompt_version`. */
   promptVersion: PromptVersion;
+  /** Wrong cards still named after the retry (task 5.1f); the review is saved anyway. */
+  flag: string | null;
 };
+
+/** The text fields of a review, where the model names cards. */
+export const reviewTexts = (v: AiReview) => [v.range, v.math, v.line, v.icm, v.lesson];
 
 /**
  * One review = one call, plus a single retry with the validation error when the JSON is wrong
@@ -38,6 +44,8 @@ export async function runReview(opts: {
   promptFields?: PromptFields | null;
   /** Benchmark only: replaces the prompt text of `promptVersion`. */
   system?: string;
+  /** The real cards: a review naming others is sent back once (task 5.1f). */
+  cards?: CardFacts | null;
   fetchImpl?: typeof fetch;
 }): Promise<ReviewRun> {
   const promptVersion = opts.promptVersion ?? configuredPromptVersion();
@@ -60,6 +68,7 @@ export async function runReview(opts: {
     schema: aiReviewJsonSchema as Record<string, unknown>,
     schemaName: 'hand_review',
     parse,
+    check: opts.cards ? (v) => cardMistake(reviewTexts(v), opts.cards!) : undefined,
     reasoningEffort: opts.reasoningEffort,
     fetchImpl: opts.fetchImpl,
   });
