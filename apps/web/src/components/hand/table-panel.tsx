@@ -43,6 +43,8 @@ type Props = {
   modeLocked: boolean;
   /** Switching back to actions was refused: the line has errors or actions that do not fit. */
   switchBlocked: boolean;
+  /** Desktop: a larger table in a column of its own. */
+  large?: boolean;
 };
 
 /**
@@ -71,6 +73,7 @@ export function TablePanel({
   onMode,
   modeLocked,
   switchBlocked,
+  large = false,
 }: Props) {
   const t = useTranslations('record');
   const th = useTranslations('hand');
@@ -120,6 +123,7 @@ export function TablePanel({
       )}
 
       <MiniTable
+        large={large}
         seats={players}
         onSeat={(pos) => (role === 'hero' ? onHeroSeat(pos) : onOpponentSeat(pos))}
         view={(pos) => {

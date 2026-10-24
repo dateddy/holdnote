@@ -1,5 +1,6 @@
 import { getLocale, getTranslations } from 'next-intl/server';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 import { PracticeHand } from '@/components/onboarding/practice-hand';
 import { SampleHand } from '@/components/onboarding/sample-hand';
 import { createClient } from '@/lib/supabase/server';
@@ -18,9 +19,9 @@ export default async function PracticePage() {
           {t('back')}
         </Link>
         <form action={finishOnboarding}>
-          <button type="submit" className="text-sm underline underline-offset-4">
+          <Button type="submit" variant="ghost" full={false}>
             {t('skip')}
-          </button>
+          </Button>
         </form>
       </header>
       <h1 className="text-2xl font-semibold">{t('practiceTitle')}</h1>

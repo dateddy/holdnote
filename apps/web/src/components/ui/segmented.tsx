@@ -20,7 +20,7 @@ export function Segmented<T extends string>({ value, options, onChange, label }:
           type="button"
           aria-pressed={o.value === value}
           onClick={() => onChange(o.value)}
-          className={`min-w-16 flex-1 px-3 text-sm whitespace-nowrap ${
+          className={`min-w-16 flex-auto px-3 text-sm whitespace-nowrap ${
             o.value === value ? 'bg-accent font-medium text-accent-foreground' : 'text-foreground'
           }`}
         >

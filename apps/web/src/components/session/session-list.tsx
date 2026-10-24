@@ -196,7 +196,7 @@ export function SessionList({
         {net.lines.length === 0
           ? '—'
           : net.lines.map((l, i) => (
-              <div key={i}>
+              <div key={i} className={i > 0 ? 'text-sm lg:text-2xl' : undefined}>
                 {isBb(l) ? (
                   <Result value={l.bb}>{signedNumber(l.bb, locale)} bb</Result>
                 ) : (
@@ -321,7 +321,7 @@ export function SessionList({
           </div>
         </>
       )}
-      <Fab href="/sessions/new" label={t('newSession')} />
+      {items.length > 0 && <Fab href="/sessions/new" label={t('newSession')} />}
 
       <ConfirmDialog
         open={toDelete !== null}

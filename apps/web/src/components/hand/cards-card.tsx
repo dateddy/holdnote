@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import { CardSlot } from '@/components/ui/card-key';
 import { Collapse } from '@/components/ui/collapse';
 import { revealAboveBar } from '@/lib/hands/reveal';
+import { cardEntry, isTypingTarget } from '@/lib/hands/shortcuts';
 import { CardPicker } from './card-picker';
 import { cardLabel } from './card-label';
 
@@ -75,6 +76,24 @@ export function CardsCard({ slots, check, blocked, highlight, onChange, onPickin
     ...slots.filter((c, i) => c && i !== active && !c.endsWith('?')),
   ]);
 
+  // Keyboard: while a slot is selected, a rank key and a suit key fill it and move to the next.
+  const typed = useRef('');
+  const keyPick = useRef<(card: string) => void>(() => {});
+  const keyUsed = useRef<ReadonlySet<string>>(new Set());
+  useEffect(() => {
+    if (active === null) return;
+    typed.current = '';
+    const onKey = (ev: KeyboardEvent) => {
+      if (ev.ctrlKey || ev.metaKey || ev.altKey || isTypingTarget(ev.target as HTMLElement)) return;
+      const r = cardEntry(typed.current, ev.key);
+      typed.current = r.pending;
+      if (r.card && !keyUsed.current.has(r.card)) keyPick.current(r.card);
+      if (r.card || r.pending || ev.key === 'Backspace') ev.preventDefault();
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [active]);
+
   function pick(card: string) {
     if (active === null) return;
     const next = [...slots];
@@ -83,6 +102,11 @@ export function CardsCard({ slots, check, blocked, highlight, onChange, onPickin
     const following = next.findIndex((c, i) => i > active && !c && stateOf(i) !== 'locked');
     open(following >= 0 ? following : null);
   }
+
+  useEffect(() => {
+    keyPick.current = pick;
+    keyUsed.current = used;
+  });
 
   const slotLabel = (i: number) =>
     i < 2 ? t(i === 0 ? 'slotHero1' : 'slotHero2') : `${groupOf(i).title} ${groupOf(i).at}`;

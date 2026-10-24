@@ -102,8 +102,8 @@ Bộ chọn bài, bàn phím số và bàn mini **trượt ra trong luồng tran
 
 | Component                  | Dùng khi                                                                                                                  |
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `Button` / `buttonClass()` | Mọi nút; `buttonClass` cho `<Link>` trông như nút. Variant `primary` · `secondary` · `ghost`; size `sm` · `md` · `lg`     |
-| `Chip` / `chipClass()`     | Chọn một/nhiều trong nhóm (vị trí, hành động, kết quả, bộ lọc); `tone="villain"` cho thanh Đối thủ                          |
+| `Button` / `buttonClass()` | Mọi nút; `buttonClass` cho `<Link>` trông như nút. Variant `primary` · `secondary` · `ghost` (nút trong suốt, không gạch chân) · `danger`; size `sm` · `md` · `lg` |
+| `Chip` / `chipClass()`     | Chọn một/nhiều trong nhóm (vị trí, hành động, kết quả, bộ lọc); `tone="villain"` cho thanh Đối thủ; `icon` cho icon đứng trước chữ ("✕ Xóa lọc") |
 | `Input` / `INPUT_CLASS`    | Ô nhập một dòng                                                                                                           |
 | `Card` / `CARD_CLASS`      | Khối nội dung có viền                                                                                                     |
 | `TopBar`                   | Đầu mọi màn (trừ đăng nhập, onboarding). Màn gốc của tab: tiêu đề lớn `text-2xl`, không back. Màn con (có `back`): thanh dính trên cùng, nền `background`, viền dưới, cao ≥56px, nằm dưới vùng an toàn của status bar; `<` (`BackButton`) 44px góc trái, tiêu đề `text-lg` một dòng (cắt bằng …), phụ đề `text-xs`, `action` bên phải. Màn Ghi nhanh dùng `compact`: thanh cuộn đi cùng trang vì đã có thanh ngữ cảnh dính |
@@ -128,12 +128,15 @@ Bộ chọn bài, bàn phím số và bàn mini **trượt ra trong luồng tran
 | `Card tight` / `Card snug` | Card `p-3` / `p-2` cho màn làm việc phải vừa một màn hình điện thoại (Ghi nhanh)                                          |
 
 | `InfoTip`                  | Dấu `?` (hoặc `!` khi là lưu ý, `icon="!"`) cạnh nhãn chỉ số hoặc thuật ngữ. Chạm mở/đóng, chạm ra ngoài đóng, mỗi lúc chỉ một cái mở; chuột: hover; bàn phím: focus. Bảng chú thích căn giữa theo biểu tượng, luôn cách mép màn hình ≥8px, lật lên trên khi dưới không đủ chỗ (`lib/floating.ts`, dùng chung với `MoreMenu`, `ChipMenu`). Một câu, tối đa ~15 chữ, nằm trong file ngôn ngữ (ngoại lệ `rounded-full` như chấm chỉ báo; vùng chạm mở rộng 44px) |
-| `StatTile`                 | Nhãn + `InfoTip` + một số lớn (`text-lg`, từ 1024px `text-2xl`) + dòng phụ tùy chọn                                          |
-| `FilterBar`                | Khung xếp các điều khiển lọc: `row` (cuộn ngang, điện thoại, ẩn thanh cuộn, mép phải mờ dần khi còn nút bị che; gắn `data-hscroll` để vuốt mép trái không tranh cuộn ngang) hoặc `column` (cột trái desktop) |
+| `StatTile`                 | Nhãn + `InfoTip` + một số lớn (`text-lg`, từ 1024px `text-2xl`; nhiều dòng thì mỗi dòng một số, như ô Net khi trộn cash và MTT) + dòng phụ tùy chọn |
+| `FilterBar`                | Khung xếp các điều khiển lọc: `row` (cuộn ngang, ẩn thanh cuộn, mép phải mờ dần khi còn nút bị che; gắn `data-hscroll` để vuốt mép trái không tranh cuộn ngang; `wrapOnDesktop` thì từ 1024px xuống dòng thay vì cuộn) hoặc `column` |
 | `Segmented`                | Chọn một trong vài mục đặt cạnh nhau (Tất cả / Cash / MTT), cao 44px                                                         |
-| `ChipMenu`                 | Chip `Tháng ▾` mở danh sách ngắn (vị trí `fixed`, không bị cắt bởi vùng cuộn ngang); mục đầu xóa lựa chọn                      |
+| `ChipMenu`                 | Chip `Tháng ▾` mở danh sách ngắn (vị trí `fixed`, không bị cắt bởi vùng cuộn ngang); có `allLabel` thì mục đầu xóa lựa chọn, bỏ `allLabel` khi bắt buộc chọn một (tiền tệ) |
 | `SortHeader`               | `<th>` mà tên cột là nút sắp xếp (`aria-sort`); `InfoTip` đặt bên cạnh, ngoài nút                                           |
-| `SideNav`                  | Thanh điều hướng trái từ 1024px, cùng 3 mục và icon với `BottomNav` (`BottomNav` ẩn từ 1024px)                                |
+| `AppShell`                 | Khung mọi màn đăng nhập từ 1024px (5.1d-4): thanh trên ngang (nút ☰ thu/mở menu + chữ HoldNote) và menu trái; thay `SideNav`. Mở `w-56` (icon + chữ), thu `w-16` (chỉ icon, vẫn bấm được, có `title`). Trang chủ, Thống kê ở trên, Cài đặt ghim đáy. Nhớ trạng thái trong `localStorage` (`lib/nav-state.ts`, bọc try/catch; lỗi thì mặc định mở). Đặt biến `--nav-w` cho nội dung. Ẩn ở onboarding. `BottomNav` ẩn từ 1024px |
+| `EntryLayout`              | Khung màn nhập liệu (form phiên, Ghi hand, Sửa hand) từ 1024px: [cột trái] · nội dung · cột phải dính (`lg:sticky lg:top-32`) chứa tóm tắt và nút chính; điện thoại: các phần nối nhau một cột (`contents`) |
+| `Fab`                      | Nút nổi góc dưới phải cho việc bắt đầu của một màn danh sách ("Phiên mới"); điện thoại nổi phía trên thanh tab, desktop cách mép 32px |
+| `ShortcutsDialog`          | Bảng phím tắt (phím `?`), `<dialog>` modal; Esc và nền đóng                                                                    |
 
 | `ActionTag`                | Chip action tĩnh trong hàng hand (không bấm được), cùng tone với `ActionPill`, cao 24px; `showWho={false}` trong bảng desktop (màu thay chữ, tên chỉ cho trình đọc màn hình) |
 | `Badge`                    | Nhãn nhỏ trên hàng: `warn` (Cần xem lại), `accent` (Có AI phân tích), `muted` (Thiếu dữ liệu)                                    |
@@ -154,22 +157,22 @@ Sẽ thêm trong các task 5.1b-x: `Screen` (khung trang). `Icon`, `TopBar` tab/
 
 ## 7. Điều hướng
 
-- 3 tab gốc (DEC-062): **Trang chủ** `/` · **Thống kê** `/stats` · **Cài đặt** `/settings`. Không còn tab Ghi hand: ghi hand từ chi tiết phiên, hoặc nút "+ Hand" ở hàng phiên gần nhất trên trang chủ. Điện thoại: thanh dưới; từ 1024px: `SideNav` bên trái, cùng 3 mục.
+- 3 tab gốc (DEC-062): **Trang chủ** `/` · **Thống kê** `/stats` · **Cài đặt** `/settings`. Không còn tab Ghi hand: ghi hand từ chi tiết phiên, hoặc nút "+ Hand" ở hàng phiên gần nhất trên trang chủ. Điện thoại: thanh dưới; từ 1024px: `AppShell` (thanh trên + menu trái thu/mở được, Cài đặt ghim đáy menu), cùng 3 mục.
 - Màn gốc của tab: không có nút back.
 - Màn con: thanh trên dính với `<` ở góc trái (không có link chữ "Quay lại"/"Về phiên"). `<` đi qua lịch sử trình duyệt; mọi link vào màn con là `push`, nên nút back Android và `<` đồng nhất. Vuốt từ mép trái (≤20px, ngang ≥60px) làm cùng việc khi app cài trên iOS (Safari thường và Android đã có cử chỉ hệ thống); không bắt vuốt bắt đầu trong vùng `data-hscroll`.
 - Tab cha vẫn sáng cho màn con (`lib/nav.ts`, `activeTab`); mọi màn `/sessions/**` và `/hands/**` thuộc Trang chủ:
   - Trang chủ: `/`, `/sessions/new`, `/sessions/[id]` (có danh sách hand; `/sessions/[id]/hands` chuyển về đây), `/sessions/[id]/edit`, `/sessions/[id]/summary`, `record`, `structure`, `end`, `/hands/[id]` (replayer + review; back về `/sessions/[id]` kèm bộ lọc), `/hands/[id]/edit` (Sửa hand). `/sessions/[id]/before` còn route nhưng không có link.
   - Thống kê: `/stats`; `/rules`, `/opponents`, `/opponents/new`, `/opponents/[id]` (con của Thống kê).
   - Cài đặt: `/settings`.
-- Ngoại lệ bề rộng: trang Phiên từ 1024px không giới hạn `max-w-md` (cột lọc 16rem + bảng 9 cột); chi tiết phiên cũng vậy: chưa chọn hand thì bảng đủ 12 cột rộng hết màn, chọn hand thì lưới `420px | còn lại` (danh sách hàng 4 dòng bên trái, dính và cuộn riêng; replayer + review bên phải); Esc hoặc ✕ đóng; điện thoại vẫn `max-w-md`.
+- Ngoại lệ bề rộng: trang Phiên từ 1024px không giới hạn `max-w-md` (hàng lọc ngang, 3 ô chỉ số ngang, bảng 9 cột + cột ⋯); form phiên `max-w-6xl`; Ghi hand / Sửa hand `max-w-7xl`; chi tiết phiên cũng vậy: chưa chọn hand thì bảng đủ 12 cột rộng hết màn, chọn hand thì lưới `420px | còn lại` (danh sách hàng 4 dòng bên trái, dính và cuộn riêng; replayer + review bên phải); Esc hoặc ✕ đóng; điện thoại vẫn `max-w-md`.
 - Phần còn lại của cây màn chốt ở task 5.1b-2.
 
 ## 8. Form phiên (tạo và sửa dùng chung)
 
 - Bốn `Card` theo thứ tự: **Loại và hình thức** → **Địa điểm và thời gian** → **Đơn vị và blind** → **Khác**; trong card các ô cách nhau `gap-3`, giữa các card `gap-6`.
-- Nút Tạo/Lưu `lg` nằm trong `StickyBar` dính đáy (`lg:left-56` để chừa `SideNav`); `BottomNav` ẩn ở màn này. Cuối form, trên thanh Lưu, một dòng tóm tắt `text-sm text-muted`, ví dụ "Cash · Live · Chip · 20/50 · straddle 100 · 1 chip = 1.000 VND". Đơn vị chỉ được gọi tên ở dòng này và ở nhóm Đơn vị: không ghi đơn vị trong từng ô.
-- Đơn vị: `Chip` Chip · VND · USD · …, Chip đứng đầu và là mặc định cho phiên cash Live. Chọn Chip thì hiện thêm hàng "1 chip = [số] [tiền tệ]", tùy chọn; để trống thì app chỉ hiện chip và bb, có điền thì hiện tiền ở dòng phụ.
-- Ngày mặc định hôm nay, giờ vào mặc định lúc này, giờ ra để trống (đang chơi); giờ ra nhỏ hơn giờ vào là sau nửa đêm. Loại phiên khóa khi sửa.
+- Điện thoại: nút Tạo/Lưu `lg` nằm trong `StickyBar` dính đáy; `BottomNav` ẩn ở màn này. Desktop (`EntryLayout`): 4 card xếp lưới 2 cột, cột phải dính chứa dòng tóm tắt và nút Tạo/Lưu. Cuối form, trên thanh Lưu, một dòng tóm tắt `text-sm text-muted`, ví dụ "Cash · Live · Chip · 20/50 · straddle 100 · 1 chip = 1.000 VND". Đơn vị chỉ được gọi tên ở dòng này và ở nhóm Đơn vị: không ghi đơn vị trong từng ô.
+- Đơn vị: `Segmented` "Chip | Tiền tệ" (Chip là mặc định cho phiên cash Live); chọn Tiền tệ thì hiện `ChipMenu` chọn VND · USD · …. Chọn Chip thì hiện thêm một dòng "1 chip = [số] [tiền tệ ▾]", tùy chọn; để trống thì app chỉ hiện chip và bb, có điền thì hiện tiền ở dòng phụ.
+- Ngày mặc định hôm nay, giờ vào mặc định lúc này, giờ ra để trống (đang chơi); giờ ra nhỏ hơn giờ vào là sau nửa đêm. Loại phiên khóa khi sửa. Ngày và giờ chỉ điền sau khi trang chạy trong trình duyệt (máy chủ không biết múi giờ người chơi); Sửa phiên nạp lại đúng ngày, giờ vào, giờ ra đã lưu (`editTimesFrom`).
 
 ## 9. Khối "AI phân tích"
 
@@ -179,3 +182,36 @@ Sẽ thêm trong các task 5.1b-x: `Screen` (khung trang). `Icon`, `TopBar` tab/
 - AI nêu lá bài không có trong hand (sau một lần thử lại): đầu khối hiện "AI có thể đã đọc sai bài. Đối chiếu với bài trên bàn ở phía trên." (`text-sm text-warn bg-warn/10 p-3 rounded-md`); câu trả lời phản biện bị cờ có dòng `text-xs text-warn` cùng nội dung.
 - "Chạy lại AI review": nút `secondary`, chỉ hiện khi hand sửa sau lần AI review gần nhất (kèm dòng "Hand đã sửa sau lần AI review gần nhất."), hỏi xác nhận trước.
 - Thẻ "Bạn tự review" (`Card`, dưới khối AI): tiêu đề `text-base font-medium` + `Badge` trạng thái ("Chưa review" `muted` / "Đã lưu" `accent`). Chưa có: nút `secondary` "Tự review hand này" mở form. Đã có: cả hàng tiêu đề là `BarButton` (Sửa / Thu gọn), thu gọn vẫn hiện `Badge` EV và loại lỗi; mở ra là form (các ô, loại lỗi, EV, bài học, "Tôi đã xem lại", nút Lưu). Chạy AI không đụng review tay. Hai bên cho EV khác nhau thì có dòng `text-xs text-muted` "AI: Sai · Bạn: Đúng".
+
+## 10. Khung desktop (từ 1024px, 5.1d-4)
+
+- **Khung:** `AppShell` (thanh trên 56px + menu trái). Thanh dưới của màn con (`TopBar` có back) dính ở `top-14` để nằm dưới thanh trên.
+- **Trang chủ:** thẻ phiên còn mở là một dải ngang (mô tả · ô giờ kết thúc · "Kết thúc phiên" · "Để sau"). Một hàng lọc: Tìm · Tất cả|Cash|MTT · Tháng ▾ · Địa điểm ▾ · Mọi kết quả|Thắng|Thua (chọn một) · Cần xem lại · "✕ Xóa lọc" (chip có icon, chỉ khi đang lọc, và là nơi duy nhất có "Xóa lọc"). Dưới hàng lọc là 3 ô chỉ số ngang rồi bảng; cả hàng bảng bấm được (hover sáng, Enter mở), cột cuối `⋯` (Sửa · Xóa). "Phiên mới" là `Fab`.
+- **Ô Net:** cash hiện bb (phiên Chip chưa quy đổi cũng hiện bb), MTT hiện tiền; trộn hai loại thì hai dòng (bb cho cash, tiền cho MTT). "—" chỉ khi chưa phiên nào có kết quả.
+- **Ghi hand / Sửa hand:** `EntryLayout`. Từ 1280px: 3 cột `22rem | còn lại | 22rem`. 1024–1279px (còn menu bên trái, ba cột không vừa): 2 cột, khối 1 nằm trên khối 2 trong cột trái, cột Kết quả dính bên phải `20rem`.
+  1. Bàn mini lớn (288px) với số người, stack, đối thủ, straddle, chế độ nhập (`TablePanel` mở sẵn, không có thanh ngữ cảnh trượt).
+  2. Thẻ bài 7 ô và thẻ Action.
+  3. Cột Kết quả dính: cảnh báo và gợi ý thiếu dữ liệu, showdown (pot, "Nhận về", "Lời/lỗ"), Một câu suy nghĩ, ⚑, thanh Lưu, nút "Phím tắt (?)". Không còn dòng cảnh báo nhỏ ở góc dưới trái.
+  Điện thoại giữ bố cục một cột với thanh ngữ cảnh và `StickyBar`.
+- **Nhãn kết quả (cả điện thoại):** số pot người thắng nhận là "Nhận về"; số thắng thua thật của mình là "Lời/lỗ".
+
+## 11. Phím tắt (desktop, màn Ghi hand / Sửa hand)
+
+Logic thuần ở `lib/hands/shortcuts.ts`, có test. Chỉ bật từ 1024px.
+
+| Phím | Việc |
+| --- | --- |
+| `F` `C` `X` `B` `R` `O` `A` | Fold · Call · Check · Bet · Raise · Open · All-in, chỉ khi nút đó có trong `state.buttons` |
+| số, `.`, `k`, `Enter` | Khi bàn phím số đang mở: gõ kích cỡ (nhận `k`), Enter xác nhận, Backspace xóa, Esc đóng |
+| hạng rồi chất (`A` `h`, `T` `d`, `10` `s`) | Khi một ô bài đang chọn: điền ô rồi tự sang ô kế |
+| `Z` | Hoàn tác action cuối |
+| `←` `→` | Đổi tab street |
+| `?` | Mở bảng phím tắt |
+
+- **Không kích hoạt khi đang gõ** trong ô chữ (`input`, `textarea`, `select`, nội dung sửa được: Một câu suy nghĩ, gắn tên đối thủ, stack...) và khi giữ Ctrl / Cmd / Alt.
+- Khi ô bài hoặc bàn phím số đang mở, chúng tự đọc phím của mình; phím toàn màn (`F C X...`) tạm nghỉ để `A` là Ách chứ không phải All-in.
+
+## 12. Nút và link
+
+- **Mọi thao tác là nút** (`Button`, `Chip`...): tạo, lưu, xóa, kết thúc, để sau, bỏ qua, sửa tay. Link gạch chân chỉ dùng để **điều hướng** sang màn khác (Cài đặt, "từ phiên...", thêm đối thủ). Nút trong suốt dùng `Button variant="ghost"`, không gạch chân.
+- Một `<Link>` trông như nút (`buttonClass`) vẫn là điều hướng thuần (vd "Phiên mới", "+ Hand").

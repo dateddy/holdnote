@@ -1,7 +1,9 @@
-# STATUS — cập nhật 2026-10-21 17:05
+# STATUS — cập nhật 2026-10-24
 
 ## Đã xong
 
+- 5.1e, 5.1f, 5.1g (DEC-065, 066, 067): phản biện dạng hội thoại, kiểm lá bài AI nêu, bộ kiểm ngôn ngữ xét chung.
+- 5.1d-4 (DEC-068): giao diện desktop: `AppShell` menu thu/mở, hàng lọc ngang, lọc kết quả chọn một, ô Net nhiều dòng, bảng phiên bấm cả hàng + ⋯, `Fab`, form phiên 2 cột, Ghi/Sửa hand 3 cột (2 cột ở 1024px) + phím tắt, nhãn Nhận về / Lời/lỗ. Ảnh `screens/5.1d-4/` bằng `node scripts/screens-5.1d-4.mjs`.
 - Giai đoạn 1–4, 5.1, 5.1c, 5.1d xong (5.1d-3 gồm đổi đơn vị 3 phiên cũ sang Chip, 1 chip = 1.000 VND). 5.1b làm dở (5.1b-1 xong; 5.1b-2/3 một phần nhờ 5.1d-3).
 - 5.1d-3 (DEC-062, 063, 064): potType + ISO; `actionsFromLegacy`; form phiên dùng chung; 3 tab icon; `<` qua history; vuốt mép iOS; trang chủ gọn; khối "AI phân tích" cạnh "Bạn tự review" (cùng hiện hành, dòng lệch EV), "Chạy lại AI review" hỏi xác nhận trừ 1 lượt.
 - DB: `chip_value`/`chip_currency`; review hiện hành theo từng loại (`reviews_one_current` trên `(hand_id, source)`), `leak_stats` ưu tiên review tay. `pnpm recheck:results`: 5 hand, 0 lệch.
@@ -9,7 +11,7 @@
 
 ## Đang làm
 
-- Không có.
+- Không có. Task 5.2b (ô Toán do poker-core điền) đã mở trong tasks.md, chưa làm.
 
 ## Bước tiếp theo (tối đa 3, theo thứ tự)
 

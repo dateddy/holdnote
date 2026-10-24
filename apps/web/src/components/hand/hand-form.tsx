@@ -30,6 +30,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card as Panel } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
+import { EntryLayout } from '@/components/ui/entry-layout';
+import { ShortcutsDialog } from '@/components/ui/shortcuts-dialog';
 import { Input } from '@/components/ui/input';
 import type { SeatTone } from '@/components/ui/seat';
 import {
@@ -49,6 +51,7 @@ import { opponentLabel } from '@/lib/hands/labels';
 import { applyLevel, currentLevel, levelLabel, sessionLevels, startLevel } from '@/lib/hands/level';
 import { boardInput, draftToSetup } from '@/lib/hands/setup';
 import { applyShorthand } from '@/lib/hands/shorthand';
+import { globalShortcut, SHORTCUT_LIST } from '@/lib/hands/shortcuts';
 import {
   nameOpponent,
   pickHero,
@@ -63,6 +66,7 @@ import {
 } from '@/lib/hands/table';
 import { isOneOf } from '@/lib/sessions/form';
 import { formatMoney } from '@/lib/sessions/format';
+import { useDesktop } from '@/lib/use-desktop';
 import { createClient } from '@/lib/supabase/client';
 import { pendingOpponents, saveHand, saveOpponent, undoHand } from '@/lib/offline/sync';
 import { ActionCard } from './action-card';
@@ -119,6 +123,7 @@ export function HandForm({
   const t = useTranslations('hand');
   const tr = useTranslations('record');
   const router = useRouter();
+  const desktop = useDesktop();
   const [raw, setDraft] = useState<HandDraft>(() => {
     const initial = edit?.initial ?? emptyDraft(session, previous);
     // A hand saved before DEC-045 is read and edited as a shorthand line.
@@ -334,6 +339,12 @@ export function HandForm({
     setEditing(null);
   }
 
+  function undoLastAction() {
+    set('actions', stripForced(undoAction(full)));
+    setNotes([]);
+    setSheet(null);
+  }
+
   const toneOf = (a: Action['actor']): SeatTone => a;
   // Every opponent picked is "Đối thủ"; from two on the seat is added (spec 13). "Người khác" is
   // only for a seat that was not picked.
@@ -391,6 +402,43 @@ export function HandForm({
     setEditing(null);
     setChosen({ street, from: current });
   };
+
+  // ---- keyboard (desktop): see lib/hands/shortcuts.ts ----
+  const [help, setHelp] = useState(false);
+  const shortcutLabel: Record<string, string> = {
+    actions: tr('shortcut_actions'),
+    amount: tr('shortcut_amount'),
+    cards: tr('shortcut_cards'),
+    undo: tr('shortcut_undo'),
+    street: tr('shortcut_street'),
+    help: tr('shortcut_help'),
+  };
+  const keyboard = useRef<(ev: KeyboardEvent) => void>(() => {});
+  useEffect(() => {
+    keyboard.current = (ev) => {
+      // Card slots and the amount pad read their own keys while they are open.
+      if (picking || sheet !== null) return;
+      const found = globalShortcut(ev, buttonsMode && machine ? machine.buttons : []);
+      if (!found) return;
+      if (found.kind === 'help') setHelp(true);
+      else if (!buttonsMode) return;
+      else if (found.kind === 'button') onButton(found.button);
+      else if (found.kind === 'undo') {
+        if (draft.actions.length > 0) undoLastAction();
+      } else if (tabs) {
+        const order: Street[] = ['preflop', 'flop', 'turn', 'river'];
+        const next = order[order.indexOf(selected) + found.delta];
+        if (next && tabs[next] !== 'locked') selectStreet(next);
+      }
+      ev.preventDefault();
+    };
+  });
+  useEffect(() => {
+    if (!desktop) return;
+    const onKey = (ev: KeyboardEvent) => keyboard.current(ev);
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [desktop]);
 
   // A seat that is no longer picked stops the replay at its first action.
   const stopAt = machine?.warnings.find((w) => w.code === 'not_in_hand')?.index;
@@ -568,8 +616,8 @@ export function HandForm({
         ? `${tr('straddle')} ${draft.straddles.join('/')}`
         : '';
 
-  return (
-    <div className="flex flex-col gap-3">
+  const banners = (
+    <>
       {status === 'saved' && edit && (
         <p role="status" className="rounded-md bg-accent/15 p-3 text-sm">
           {t('savedChanges')}
@@ -595,47 +643,42 @@ export function HandForm({
           {tr('oldHand', { reason: tr(`oldHandReason.${edit.initial.legacyReason}`) })}
         </p>
       )}
+    </>
+  );
 
-      <ContextBar
-        num={num}
-        heroPos={draft.heroPos}
-        opponents={picked.map((o) => o.pos)}
-        players={players}
-        stack={draft.heroStack}
-        extra={extra}
-        open={panel !== null}
-        onToggle={togglePanel}
-        onClose={closePanel}
-      >
-        <TablePanel
-          session={session}
-          draft={draft}
-          players={players}
-          role={panel ?? 'villain'}
-          onRole={setPanel}
-          dropped={dropped}
-          options={opponents}
-          onHeroSeat={onHeroSeat}
-          onOpponentSeat={(pos) => setDraft((d) => toggleOpponent(d, pos))}
-          onPlayers={onPlayers}
-          onOpponentStack={(pos, stack) => setDraft((d) => setOpponentStack(d, pos, stack))}
-          onOpponentName={(pos, id) =>
-            setDraft((d) => nameOpponent(d, pos, id, id ? opponentStacks[id] : undefined))
-          }
-          {...(!practice && { onOpponentCreate: createOpponent })}
-          onStraddles={(count) =>
-            setDraft((d) => setStraddleCount(session, d, players, count, bbForStraddle))
-          }
-          set={set}
-          onDraft={setDraft}
-          {...(!practice && !edit && { structureHref: `/sessions/${sessionId}/structure` })}
-          mode={mode}
-          onMode={switchMode}
-          modeLocked={Boolean(edit?.initial.legacy)}
-          switchBlocked={switchBlocked}
-        />
-      </ContextBar>
+  const tablePanel = (
+    <TablePanel
+      session={session}
+      draft={draft}
+      players={players}
+      role={panel ?? 'villain'}
+      onRole={setPanel}
+      dropped={dropped}
+      options={opponents}
+      onHeroSeat={onHeroSeat}
+      onOpponentSeat={(pos) => setDraft((d) => toggleOpponent(d, pos))}
+      onPlayers={onPlayers}
+      onOpponentStack={(pos, stack) => setDraft((d) => setOpponentStack(d, pos, stack))}
+      onOpponentName={(pos, id) =>
+        setDraft((d) => nameOpponent(d, pos, id, id ? opponentStacks[id] : undefined))
+      }
+      {...(!practice && { onOpponentCreate: createOpponent })}
+      onStraddles={(count) =>
+        setDraft((d) => setStraddleCount(session, d, players, count, bbForStraddle))
+      }
+      large={desktop}
+      set={set}
+      onDraft={setDraft}
+      {...(!practice && !edit && { structureHref: `/sessions/${sessionId}/structure` })}
+      mode={mode}
+      onMode={switchMode}
+      modeLocked={Boolean(edit?.initial.legacy)}
+      switchBlocked={switchBlocked}
+    />
+  );
 
+  const levelHint = (
+    <>
       {suggested !== null && (
         <div
           role="status"
@@ -653,7 +696,11 @@ export function HandForm({
           </Button>
         </div>
       )}
+    </>
+  );
 
+  const cardsEl = (
+    <>
       <CardsCard
         slots={draft.slots}
         check={buttonsMode ? (derived.board ?? null) : null}
@@ -668,7 +715,11 @@ export function HandForm({
           }
         }}
       />
+    </>
+  );
 
+  const actionEl = (
+    <>
       {buttonsMode && machine && tabs ? (
         <ActionCard
           state={machine}
@@ -706,11 +757,7 @@ export function HandForm({
           canUndo={draft.actions.length > 0}
           onButton={onButton}
           onDead={() => setSheet('dead')}
-          onUndo={() => {
-            set('actions', stripForced(undoAction(full)));
-            setNotes([]);
-            setSheet(null);
-          }}
+          onUndo={undoLastAction}
           collapsed={picking}
           halted={halted}
           pad={
@@ -746,7 +793,11 @@ export function HandForm({
           errors={lineErrors}
         />
       )}
+    </>
+  );
 
+  const warningsEl = (
+    <>
       {warnings.length > 0 && (
         <ul role="status" className="space-y-1 rounded-md bg-warn/10 p-3 text-sm">
           {warnings.map((w) => (
@@ -754,61 +805,139 @@ export function HandForm({
           ))}
         </ul>
       )}
+    </>
+  );
 
+  const showdownEl = (
+    <>
+      <ShowdownBlock
+        draft={draft}
+        set={set}
+        outcome={derived.outcome}
+        decided={decided}
+        mode={buttonsMode ? 'actions' : 'shorthand'}
+        result={derived.result}
+        resultBb={derived.resultBb}
+        money={money}
+        {...(wonText && { wonText })}
+        showdown={buttonsMode ? derived.showdown : null}
+        heroSeat={heroSeat ?? ''}
+        opponents={showdownOpponents}
+        nameOf={nameOfSeat}
+        onCards={(key, cards) => setDraft((d) => setOpponentCards(d, key, cards))}
+        onPick={(i, winners) => setDraft((d) => setPotWinners(d, i, winners))}
+      />
+    </>
+  );
+
+  const thoughtEl = (
+    <>
+      <section className="space-y-2">
+        <label className="flex flex-col gap-1 text-sm">
+          {t('thought')}
+          <Input
+            autoComplete="off"
+            value={draft.thought}
+            onChange={(e) => set('thought', e.target.value)}
+          />
+        </label>
+        <Chip on={draft.flagged} onClick={() => set('flagged', !draft.flagged)}>
+          ⚑ {t('flag')}
+        </Chip>
+      </section>
+    </>
+  );
+
+  const saveBar = (
+    <SaveBar
+      sticky={!edit && !desktop}
+      pot={potNow == null ? null : both(potNow)}
+      stack={stackNow == null ? null : both(stackNow)}
+      label={
+        mismatch
+          ? tr('saveMismatch')
+          : practice
+            ? practice.label
+            : status === 'saving'
+              ? t('saving')
+              : edit
+                ? t('saveChanges')
+                : t('save')
+      }
+      disabled={!canSave(draft) || lineErrors.length > 0 || mismatch || status === 'saving'}
+      {...(hint && !desktop && { hint })}
+      onSave={save}
+    />
+  );
+
+  if (desktop) {
+    // Three columns (spec: desktop): the table, the cards and actions, and the result with Save.
+    return (
+      <div className="flex flex-col gap-3">
+        <h2 className="text-lg font-semibold">{t('title', { num })}</h2>
+        {banners}
+        {levelHint}
+        <EntryLayout
+          left={tablePanel}
+          aside={
+            <>
+              {warningsEl}
+              {hint && (
+                <p role="status" className="text-sm text-muted">
+                  {hint}
+                </p>
+              )}
+              {showShowdown && showdownEl}
+              {thoughtEl}
+              {saveBar}
+              <Button variant="secondary" onClick={() => setHelp(true)}>
+                {tr('shortcutsOpen')}
+              </Button>
+            </>
+          }
+        >
+          {cardsEl}
+          {actionEl}
+        </EntryLayout>
+        <ShortcutsDialog
+          open={help}
+          title={tr('shortcutsTitle')}
+          closeLabel={tr('close')}
+          rows={SHORTCUT_LIST.map((g) => ({ label: shortcutLabel[g.id] ?? g.id, keys: g.keys }))}
+          onClose={() => setHelp(false)}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      {banners}
+      <ContextBar
+        num={num}
+        heroPos={draft.heroPos}
+        opponents={picked.map((o) => o.pos)}
+        players={players}
+        stack={draft.heroStack}
+        extra={extra}
+        open={panel !== null}
+        onToggle={togglePanel}
+        onClose={closePanel}
+      >
+        {tablePanel}
+      </ContextBar>
+
+      {levelHint}
+      {cardsEl}
+      {actionEl}
+      {warningsEl}
       {showShowdown && (
         <>
-          <ShowdownBlock
-            draft={draft}
-            set={set}
-            outcome={derived.outcome}
-            decided={decided}
-            mode={buttonsMode ? 'actions' : 'shorthand'}
-            result={derived.result}
-            resultBb={derived.resultBb}
-            money={money}
-            {...(wonText && { wonText })}
-            showdown={buttonsMode ? derived.showdown : null}
-            heroSeat={heroSeat ?? ''}
-            opponents={showdownOpponents}
-            nameOf={nameOfSeat}
-            onCards={(key, cards) => setDraft((d) => setOpponentCards(d, key, cards))}
-            onPick={(i, winners) => setDraft((d) => setPotWinners(d, i, winners))}
-          />
-          <section className="space-y-2">
-            <label className="flex flex-col gap-1 text-sm">
-              {t('thought')}
-              <Input
-                autoComplete="off"
-                value={draft.thought}
-                onChange={(e) => set('thought', e.target.value)}
-              />
-            </label>
-            <Chip on={draft.flagged} onClick={() => set('flagged', !draft.flagged)}>
-              ⚑ {t('flag')}
-            </Chip>
-          </section>
+          {showdownEl}
+          {thoughtEl}
         </>
       )}
-
-      <SaveBar
-        sticky={!edit}
-        pot={potNow == null ? null : both(potNow)}
-        stack={stackNow == null ? null : both(stackNow)}
-        label={
-          mismatch
-            ? tr('saveMismatch')
-            : practice
-              ? practice.label
-              : status === 'saving'
-                ? t('saving')
-                : edit
-                  ? t('saveChanges')
-                  : t('save')
-        }
-        disabled={!canSave(draft) || lineErrors.length > 0 || mismatch || status === 'saving'}
-        {...(hint && { hint })}
-        onSave={save}
-      />
+      {saveBar}
     </div>
   );
 }

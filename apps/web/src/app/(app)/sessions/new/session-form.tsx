@@ -188,201 +188,204 @@ export function SessionForm({ initial, edit, profileCurrency }: Props) {
 
       <EntryLayout aside={aside}>
         <div className="flex flex-col gap-6 lg:grid lg:grid-cols-2 lg:items-start lg:gap-3">
-          <Group title={t('groupKind')}>
-            {edit ? (
-              <p className="text-sm text-muted">
-                {t('kindLocked', { kind: v.kind === 'mtt' ? t('mtt') : t('cash') })}
-              </p>
-            ) : (
-              <Segmented
-                label={t('kind')}
-                value={v.kind}
-                options={KINDS.map((k) => ({ value: k, label: t(k) }))}
-                onChange={(k) => router.replace(`/sessions/new?kind=${k}`)}
-              />
-            )}
-            <Segmented
-              label={t('mode')}
-              value={v.mode}
-              options={MODES.map((m) => ({ value: m, label: t(m) }))}
-              onChange={pickMode}
-            />
-          </Group>
-
-          <Group title={t('groupPlace')}>
-            {text('venue', t('venue'))}
-            <Field label={t('dateField')} error={err('date')}>
-              <Input
-                type="date"
-                value={inBrowser ? v.date : ''}
-                onChange={(e) => set({ date: e.target.value })}
-              />
-            </Field>
-            <div className="grid grid-cols-2 gap-3">
-              <Field label={t('startTime')}>
-                <Input
-                  type="time"
-                  value={inBrowser ? startTime : ''}
-                  onChange={(e) => setStartTime(e.target.value)}
-                />
-              </Field>
-              <Field label={t('endTime')} hint={t('endTimeHint')}>
-                <Input
-                  type="time"
-                  value={inBrowser ? endTime : ''}
-                  onChange={(e) => setEndTime(e.target.value)}
-                />
-              </Field>
-            </div>
-            {state.timeError && (
-              <p role="alert" className="text-sm text-loss">
-                {t('timeError')}
-              </p>
-            )}
-          </Group>
-
-          <Group title={t('groupUnit')}>
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="min-w-48 flex-1">
+          <div className="contents lg:flex lg:flex-col lg:gap-3">
+            <Group title={t('groupKind')}>
+              {edit ? (
+                <p className="text-sm text-muted">
+                  {t('kindLocked', { kind: v.kind === 'mtt' ? t('mtt') : t('cash') })}
+                </p>
+              ) : (
                 <Segmented
-                  label={t('currency')}
-                  value={v.currency === 'CHIP' ? 'chip' : 'money'}
-                  options={[
-                    { value: 'chip', label: t('unitChip') },
-                    { value: 'money', label: t('unitMoney') },
-                  ]}
-                  onChange={(u) => {
-                    setUnitPicked(true);
-                    set({
-                      currency:
-                        u === 'chip' ? 'CHIP' : defaultUnit('mtt', 'online', profileCurrency),
-                    });
-                  }}
-                />
-              </div>
-              {v.currency !== 'CHIP' && (
-                <ChipMenu
-                  label={t('unitMoney')}
-                  value={v.currency}
-                  options={CHIP_RATE_CURRENCIES.map((c) => ({ value: c, label: c }))}
-                  onChange={(c) => {
-                    setUnitPicked(true);
-                    set({ currency: c });
-                  }}
+                  label={t('kind')}
+                  value={v.kind}
+                  options={KINDS.map((k) => ({ value: k, label: t(k) }))}
+                  onChange={(k) => router.replace(`/sessions/new?kind=${k}`)}
                 />
               )}
-            </div>
-            {v.currency === 'CHIP' && (
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm whitespace-nowrap">{t('chipRateLead')}</span>
+              <Segmented
+                label={t('mode')}
+                value={v.mode}
+                options={MODES.map((m) => ({ value: m, label: t(m) }))}
+                onChange={pickMode}
+              />
+            </Group>
+
+            <Group title={t('groupPlace')}>
+              {text('venue', t('venue'))}
+              <Field label={t('dateField')} error={err('date')}>
+                <Input
+                  type="date"
+                  value={inBrowser ? v.date : ''}
+                  onChange={(e) => set({ date: e.target.value })}
+                />
+              </Field>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label={t('startTime')}>
                   <Input
-                    aria-label={t('chipRateLabel')}
-                    value={v.chipValue}
-                    onChange={(e) => set({ chipValue: e.target.value })}
-                    inputMode="decimal"
-                    autoComplete="off"
-                    aria-invalid={state.errors.chipValue ? true : undefined}
+                    type="time"
+                    value={inBrowser ? startTime : ''}
+                    onChange={(e) => setStartTime(e.target.value)}
                   />
-                  <ChipMenu
-                    label={t('chipRateCurrency')}
-                    value={v.chipCurrency}
-                    options={CHIP_RATE_CURRENCIES.map((c) => ({ value: c, label: c }))}
-                    onChange={(c) => set({ chipCurrency: c })}
+                </Field>
+                <Field label={t('endTime')} hint={t('endTimeHint')}>
+                  <Input
+                    type="time"
+                    value={inBrowser ? endTime : ''}
+                    onChange={(e) => setEndTime(e.target.value)}
+                  />
+                </Field>
+              </div>
+              {state.timeError && (
+                <p role="alert" className="text-sm text-loss">
+                  {t('timeError')}
+                </p>
+              )}
+            </Group>
+          </div>
+          <div className="contents lg:flex lg:flex-col lg:gap-3">
+            <Group title={t('groupUnit')}>
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="min-w-48 flex-1">
+                  <Segmented
+                    label={t('currency')}
+                    value={v.currency === 'CHIP' ? 'chip' : 'money'}
+                    options={[
+                      { value: 'chip', label: t('unitChip') },
+                      { value: 'money', label: t('unitMoney') },
+                    ]}
+                    onChange={(u) => {
+                      setUnitPicked(true);
+                      set({
+                        currency:
+                          u === 'chip' ? 'CHIP' : defaultUnit('mtt', 'online', profileCurrency),
+                      });
+                    }}
                   />
                 </div>
-                <p className="text-xs text-muted">{t('chipRateHint')}</p>
-                {err('chipValue') && (
-                  <p role="alert" className="text-sm text-loss">
-                    {err('chipValue')}
-                  </p>
+                {v.currency !== 'CHIP' && (
+                  <ChipMenu
+                    label={t('unitMoney')}
+                    value={v.currency}
+                    options={CHIP_RATE_CURRENCIES.map((c) => ({ value: c, label: c }))}
+                    onChange={(c) => {
+                      setUnitPicked(true);
+                      set({ currency: c });
+                    }}
+                  />
                 )}
               </div>
-            )}
-
-            {fromStructure ? (
-              <p className="text-sm text-muted">{tb('fromStart')}</p>
-            ) : (
-              <>
-                {isMtt && <p className="text-base font-medium">{t('mttBlinds')}</p>}
-                <div className="grid grid-cols-2 gap-3">
-                  {text('sb', t('sb'), true)}
-                  {text('bb', t('bb'), true)}
-                </div>
-                {!isMtt && text('straddle', t('straddle'), true)}
+              {v.currency === 'CHIP' && (
                 <div className="space-y-1">
-                  <p className="text-sm">{t('ante')}</p>
-                  <div className="flex flex-wrap gap-2" role="group" aria-label={t('ante')}>
-                    {ANTE_MODES.map((m) => (
-                      <Chip key={m} on={v.anteMode === m} onClick={() => set({ anteMode: m })}>
-                        {t(m === 'none' ? 'anteNone' : m === 'each' ? 'anteEach' : 'anteBb')}
-                      </Chip>
-                    ))}
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm whitespace-nowrap">{t('chipRateLead')}</span>
+                    <Input
+                      aria-label={t('chipRateLabel')}
+                      value={v.chipValue}
+                      onChange={(e) => set({ chipValue: e.target.value })}
+                      inputMode="decimal"
+                      autoComplete="off"
+                      aria-invalid={state.errors.chipValue ? true : undefined}
+                    />
+                    <ChipMenu
+                      label={t('chipRateCurrency')}
+                      value={v.chipCurrency}
+                      options={CHIP_RATE_CURRENCIES.map((c) => ({ value: c, label: c }))}
+                      onChange={(c) => set({ chipCurrency: c })}
+                    />
                   </div>
-                </div>
-                {v.anteMode !== 'none' && text('ante', t('anteAmount'), true)}
-              </>
-            )}
-          </Group>
-
-          <Group title={t('groupOther')}>
-            <div className="flex items-center justify-between gap-3 text-sm">
-              <span>{t('seats')}</span>
-              <Stepper
-                value={seats}
-                min={2}
-                max={10}
-                onChange={(n) => set({ seats: String(n) })}
-                text={t('seatsCount', { n: seats })}
-                minusLabel={t('seatsLess')}
-                plusLabel={t('seatsMore')}
-              />
-            </div>
-            {text('buyin', t('buyin'), true)}
-            {!isMtt && text('stopLoss', t('stopLoss'), true)}
-            {isMtt && (
-              <>
-                {text('mttName', t('mttName'))}
-                <div className="space-y-1">
-                  <p className="text-sm">{t('mttType')}</p>
-                  <div className="flex flex-wrap gap-2" role="group" aria-label={t('mttType')}>
-                    {MTT_TYPES.map((m) => (
-                      <Chip key={m} on={v.mttType === m} onClick={() => set({ mttType: m })}>
-                        {t(`type_${m}`)}
-                      </Chip>
-                    ))}
-                  </div>
-                </div>
-                <div className="flex items-center justify-between gap-3 text-sm">
-                  <span>{t('mttReentry')}</span>
-                  <Toggle
-                    checked={v.mttReentry === 'on'}
-                    aria-label={t('mttReentry')}
-                    onClick={() => set({ mttReentry: v.mttReentry === 'on' ? '' : 'on' })}
-                  />
-                </div>
-                {text('mttStartLevel', t('mttStartLevel'), true)}
-                {text('mttStartStack', t('mttStartStack'), true)}
-                <div className="space-y-2">
-                  <p className="text-xs text-muted">
-                    {tb('optional')}. {tb('hint')}
-                  </p>
-                  <BlindStructureEditor
-                    value={levels}
-                    onChange={setLevels}
-                    defaultAnteMode={
-                      v.anteMode === 'each' || v.anteMode === 'bb' ? v.anteMode : 'none'
-                    }
-                  />
-                  {err('mttBlindLevels') && (
+                  <p className="text-xs text-muted">{t('chipRateHint')}</p>
+                  {err('chipValue') && (
                     <p role="alert" className="text-sm text-loss">
-                      {err('mttBlindLevels')}
+                      {err('chipValue')}
                     </p>
                   )}
                 </div>
-              </>
-            )}
-          </Group>
+              )}
+
+              {fromStructure ? (
+                <p className="text-sm text-muted">{tb('fromStart')}</p>
+              ) : (
+                <>
+                  {isMtt && <p className="text-base font-medium">{t('mttBlinds')}</p>}
+                  <div className="grid grid-cols-2 gap-3">
+                    {text('sb', t('sb'), true)}
+                    {text('bb', t('bb'), true)}
+                  </div>
+                  {!isMtt && text('straddle', t('straddle'), true)}
+                  <div className="space-y-1">
+                    <p className="text-sm">{t('ante')}</p>
+                    <div className="flex flex-wrap gap-2" role="group" aria-label={t('ante')}>
+                      {ANTE_MODES.map((m) => (
+                        <Chip key={m} on={v.anteMode === m} onClick={() => set({ anteMode: m })}>
+                          {t(m === 'none' ? 'anteNone' : m === 'each' ? 'anteEach' : 'anteBb')}
+                        </Chip>
+                      ))}
+                    </div>
+                  </div>
+                  {v.anteMode !== 'none' && text('ante', t('anteAmount'), true)}
+                </>
+              )}
+            </Group>
+
+            <Group title={t('groupOther')}>
+              <div className="flex items-center justify-between gap-3 text-sm">
+                <span>{t('seats')}</span>
+                <Stepper
+                  value={seats}
+                  min={2}
+                  max={10}
+                  onChange={(n) => set({ seats: String(n) })}
+                  text={t('seatsCount', { n: seats })}
+                  minusLabel={t('seatsLess')}
+                  plusLabel={t('seatsMore')}
+                />
+              </div>
+              {text('buyin', t('buyin'), true)}
+              {!isMtt && text('stopLoss', t('stopLoss'), true)}
+              {isMtt && (
+                <>
+                  {text('mttName', t('mttName'))}
+                  <div className="space-y-1">
+                    <p className="text-sm">{t('mttType')}</p>
+                    <div className="flex flex-wrap gap-2" role="group" aria-label={t('mttType')}>
+                      {MTT_TYPES.map((m) => (
+                        <Chip key={m} on={v.mttType === m} onClick={() => set({ mttType: m })}>
+                          {t(`type_${m}`)}
+                        </Chip>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between gap-3 text-sm">
+                    <span>{t('mttReentry')}</span>
+                    <Toggle
+                      checked={v.mttReentry === 'on'}
+                      aria-label={t('mttReentry')}
+                      onClick={() => set({ mttReentry: v.mttReentry === 'on' ? '' : 'on' })}
+                    />
+                  </div>
+                  {text('mttStartLevel', t('mttStartLevel'), true)}
+                  {text('mttStartStack', t('mttStartStack'), true)}
+                  <div className="space-y-2">
+                    <p className="text-xs text-muted">
+                      {tb('optional')}. {tb('hint')}
+                    </p>
+                    <BlindStructureEditor
+                      value={levels}
+                      onChange={setLevels}
+                      defaultAnteMode={
+                        v.anteMode === 'each' || v.anteMode === 'bb' ? v.anteMode : 'none'
+                      }
+                    />
+                    {err('mttBlindLevels') && (
+                      <p role="alert" className="text-sm text-loss">
+                        {err('mttBlindLevels')}
+                      </p>
+                    )}
+                  </div>
+                </>
+              )}
+            </Group>
+          </div>
         </div>
       </EntryLayout>
     </form>

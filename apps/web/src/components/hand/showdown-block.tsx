@@ -148,7 +148,7 @@ export function ShowdownBlock({
               <div key={i} className="space-y-1.5">
                 <p className="flex justify-between gap-2 text-sm">
                   <span className="font-medium">
-                    {showdown.pots.length > 1 ? potName(i) : t('resultLabel')}
+                    {showdown.pots.length > 1 ? potName(i) : t('potReceive')}
                   </span>
                   <span className="tabular-nums text-muted">{money(pot.amount)}</span>
                 </p>

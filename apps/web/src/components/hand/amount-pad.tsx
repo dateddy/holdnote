@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   parseAmount,
   previewAmount,
@@ -13,6 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
 import { NumPad } from '@/components/ui/num-pad';
+import { isTypingTarget } from '@/lib/hands/shortcuts';
 
 export type AmountKind = 'open' | 'bet' | 'raise' | 'all-in' | 'dead';
 
@@ -61,6 +62,27 @@ function AmountBody({
     if (text.includes('k')) return;
     setText(text + k);
   };
+
+  // Keyboard: digits, "." and "k" type the amount, Backspace deletes, Enter confirms, Escape closes.
+  const keys = useRef<(ev: KeyboardEvent) => void>(() => {});
+  useEffect(() => {
+    keys.current = (ev) => {
+      if (ev.ctrlKey || ev.metaKey || ev.altKey || isTypingTarget(ev.target as HTMLElement)) return;
+      if (/^[0-9.k]$/i.test(ev.key)) key(ev.key.toLowerCase());
+      else if (ev.key === 'Backspace') setText(text.slice(0, -1));
+      else if (ev.key === 'Escape') onClose();
+      else if (ev.key === 'Enter') {
+        if (n === null || (kind === 'dead' && !seat)) return;
+        onConfirm(kind, n, seat ?? undefined);
+      } else return;
+      ev.preventDefault();
+    };
+  });
+  useEffect(() => {
+    const onKey = (ev: KeyboardEvent) => keys.current(ev);
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, []);
 
   return (
     <div

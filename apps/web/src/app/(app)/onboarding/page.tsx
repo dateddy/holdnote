@@ -1,5 +1,6 @@
 import { getLocale, getTranslations } from 'next-intl/server';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 import { SampleHand } from '@/components/onboarding/sample-hand';
 import { LOCALES } from '@/i18n/locales';
 import { CURRENCIES, KINDS, MODES } from '@/lib/sessions/form';
@@ -42,9 +43,9 @@ export default async function OnboardingPage({ searchParams }: PageProps<'/onboa
       <header className="flex items-center justify-between gap-4">
         <p className="text-sm text-muted">{t('progress', { step, of: 3 })}</p>
         <form action={finishOnboarding}>
-          <button type="submit" className="text-sm underline underline-offset-4">
+          <Button type="submit" variant="ghost" full={false}>
             {t('skip')}
-          </button>
+          </Button>
         </form>
       </header>
 
