@@ -71,7 +71,7 @@ export function EndForm({ sessionId, base, initial, handCount, endAt = null }: P
   return (
     <form action={formAction} className="flex flex-col gap-5">
       {endAt && <input type="hidden" name="end_at" value={endAt} />}
-      <section className="space-y-1 rounded-md border border-line bg-surface p-4">
+      <section className="space-y-1 rounded-xl border border-line bg-surface p-4">
         <h2 className="font-medium">{t('resultTitle')}</h2>
         <p className="text-lg">
           {result

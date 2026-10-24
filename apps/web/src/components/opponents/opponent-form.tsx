@@ -55,7 +55,7 @@ export function OpponentForm({ id, initial }: { id: string | null; initial: Oppo
           rows={4}
           defaultValue={v.notes}
           maxLength={1000}
-          className="w-full rounded-md border border-line bg-surface p-3 text-base"
+          className="w-full rounded-xl border border-line bg-surface p-3 text-base"
         />
         {err('notes')}
       </label>
@@ -67,7 +67,7 @@ export function OpponentForm({ id, initial }: { id: string | null; initial: Oppo
       <button
         type="submit"
         disabled={pending}
-        className="h-14 rounded-md bg-accent text-lg font-medium text-accent-foreground disabled:opacity-40"
+        className="h-14 rounded-xl bg-accent text-lg font-medium text-accent-foreground disabled:opacity-40"
       >
         {pending ? t('saving') : t('save')}
       </button>

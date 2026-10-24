@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { X } from 'lucide-react';
+import { CircleDollarSign, LayoutGrid, Trophy, X } from 'lucide-react';
 import { useMemo, useState, useTransition } from 'react';
 import { sessionTotals, type SessionTotals } from 'poker-core';
 import { deleteSession } from '@/app/(app)/sessions/actions';
@@ -14,6 +14,8 @@ import { ChipMenu } from '@/components/ui/chip-menu';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Fab } from '@/components/ui/fab';
 import { FilterBar } from '@/components/ui/filter-bar';
+import { Icon } from '@/components/ui/icon';
+import { IconButton } from '@/components/ui/icon-button';
 import { Input } from '@/components/ui/input';
 import { Result } from '@/components/ui/result';
 import { Segmented } from '@/components/ui/segmented';
@@ -107,10 +109,14 @@ export function SessionList({
   const monthOptions = options.months.map((m) => ({ value: m, label: formatMonth(m, locale) }));
   const venueOptions = options.venues.map((v) => ({ value: v, label: v }));
   // The only "Xóa lọc" on the screen: the last control of the filter row, there only while filtering.
-  const clear = filtering && (
-    <Chip on={false} icon={X} onClick={() => update(EMPTY_FILTER)}>
-      {t('clear')}
-    </Chip>
+  // The only "Xóa lọc" on the screen: an x, only while filtering. First in the row on a phone
+  // (the row scrolls sideways, so it never hides past the edge), last on desktop.
+  const clearButton = (
+    <IconButton
+      glyph={<Icon icon={X} size={20} />}
+      label={t('clear')}
+      onClick={() => update(EMPTY_FILTER)}
+    />
   );
 
   const search = (
@@ -131,6 +137,7 @@ export function SessionList({
       options={LIST_KINDS.map((k) => ({
         value: k,
         label: t(k === 'all' ? 'kindAll' : k === 'cash' ? 'kindCash' : 'kindMtt'),
+        icon: k === 'all' ? LayoutGrid : k === 'cash' ? CircleDollarSign : Trophy,
       }))}
     />
   );
@@ -249,14 +256,14 @@ export function SessionList({
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 p-6 pb-28 lg:max-w-none">
-      <TopBar title={t('title')} />
+      <TopBar title={t('title')} beside={kind} />
       <StaleSessions entries={stale} />
 
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:gap-2">
         <div className="lg:w-72 lg:shrink-0">{search}</div>
         <div className="min-w-0 lg:flex-1">
           <FilterBar label={t('filters')} wrapOnDesktop>
-            {kind}
+            {filtering && <span className="lg:hidden">{clearButton}</span>}
             <ChipMenu
               label={t('month')}
               value={filter.month}
@@ -273,7 +280,7 @@ export function SessionList({
             />
             {result}
             {toReview}
-            {clear}
+            {filtering && <span className="hidden lg:inline-flex">{clearButton}</span>}
           </FilterBar>
         </div>
       </div>
@@ -295,7 +302,7 @@ export function SessionList({
                     </Result>
                   </span>
                 </div>
-                <ul className="divide-y divide-line rounded-md border border-line bg-surface">
+                <ul className="divide-y divide-line rounded-xl border border-line bg-surface">
                   {g.items.map((item) => (
                     <li key={item.session.id}>
                       <SessionRow

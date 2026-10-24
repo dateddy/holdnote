@@ -28,7 +28,7 @@ export function CardKey({
     <button
       type={type}
       aria-pressed={on}
-      className={`h-12 min-w-0 rounded-md border disabled:opacity-30 ${KIND[kind]} ${
+      className={`h-12 min-w-0 rounded-xl border disabled:opacity-30 ${KIND[kind]} ${
         on ? 'border-accent bg-accent text-accent-foreground' : 'border-line bg-surface'
       } ${suit && !on ? (SUIT_TEXT[suit] ?? '') : ''} ${className ?? ''}`.trim()}
       {...rest}
@@ -82,7 +82,7 @@ export function CardSlot({
     <button
       type={type}
       aria-pressed={on}
-      className={`flex shrink-0 flex-col items-center justify-center rounded-md border text-lg motion-reduce:animate-none disabled:opacity-40 ${
+      className={`flex shrink-0 flex-col items-center justify-center rounded-lg border text-lg motion-reduce:animate-none disabled:opacity-40 ${
         size === 'card' ? 'h-[57px] w-[41px] lg:h-20 lg:w-14 lg:text-xl' : 'h-14'
       } ${border} ${className ?? ''}`.trim()}
       {...rest}

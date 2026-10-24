@@ -70,7 +70,7 @@ export function EditRow({ action, before, bb, money, onApply, onDeleteFrom, onCl
       ref={root}
       role="group"
       aria-label={t('editAction')}
-      className="space-y-2 rounded-md border border-line bg-background p-2"
+      className="space-y-2 rounded-xl border border-line bg-background p-2"
     >
       <div className="flex flex-wrap gap-1.5">
         {(current === 'dead' ? (['dead'] as const) : options).map((k) => (

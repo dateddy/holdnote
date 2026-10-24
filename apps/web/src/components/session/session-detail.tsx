@@ -384,7 +384,7 @@ export function SessionDetail({
       ) : (
         <>
           {/* Phone */}
-          <ul className="divide-y divide-line rounded-md border border-line bg-surface lg:hidden">
+          <ul className="divide-y divide-line rounded-xl border border-line bg-surface lg:hidden">
             {shown.map((r) => (
               <li key={r.id}>
                 <HandRow row={r} href={hrefOf(r.id)} />
@@ -396,7 +396,7 @@ export function SessionDetail({
           <div className="hidden lg:block">
             {active ? (
               <div className="grid items-start gap-6 lg:grid-cols-[420px_minmax(0,1fr)]">
-                <ul className="sticky top-6 max-h-[calc(100vh-3rem)] divide-y divide-line overflow-y-auto rounded-md border border-line bg-surface">
+                <ul className="sticky top-6 max-h-[calc(100vh-3rem)] divide-y divide-line overflow-y-auto rounded-xl border border-line bg-surface">
                   {shown.map((r) => (
                     <li key={r.id} data-hand-id={r.id}>
                       <HandRow

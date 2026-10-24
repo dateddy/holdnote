@@ -8,6 +8,8 @@ type Props = {
   /** Child screen: a bar with `<` at the left. `label` is the accessible name of the arrow. */
   back?: { href: string; label: string };
   action?: ReactNode;
+  /** Root screen: a control right beside the title (the kind filter of Phiên). */
+  beside?: ReactNode;
   /**
    * For the working screen (Ghi nhanh) that has its own sticky bar and 12px side padding: the
    * bar scrolls away with the page instead of sticking, so only one bar is stuck to the top.
@@ -20,12 +22,15 @@ type Props = {
  * stuck to the top with the `<` arrow, title and one action on the right. Put it first in a
  * `main` with 24px padding: the bar reaches the screen edges and rests on the status bar's safe area.
  */
-export function TopBar({ title, subtitle, back, action, compact = false }: Props) {
+export function TopBar({ title, subtitle, back, action, beside, compact = false }: Props) {
   if (!back) {
     return (
       <header className="space-y-1">
         <div className="flex items-center justify-between gap-4">
-          <h1 className="text-2xl font-semibold">{title}</h1>
+          <div className="flex items-center gap-4">
+            <h1 className="text-2xl font-semibold">{title}</h1>
+            {beside}
+          </div>
           {action && <div className="flex items-center gap-3">{action}</div>}
         </div>
         {subtitle && <p className="text-sm text-muted">{subtitle}</p>}

@@ -18,14 +18,14 @@ export default async function OpponentsPage() {
       <TopBar title={t('title')} back={{ href: '/stats', label: t('parent') }} />
       <Link
         href="/opponents/new"
-        className="flex h-12 items-center justify-center rounded-md bg-accent font-medium text-accent-foreground"
+        className="flex h-12 items-center justify-center rounded-xl bg-accent font-medium text-accent-foreground"
       >
         {t('add')}
       </Link>
       {!opponents?.length ? (
         <p className="text-sm text-muted">{t('none')}</p>
       ) : (
-        <ul className="divide-y divide-line rounded-md border border-line bg-surface">
+        <ul className="divide-y divide-line rounded-xl border border-line bg-surface">
           {opponents.map((o) => (
             <li key={o.id}>
               <Link href={`/opponents/${o.id}`} className="flex flex-col gap-0.5 p-3">

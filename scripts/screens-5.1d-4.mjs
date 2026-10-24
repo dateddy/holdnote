@@ -367,7 +367,10 @@ async function main() {
     const cards = await page
       .locator('main form section')
       .evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().left)));
-    check(new Set(cards).size === 2, `${tag}: four blocks in two columns (${cards.join(',')})`);
+    check(
+      new Set(cards).size === (width >= 1280 ? 2 : 1),
+      `${tag}: blocks in ${width >= 1280 ? 'two columns' : 'one column'} (${cards.join(',')})`,
+    );
     const save = await page.getByRole('button', { name: /^Tạo/ }).boundingBox();
     check(
       save != null && save.x > width * 0.6 && save.y < height - 80 === true,

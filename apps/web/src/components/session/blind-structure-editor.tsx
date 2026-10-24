@@ -75,7 +75,7 @@ export function BlindStructureEditor({ value, onChange, defaultAnteMode }: Props
 
   const f = editing?.fields;
   const editor = f && (
-    <div className="space-y-3 rounded-md border border-line bg-surface p-3">
+    <div className="space-y-3 rounded-xl border border-line bg-surface p-3">
       <div className="grid grid-cols-2 gap-3">
         <label className="flex flex-col gap-1 text-sm">
           {t('level')}

@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   act,
   canonPos,
@@ -32,6 +32,7 @@ import { Card as Panel } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
 import { EntryLayout } from '@/components/ui/entry-layout';
 import { ShortcutsDialog } from '@/components/ui/shortcuts-dialog';
+import { TopBar } from '@/components/ui/top-bar';
 import { Input } from '@/components/ui/input';
 import type { SeatTone } from '@/components/ui/seat';
 import {
@@ -100,6 +101,18 @@ type Props = {
   startedAt?: string | null;
   /** Set on the hand detail screen: update this hand instead of adding one. */
   edit?: { handId: string; num: number; initial: HandDraft };
+  /**
+   * The screen's title bar. Phone: `title` ("Ghi hand"), the hand number is in the context bar.
+   * Desktop: "Hand #2 · Chill · 20/50/100" (`context` is venue and stake).
+   */
+  header?: {
+    title: string;
+    back: { href: string; label: string };
+    context?: string;
+    compact?: boolean;
+  };
+  /** Shown right under the title bar (the offline queue status). */
+  notice?: ReactNode;
   /** Onboarding practice (spec 3.2): nothing is saved; the button hands the draft back. */
   practice?: { label: string; onCheck: (draft: HandDraft) => void };
 };
@@ -118,6 +131,8 @@ export function HandForm({
   entryMode,
   startedAt = null,
   edit,
+  header,
+  notice,
   practice,
 }: Props) {
   const t = useTranslations('hand');
@@ -619,7 +634,7 @@ export function HandForm({
   const banners = (
     <>
       {status === 'saved' && edit && (
-        <p role="status" className="rounded-md bg-accent/15 p-3 text-sm">
+        <p role="status" className="rounded-xl bg-accent/15 p-3 text-sm">
           {t('savedChanges')}
         </p>
       )}
@@ -633,7 +648,7 @@ export function HandForm({
         />
       )}
       {status === 'failed' && (
-        <p role="alert" className="rounded-md bg-loss/10 p-3 text-sm text-loss">
+        <p role="alert" className="rounded-xl bg-loss/10 p-3 text-sm text-loss">
           {offline ? t('needNetwork') : t('saveFailed')}
         </p>
       )}
@@ -682,7 +697,7 @@ export function HandForm({
       {suggested !== null && (
         <div
           role="status"
-          className="flex items-center justify-between gap-3 rounded-md bg-accent/10 px-3 py-2 text-sm"
+          className="flex items-center justify-between gap-3 rounded-xl bg-accent/10 px-3 py-2 text-sm"
         >
           <span>{tr('levelHint', { n: suggested })}</span>
           <Button
@@ -799,7 +814,7 @@ export function HandForm({
   const warningsEl = (
     <>
       {warnings.length > 0 && (
-        <ul role="status" className="space-y-1 rounded-md bg-warn/10 p-3 text-sm">
+        <ul role="status" className="space-y-1 rounded-xl bg-warn/10 p-3 text-sm">
           {warnings.map((w) => (
             <li key={w}>{w}</li>
           ))}
@@ -874,7 +889,15 @@ export function HandForm({
     // Three columns (spec: desktop): the table, the cards and actions, and the result with Save.
     return (
       <div className="flex flex-col gap-3">
-        <h2 className="text-lg font-semibold">{t('title', { num })}</h2>
+        {header && (
+          <TopBar
+            title={[t('title', { num }), header.context].filter(Boolean).join(' · ')}
+            back={header.back}
+            {...(header.compact && { compact: true })}
+          />
+        )}
+        {notice}
+        {notice}
         {banners}
         {levelHint}
         <EntryLayout
@@ -912,6 +935,13 @@ export function HandForm({
 
   return (
     <div className="flex flex-col gap-3">
+      {header && (
+        <TopBar
+          title={header.title}
+          back={header.back}
+          {...(header.compact && { compact: true })}
+        />
+      )}
       {banners}
       <ContextBar
         num={num}

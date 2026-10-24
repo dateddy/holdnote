@@ -1,7 +1,6 @@
 import { getLocale, getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { HandForm } from '@/components/hand/hand-form';
-import { TopBar } from '@/components/ui/top-bar';
 import { fromHandRow, HAND_EDIT_COLUMNS, HAND_SESSION_COLUMNS } from '@/lib/hands/build';
 import { sortOpponents } from '@/lib/hands/table';
 import { createClient } from '@/lib/supabase/server';
@@ -20,7 +19,7 @@ export default async function EditHandPage({ params }: PageProps<'/hands/[id]/ed
 
   const { data: session } = await supabase
     .from('sessions')
-    .select(`${HAND_SESSION_COLUMNS}, currency, venue`)
+    .select(`${HAND_SESSION_COLUMNS}, currency, venue, stake_label`)
     .eq('id', hand.session_id)
     .maybeSingle();
   if (!session) notFound();
@@ -35,11 +34,12 @@ export default async function EditHandPage({ params }: PageProps<'/hands/[id]/ed
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 p-6 lg:max-w-none">
-      <TopBar
-        title={t('editHand')}
-        back={{ href: `/hands/${id}`, label: t('detailTitle', { num: hand.num }) }}
-      />
       <HandForm
+        header={{
+          title: t('editHand'),
+          back: { href: `/hands/${id}`, label: t('detailTitle', { num: hand.num }) },
+          context: [venue, session.stake_label].filter(Boolean).join(' · '),
+        }}
         sessionId={hand.session_id}
         session={session}
         locale={locale}

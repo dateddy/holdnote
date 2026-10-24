@@ -20,7 +20,7 @@ export function buttonClass({
   size = 'md',
   full = true,
 }: { variant?: Variant; size?: Size; full?: boolean } = {}) {
-  const shape = `flex items-center justify-center rounded-md px-4 ${SIZE[size]}`;
+  const shape = `flex items-center justify-center rounded-xl px-4 ${SIZE[size]}`;
   return `${shape} ${full ? 'w-full' : ''} ${VARIANT[variant]}`.trim();
 }
 

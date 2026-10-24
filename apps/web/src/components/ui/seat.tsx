@@ -39,7 +39,7 @@ export function Seat({
       type={type}
       aria-current={toAct || undefined}
       aria-pressed={selected}
-      className={`flex h-11 min-w-11 items-center justify-center rounded-md border px-1 text-xs font-medium leading-tight disabled:cursor-default ${
+      className={`flex h-11 min-w-11 items-center justify-center rounded-xl border px-1 text-xs font-medium leading-tight disabled:cursor-default ${
         selected ? FILLED[tone] : 'border-line bg-surface'
       } ${toAct ? 'ring-2 ring-accent' : ''} ${className ?? ''}`.trim()}
       {...rest}

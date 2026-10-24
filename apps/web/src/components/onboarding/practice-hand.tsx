@@ -26,7 +26,7 @@ export function PracticeHand({
   return (
     <div className="flex flex-col gap-5">
       {check && (
-        <section role="status" className="space-y-2 rounded-md border border-line bg-surface p-4">
+        <section role="status" className="space-y-2 rounded-xl border border-line bg-surface p-4">
           <p className="font-medium">{allRight ? t('practiceAllRight') : t('practiceSomeWrong')}</p>
           <ul className="space-y-1 text-sm">
             {PRACTICE_PARTS.map((p) => (
@@ -40,7 +40,7 @@ export function PracticeHand({
             <form action={finishOnboarding}>
               <button
                 type="submit"
-                className="h-12 w-full rounded-md bg-accent font-medium text-accent-foreground"
+                className="h-12 w-full rounded-xl bg-accent font-medium text-accent-foreground"
               >
                 {t('finish')}
               </button>

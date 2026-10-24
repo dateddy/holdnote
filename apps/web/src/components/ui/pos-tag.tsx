@@ -13,7 +13,7 @@ type Props = HTMLAttributes<HTMLSpanElement> & { tone: PosTone };
 export function PosTag({ tone, className, ...rest }: Props) {
   return (
     <span
-      className={`inline-flex h-6 items-center rounded-md border px-1.5 text-xs font-medium ${TONE[tone]} ${
+      className={`inline-flex h-6 items-center rounded-xl border px-1.5 text-xs font-medium ${TONE[tone]} ${
         className ?? ''
       }`.trim()}
       {...rest}

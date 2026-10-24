@@ -108,7 +108,7 @@ export default async function BeforeSessionPage({ params }: PageProps<'/sessions
       <form action={enterTable.bind(null, id)} className="mt-auto">
         <button
           type="submit"
-          className="h-14 w-full rounded-md bg-accent text-lg font-medium text-accent-foreground"
+          className="h-14 w-full rounded-xl bg-accent text-lg font-medium text-accent-foreground"
         >
           {t('enterTable')}
         </button>

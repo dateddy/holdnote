@@ -27,7 +27,7 @@ export function Tab({ tone, selected, className, type = 'button', ...rest }: Pro
       role="tab"
       aria-selected={selected}
       disabled={tone === 'locked'}
-      className={`flex h-11 min-w-0 flex-1 items-center justify-center rounded-md border px-1 text-sm ${look} ${
+      className={`flex h-11 min-w-0 flex-1 items-center justify-center rounded-xl border px-1 text-sm ${look} ${
         className ?? ''
       }`.trim()}
       {...rest}

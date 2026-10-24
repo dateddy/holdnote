@@ -11,7 +11,7 @@ import { finishOnboarding, saveBasics, savePlay } from './actions';
 const LANGUAGE_NAMES: Record<string, string> = { vi: 'Tiếng Việt', en: 'English' };
 
 const OPTION =
-  'flex h-12 cursor-pointer items-center justify-center rounded-md border border-line bg-surface px-3 has-checked:border-accent has-checked:bg-accent has-checked:text-accent-foreground';
+  'flex h-12 cursor-pointer items-center justify-center rounded-xl border border-line bg-surface px-3 has-checked:border-accent has-checked:bg-accent has-checked:text-accent-foreground';
 import { buttonClass } from '@/components/ui/button';
 const BIG = buttonClass({ size: 'lg' });
 
@@ -108,7 +108,7 @@ export default async function OnboardingPage({ searchParams }: PageProps<'/onboa
             {t('tryIt')}
           </Link>
           <form action={finishOnboarding}>
-            <button type="submit" className="h-12 w-full rounded-md border border-line bg-surface">
+            <button type="submit" className="h-12 w-full rounded-xl border border-line bg-surface">
               {t('finish')}
             </button>
           </form>

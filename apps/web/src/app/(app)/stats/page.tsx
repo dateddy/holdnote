@@ -18,7 +18,7 @@ import { buttonClass } from '@/components/ui/button';
 import { TopBar } from '@/components/ui/top-bar';
 import { createClient } from '@/lib/supabase/server';
 
-const SELECT = 'h-10 w-full rounded-md border border-line bg-surface px-2 text-sm';
+const SELECT = 'h-10 w-full rounded-xl border border-line bg-surface px-2 text-sm';
 
 export default async function StatsPage({ searchParams }: PageProps<'/stats'>) {
   const filters = parseFilters(await searchParams);
@@ -207,7 +207,7 @@ export default async function StatsPage({ searchParams }: PageProps<'/stats'>) {
           </select>
           <button
             type="submit"
-            className="col-span-2 h-10 rounded-md bg-accent text-sm font-medium text-accent-foreground"
+            className="col-span-2 h-10 rounded-xl bg-accent text-sm font-medium text-accent-foreground"
           >
             {t('apply')}
           </button>
@@ -242,7 +242,7 @@ export default async function StatsPage({ searchParams }: PageProps<'/stats'>) {
           {mtt.map((g) => (
             <dl
               key={g.currency}
-              className="grid grid-cols-2 gap-x-4 gap-y-1 rounded-md border border-line bg-surface p-3 text-sm"
+              className="grid grid-cols-2 gap-x-4 gap-y-1 rounded-xl border border-line bg-surface p-3 text-sm"
             >
               <dt className="col-span-2 font-medium">{g.currency}</dt>
               <dt>{t('mttCount')}</dt>
@@ -268,7 +268,7 @@ export default async function StatsPage({ searchParams }: PageProps<'/stats'>) {
 
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">{t('disciplineTitle')}</h2>
-        <dl className="grid grid-cols-2 gap-x-4 gap-y-1 rounded-md border border-line bg-surface p-3 text-sm">
+        <dl className="grid grid-cols-2 gap-x-4 gap-y-1 rounded-xl border border-line bg-surface p-3 text-sm">
           <dt>{t('disciplineSessions')}</dt>
           <dd className="text-right tabular-nums">{discipline.sessions}</dd>
           <dt>{t('stopLossBreaches')}</dt>

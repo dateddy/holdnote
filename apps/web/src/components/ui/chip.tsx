@@ -8,7 +8,7 @@ export function chipClass(on: boolean, extra = '', tone: 'accent' | 'villain' = 
     tone === 'villain'
       ? 'border-villain bg-villain text-villain-foreground'
       : 'border-accent bg-accent text-accent-foreground';
-  return `flex h-11 items-center justify-center rounded-md border px-3 text-sm disabled:opacity-40 ${
+  return `flex h-11 items-center justify-center rounded-xl border px-3 text-sm disabled:opacity-40 ${
     on ? filled : 'border-line bg-surface'
   } ${extra}`.trim();
 }

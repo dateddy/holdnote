@@ -89,7 +89,7 @@ export function AiKeyForm({ hasKey, model }: Props) {
         type="button"
         disabled={status === 'busy' || apiKey.trim().length < 10}
         onClick={() => send('PUT')}
-        className="h-12 rounded-md bg-accent text-base font-medium text-accent-foreground disabled:opacity-40"
+        className="h-12 rounded-xl bg-accent text-base font-medium text-accent-foreground disabled:opacity-40"
       >
         {status === 'busy' ? t('saving') : t('saveKey')}
       </button>
@@ -98,7 +98,7 @@ export function AiKeyForm({ hasKey, model }: Props) {
           type="button"
           disabled={status === 'busy'}
           onClick={() => send('DELETE')}
-          className="h-12 rounded-md border border-line bg-surface text-base disabled:opacity-40"
+          className="h-12 rounded-xl border border-line bg-surface text-base disabled:opacity-40"
         >
           {t('removeKey')}
         </button>

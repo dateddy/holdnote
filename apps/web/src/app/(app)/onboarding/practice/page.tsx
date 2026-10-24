@@ -31,7 +31,7 @@ export default async function PracticePage() {
         <li>{t('guide3')}</li>
         <li>{t('guide4')}</li>
       </ol>
-      <details className="rounded-md border border-line bg-surface p-3">
+      <details className="rounded-xl border border-line bg-surface p-3">
         <summary className="cursor-pointer text-sm font-medium">{t('showSample')}</summary>
         <div className="pt-3">
           <SampleHand withReview={false} />

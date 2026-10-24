@@ -241,7 +241,7 @@ export function ReviewForm({
   );
 
   const hints = mathHints.length > 0 && (
-    <ul className="space-y-0.5 rounded-md bg-accent/5 p-3 text-sm">
+    <ul className="space-y-0.5 rounded-xl bg-accent/5 p-3 text-sm">
       {mathHints.map((m, i) => (
         <li key={i}>
           {t('mathHint', { street: m.street, act: m.act, toCall: m.toCall, odds: m.odds })}
@@ -368,7 +368,7 @@ export function ReviewForm({
   );
 
   const aiBlock = (
-    <div className="flex flex-col gap-2 rounded-md border border-line bg-surface p-3">
+    <div className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-3">
       <Button onClick={() => callAi({})} disabled={run === 'busy' || outOfTurns}>
         {run === 'busy' ? t('aiRunning') : t('aiButton')}
       </Button>
@@ -388,11 +388,11 @@ export function ReviewForm({
     <ol className="flex flex-col gap-3" aria-label={t('rebutThread')}>
       {rebuttals.map((r) => (
         <li key={r.id} className="flex flex-col gap-2">
-          <div className="space-y-1 rounded-md border border-line p-3">
+          <div className="space-y-1 rounded-xl border border-line p-3">
             <p className="text-xs text-muted">{t('rebutYou')}</p>
             <p className="text-base whitespace-pre-line">{r.reason}</p>
           </div>
-          <div className="space-y-1 rounded-md bg-accent/5 p-3">
+          <div className="space-y-1 rounded-xl bg-accent/5 p-3">
             <p className="flex flex-wrap items-center gap-2 text-xs text-muted">
               {t('rebutAi')}
               <Badge tone={r.outcome === 'revised' ? 'warn' : 'accent'}>
@@ -411,7 +411,7 @@ export function ReviewForm({
   );
 
   const rebutBox = (
-    <div className="flex flex-col gap-2 rounded-md border border-line bg-surface p-3">
+    <div className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-3">
       {!rebutOpen ? (
         <>
           <Button variant="secondary" onClick={() => setRebutOpen(true)} disabled={!canRebut}>
@@ -489,7 +489,7 @@ export function ReviewForm({
         {aiId && (
           <>
             {aiCardFlag && (
-              <p role="note" className="rounded-md bg-warn/10 p-3 text-sm text-warn">
+              <p role="note" className="rounded-xl bg-warn/10 p-3 text-sm text-warn">
                 {t('cardFlag')}
               </p>
             )}

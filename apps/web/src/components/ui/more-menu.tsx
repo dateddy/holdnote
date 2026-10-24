@@ -65,7 +65,7 @@ export function MoreMenu({
           role="menu"
           aria-label={label}
           style={style}
-          className="z-20 overflow-y-auto rounded-md border border-line bg-surface"
+          className="z-20 overflow-y-auto rounded-xl border border-line bg-surface"
         >
           {items.map((it) =>
             it.href ? (

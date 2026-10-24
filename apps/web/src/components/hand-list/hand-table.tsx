@@ -32,7 +32,7 @@ export function HandTable({ rows, selectedId, onSelect, showSession = false }: P
   const th = 'px-2 py-2 text-left text-xs font-medium whitespace-nowrap text-muted';
 
   return (
-    <div className="overflow-x-auto rounded-md border border-line bg-surface">
+    <div className="overflow-x-auto rounded-xl border border-line bg-surface">
       <table className="w-full text-sm" aria-label={t('table')}>
         <thead>
           <tr className="border-b border-line">

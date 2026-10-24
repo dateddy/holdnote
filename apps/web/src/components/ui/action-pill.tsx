@@ -32,7 +32,7 @@ export function ActionPill({
       type={type}
       data-pill=""
       aria-pressed={active}
-      className={`flex h-9 items-center gap-1 rounded-md border px-2 text-sm tabular-nums ${
+      className={`flex h-9 items-center gap-1 rounded-xl border px-2 text-sm tabular-nums ${
         invalid ? 'border-loss bg-loss/10 text-loss' : TONE_CLASS[tone]
       } ${active ? 'ring-2 ring-accent' : ''} ${className ?? ''}`.trim()}
       {...rest}

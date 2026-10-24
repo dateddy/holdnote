@@ -13,7 +13,8 @@ export function IconButton({ glyph, label, className, type = 'button', ...rest }
     <button
       type={type}
       aria-label={label}
-      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-line bg-surface text-lg disabled:opacity-40 ${
+      title={label}
+      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-line bg-surface text-lg disabled:opacity-40 ${
         className ?? ''
       }`.trim()}
       {...rest}

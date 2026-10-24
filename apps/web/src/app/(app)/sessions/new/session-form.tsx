@@ -131,7 +131,7 @@ export function SessionForm({ initial, edit, profileCurrency }: Props) {
 
   const aside = (
     <>
-      <div className="space-y-1 lg:rounded-md lg:border lg:border-line lg:bg-surface lg:p-4">
+      <div className="space-y-1 lg:rounded-xl lg:border lg:border-line lg:bg-surface lg:p-4">
         <p className="hidden text-xs font-medium tracking-[0.06em] text-muted uppercase lg:block">
           {t('summaryTitle')}
         </p>
@@ -192,8 +192,8 @@ export function SessionForm({ initial, edit, profileCurrency }: Props) {
       <input type="hidden" name="end_at" value={times.endAt ?? ''} suppressHydrationWarning />
 
       <EntryLayout aside={aside}>
-        <div className="flex flex-col gap-6 lg:grid lg:grid-cols-2 lg:items-start lg:gap-3">
-          <div className="contents lg:flex lg:flex-col lg:gap-3">
+        <div className="flex flex-col gap-6 lg:gap-3 xl:grid xl:grid-cols-2 xl:items-start">
+          <div className="contents xl:flex xl:flex-col xl:gap-3">
             <Group title={t('groupKind')}>
               {edit ? (
                 <p className="text-sm text-muted">
@@ -217,7 +217,7 @@ export function SessionForm({ initial, edit, profileCurrency }: Props) {
 
             <Group title={t('groupPlace')}>
               {text('venue', t('venue'))}
-              <div className="flex flex-col gap-3 lg:grid lg:grid-cols-3 lg:items-start">
+              <div className="flex flex-col gap-3 xl:grid xl:grid-cols-3 xl:items-start">
                 <Field label={t('dateField')} error={err('date')}>
                   <Input
                     type="date"
@@ -225,7 +225,7 @@ export function SessionForm({ initial, edit, profileCurrency }: Props) {
                     onChange={(e) => set({ date: e.target.value })}
                   />
                 </Field>
-                <div className="grid grid-cols-2 gap-3 lg:col-span-2">
+                <div className="grid grid-cols-2 gap-3 xl:col-span-2">
                   <Field label={t('startTime')}>
                     <Input
                       type="time"
@@ -249,7 +249,7 @@ export function SessionForm({ initial, edit, profileCurrency }: Props) {
               )}
             </Group>
           </div>
-          <div className="contents lg:flex lg:flex-col lg:gap-3">
+          <div className="contents xl:flex xl:flex-col xl:gap-3">
             <Group title={t('groupUnit')}>
               <div className="flex flex-wrap items-center gap-2">
                 <div className="min-w-48 flex-1">
@@ -314,11 +314,11 @@ export function SessionForm({ initial, edit, profileCurrency }: Props) {
               ) : (
                 <>
                   {isMtt && <p className="text-base font-medium">{t('mttBlinds')}</p>}
-                  <div className={`grid grid-cols-2 gap-3 ${isMtt ? '' : 'lg:grid-cols-3'}`}>
+                  <div className={`grid grid-cols-2 gap-3 ${isMtt ? '' : 'xl:grid-cols-3'}`}>
                     {text('sb', t('sb'), true)}
                     {text('bb', t('bb'), true)}
                     {!isMtt && (
-                      <div className="col-span-2 lg:col-span-1">
+                      <div className="col-span-2 xl:col-span-1">
                         {text('straddle', t('straddle'), true)}
                       </div>
                     )}

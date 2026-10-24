@@ -16,8 +16,8 @@ import { MoreMenu } from './more-menu';
  * - a bar across the top with HoldNote on its own at the left and the account menu at the right
  *   (Cài đặt · Đăng xuất);
  * - a rail on the left, always open: icon with its name under it (Trang chủ, Thống kê);
- * - the page inside one large panel (`bg-panel`), the page's own cards inside it. The panel
- *   stops growing at 1800px so tables and cards stay readable on very wide screens.
+ * - the page inside one large panel (`bg-panel`) that runs to the right edge, the page's own
+ *   cards inside it.
  *
  * `--nav-w` is the rail's width, so fixed bars of the page (`StickyBar`) keep clear of it. On a
  * phone the frame is just the page; its bottom bar is `BottomNav` (Cài đặt stays a tab there).
@@ -53,14 +53,14 @@ export function AppShell({ children }: { children: ReactNode }) {
       </header>
       <nav
         aria-label={t('label')}
-        className="fixed top-14 bottom-4 left-4 z-20 hidden w-24 flex-col gap-2 rounded-xl bg-panel py-4 lg:flex"
+        className="fixed top-14 bottom-4 left-6 z-20 hidden w-24 flex-col gap-2 rounded-2xl bg-panel py-4 lg:flex"
       >
         {tabs.map((tab) => (
           <Link
             key={tab.key}
             href={tab.href}
             aria-current={tab.active ? 'page' : undefined}
-            className={`mx-2 flex flex-col items-center gap-1 rounded-md py-3 text-xs font-medium uppercase ${
+            className={`mx-2 flex flex-col items-center gap-1 rounded-xl py-3 text-xs font-medium uppercase ${
               tab.active ? 'bg-accent/10 text-accent' : 'text-muted'
             }`}
           >
@@ -70,9 +70,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         ))}
       </nav>
       <div className="flex flex-1 flex-col lg:pr-4 lg:pb-4 lg:pl-(--nav-w)">
-        <div className="flex flex-1 flex-col lg:mx-auto lg:w-full lg:max-w-[1800px] lg:rounded-xl lg:bg-panel">
-          {children}
-        </div>
+        <div className="flex flex-1 flex-col lg:w-full lg:rounded-2xl lg:bg-panel">{children}</div>
       </div>
     </div>
   );

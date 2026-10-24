@@ -44,7 +44,7 @@ export function SessionTable({ items, sort, onSort, explain, onDelete }: Props) 
   );
 
   return (
-    <div className="relative overflow-x-auto rounded-md border border-line bg-surface">
+    <div className="relative overflow-x-auto rounded-xl border border-line bg-surface">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-line">

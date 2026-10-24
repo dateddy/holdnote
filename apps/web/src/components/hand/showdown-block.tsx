@@ -107,7 +107,7 @@ export function ShowdownBlock({
   });
 
   return (
-    <section className="space-y-3 rounded-md border border-line bg-surface p-3">
+    <section className="space-y-3 rounded-xl border border-line bg-surface p-3">
       <h3 className="text-base font-medium">{header}</h3>
 
       {mode === 'actions' && !decided && showdown && (
@@ -171,7 +171,7 @@ export function ShowdownBlock({
           </div>
 
           {mismatches.length > 0 && (
-            <ul role="alert" className="space-y-1 rounded-md bg-loss/10 p-2 text-sm text-loss">
+            <ul role="alert" className="space-y-1 rounded-xl bg-loss/10 p-2 text-sm text-loss">
               {mismatches.map((m) => (
                 <li key={m}>{m}</li>
               ))}

@@ -32,7 +32,7 @@ export function ShortcutsDialog({ open, title, closeLabel, rows, onClose }: Prop
       onClick={(e) => {
         if (e.target === ref.current) onClose();
       }}
-      className="m-auto w-[calc(100%-3rem)] max-w-md rounded-md border border-line bg-surface p-4 text-foreground backdrop:bg-background/70"
+      className="m-auto w-[calc(100%-3rem)] max-w-md rounded-xl border border-line bg-surface p-4 text-foreground backdrop:bg-background/70"
     >
       <h2 className="text-lg font-semibold">{title}</h2>
       <dl className="mt-3 flex flex-col gap-2 text-sm">
@@ -43,7 +43,7 @@ export function ShortcutsDialog({ open, title, closeLabel, rows, onClose }: Prop
               {r.keys.map((k) => (
                 <kbd
                   key={k}
-                  className="rounded-md border border-line bg-background px-2 py-0.5 font-mono text-xs"
+                  className="rounded-lg border border-line bg-background px-2 py-0.5 font-mono text-xs"
                 >
                   {k}
                 </kbd>

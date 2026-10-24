@@ -12,7 +12,7 @@ const ROWS = [
 
 /** Number keys for chip amounts: 0-9, `.`, `k` (thousands) and delete. Four columns, four 44px rows. */
 export function NumPad({ onKey, onBackspace, backspaceLabel }: Props) {
-  const key = 'h-11 rounded-md border border-line bg-surface text-lg tabular-nums';
+  const key = 'h-11 rounded-xl border border-line bg-surface text-lg tabular-nums';
   const press = (k: string) => (
     <button key={k} type="button" onClick={() => onKey(k)} className={key}>
       {k}

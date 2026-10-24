@@ -26,7 +26,7 @@ export function TableSeat({ position, tone, stack, inHand, note, label }: Props)
     <div
       role="img"
       aria-label={label}
-      className={`flex min-h-11 min-w-14 flex-col items-center justify-center rounded-md border px-1.5 py-0.5 text-center text-xs leading-tight tabular-nums ${
+      className={`flex min-h-11 min-w-14 flex-col items-center justify-center rounded-xl border px-1.5 py-0.5 text-center text-xs leading-tight tabular-nums ${
         inHand ? FILLED[tone] : 'border-line bg-surface text-muted opacity-50'
       }`}
     >

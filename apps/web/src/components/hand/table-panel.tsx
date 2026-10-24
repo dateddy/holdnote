@@ -117,7 +117,7 @@ export function TablePanel({
         />
       </div>
       {dropped.length > 0 && (
-        <p role="status" className="rounded-md bg-warn/10 p-2 text-sm">
+        <p role="status" className="rounded-xl bg-warn/10 p-2 text-sm">
           {t('seatsGone', { seats: dropped.join(', '), n: players })}
         </p>
       )}

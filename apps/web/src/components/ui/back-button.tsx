@@ -24,7 +24,7 @@ export function BackButton({ href, label }: Props) {
       aria-label={label}
       data-back-button
       onClick={() => (navHistory.canGoBack() ? router.back() : router.replace(href))}
-      className="flex size-11 shrink-0 items-center justify-center rounded-md"
+      className="flex size-11 shrink-0 items-center justify-center rounded-xl"
     >
       <Icon icon={ChevronLeft} />
     </button>

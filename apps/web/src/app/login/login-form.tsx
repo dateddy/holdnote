@@ -38,7 +38,7 @@ export function LoginForm({ next }: { next: string }) {
 
   if (status === 'sent') {
     return (
-      <p className="rounded-md bg-win/10 p-4 text-center text-sm">
+      <p className="rounded-xl bg-win/10 p-4 text-center text-sm">
         {t.rich('sent', { email, b: (chunks) => <b>{chunks}</b> })}
       </p>
     );
@@ -49,7 +49,7 @@ export function LoginForm({ next }: { next: string }) {
       <button
         type="button"
         onClick={signInWithGoogle}
-        className="h-12 rounded-md border border-line bg-surface font-medium"
+        className="h-12 rounded-xl border border-line bg-surface font-medium"
       >
         {t('google')}
       </button>
@@ -70,13 +70,13 @@ export function LoginForm({ next }: { next: string }) {
             inputMode="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="h-12 rounded-md border border-line bg-surface px-3 text-base"
+            className="h-12 rounded-xl border border-line bg-surface px-3 text-base"
           />
         </label>
         <button
           type="submit"
           disabled={status === 'sending'}
-          className="h-12 rounded-md bg-accent font-medium text-accent-foreground disabled:opacity-50"
+          className="h-12 rounded-xl bg-accent font-medium text-accent-foreground disabled:opacity-50"
         >
           {status === 'sending' ? t('sending') : t('sendLink')}
         </button>

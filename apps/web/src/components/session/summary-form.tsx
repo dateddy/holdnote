@@ -16,7 +16,7 @@ import {
   type SummaryFormValues,
 } from '@/lib/sessions/summary';
 
-const AREA = 'w-full rounded-md border border-line bg-surface p-3 text-base';
+const AREA = 'w-full rounded-xl border border-line bg-surface p-3 text-base';
 
 const LEAK_TAGS = ERROR_TAGS.filter((t) => t !== 'none');
 
@@ -127,7 +127,7 @@ export function SummaryForm({
 
   return (
     <form action={formAction} className="flex flex-col gap-5">
-      <section className="space-y-1 rounded-md border border-line bg-surface p-4">
+      <section className="space-y-1 rounded-xl border border-line bg-surface p-4">
         <h2 className="font-medium">{t('resultTitle')}</h2>
         <p className="text-lg">
           {result
@@ -147,12 +147,12 @@ export function SummaryForm({
         )}
       </section>
 
-      <div className="flex flex-col gap-2 rounded-md border border-line bg-surface p-3">
+      <div className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-3">
         <button
           type="button"
           onClick={callAi}
           disabled={run === 'busy' || outOfTurns || handCount === 0}
-          className="h-12 rounded-md bg-accent text-base font-medium text-accent-foreground disabled:opacity-40"
+          className="h-12 rounded-xl bg-accent text-base font-medium text-accent-foreground disabled:opacity-40"
         >
           {run === 'busy' ? t('aiRunning') : t('aiButton')}
         </button>
@@ -283,7 +283,7 @@ export function SummaryForm({
       <button
         type="submit"
         disabled={pending}
-        className="h-14 rounded-md bg-accent text-lg font-medium text-accent-foreground disabled:opacity-40"
+        className="h-14 rounded-xl bg-accent text-lg font-medium text-accent-foreground disabled:opacity-40"
       >
         {pending ? t('saving') : t('save')}
       </button>

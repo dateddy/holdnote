@@ -19,7 +19,7 @@ export default async function LoginPage({ searchParams }: PageProps<'/login'>) {
         <p className="text-sm text-muted">{t('common.tagline')}</p>
       </div>
       {authFailed && (
-        <p role="alert" className="rounded-md bg-loss/10 p-3 text-sm text-loss">
+        <p role="alert" className="rounded-xl bg-loss/10 p-3 text-sm text-loss">
           {t('login.authFailed')}
         </p>
       )}

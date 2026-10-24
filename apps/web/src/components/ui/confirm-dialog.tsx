@@ -47,7 +47,7 @@ export function ConfirmDialog({
       onClick={(e) => {
         if (e.target === ref.current && !pending) onCancel();
       }}
-      className="m-auto w-[calc(100%-3rem)] max-w-sm rounded-md border border-line bg-surface p-4 text-foreground backdrop:bg-background/70"
+      className="m-auto w-[calc(100%-3rem)] max-w-sm rounded-xl border border-line bg-surface p-4 text-foreground backdrop:bg-background/70"
     >
       <div className="space-y-2">
         <h2 className="text-lg font-semibold">{title}</h2>

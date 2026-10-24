@@ -5,7 +5,7 @@ import { TopBar } from '@/components/ui/top-bar';
 import { createClient } from '@/lib/supabase/server';
 import { addRule, deleteRule, moveRule, setRuleActive, updateRule } from './actions';
 
-const SMALL = 'h-9 rounded-md border border-line bg-surface px-2 text-sm disabled:opacity-30';
+const SMALL = 'h-9 rounded-xl border border-line bg-surface px-2 text-sm disabled:opacity-30';
 
 /** "Your rules" (spec 3.3, 3.11): shown before every session while active. */
 export default async function RulesPage() {
@@ -30,11 +30,11 @@ export default async function RulesPage() {
           maxLength={RULE_MAX}
           placeholder={t('placeholder')}
           aria-label={t('placeholder')}
-          className="h-12 min-w-0 flex-1 rounded-md border border-line bg-surface px-3 text-base"
+          className="h-12 min-w-0 flex-1 rounded-xl border border-line bg-surface px-3 text-base"
         />
         <button
           type="submit"
-          className="h-12 rounded-md bg-accent px-4 font-medium text-accent-foreground"
+          className="h-12 rounded-xl bg-accent px-4 font-medium text-accent-foreground"
         >
           {t('add')}
         </button>
@@ -47,7 +47,7 @@ export default async function RulesPage() {
           {list.map((r, i) => (
             <li
               key={r.id}
-              className={`space-y-2 rounded-md border border-line bg-surface p-3 ${r.active ? '' : 'text-muted'}`}
+              className={`space-y-2 rounded-xl border border-line bg-surface p-3 ${r.active ? '' : 'text-muted'}`}
             >
               <form action={updateRule.bind(null, r.id)} className="flex gap-2">
                 <input
@@ -56,7 +56,7 @@ export default async function RulesPage() {
                   required
                   maxLength={RULE_MAX}
                   aria-label={t('ruleN', { n: i + 1 })}
-                  className="h-10 min-w-0 flex-1 rounded-md border border-line bg-surface px-2 text-base"
+                  className="h-10 min-w-0 flex-1 rounded-xl border border-line bg-surface px-2 text-base"
                 />
                 <button type="submit" className={SMALL}>
                   {t('save')}

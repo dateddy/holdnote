@@ -26,7 +26,7 @@ export function ShorthandInput({ value, onChange, errors }: Props) {
         spellCheck={false}
         placeholder="H o600 V c / H x V b800 H c"
         aria-invalid={errors.length > 0 ? true : undefined}
-        className="w-full rounded-md border border-line bg-surface p-3 font-mono text-base"
+        className="w-full rounded-xl border border-line bg-surface p-3 font-mono text-base"
       />
       <div className="flex flex-wrap gap-1.5" role="group" aria-label={t('keys')}>
         {KEYS.map((k) => (
@@ -34,7 +34,7 @@ export function ShorthandInput({ value, onChange, errors }: Props) {
             key={k}
             type="button"
             onClick={() => onChange(insertToken(value, k))}
-            className="flex h-11 min-w-11 flex-1 items-center justify-center rounded-md border border-line bg-surface font-mono"
+            className="flex h-11 min-w-11 flex-1 items-center justify-center rounded-xl border border-line bg-surface font-mono"
           >
             {k}
           </button>
@@ -43,7 +43,7 @@ export function ShorthandInput({ value, onChange, errors }: Props) {
           type="button"
           aria-label={t('undoAction')}
           onClick={() => onChange(backspaceToken(value))}
-          className="flex h-11 min-w-11 flex-1 items-center justify-center rounded-md border border-line bg-surface"
+          className="flex h-11 min-w-11 flex-1 items-center justify-center rounded-xl border border-line bg-surface"
         >
           ⌫
         </button>

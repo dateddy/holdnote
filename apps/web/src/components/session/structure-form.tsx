@@ -40,7 +40,7 @@ export function StructureForm({
         defaultAnteMode={defaultAnteMode}
       />
       {status === 'saved' && (
-        <p role="status" className="rounded-md bg-accent/15 p-3 text-sm">
+        <p role="status" className="rounded-xl bg-accent/15 p-3 text-sm">
           {t('saved')}
         </p>
       )}

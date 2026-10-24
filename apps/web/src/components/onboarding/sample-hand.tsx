@@ -10,7 +10,7 @@ export function SampleHand({ withReview }: { withReview: boolean }) {
   const tReview = useTranslations('review');
 
   return (
-    <section className="space-y-3 rounded-md border border-line bg-surface p-4">
+    <section className="space-y-3 rounded-xl border border-line bg-surface p-4">
       <p className="text-sm text-muted">{t('sampleGame')}</p>
       <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
         <b className="text-xl">

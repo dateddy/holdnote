@@ -75,7 +75,7 @@ export function ChipMenu({ label, value, options, allLabel, onChange, className 
           role="group"
           aria-label={label}
           style={style}
-          className="z-20 overflow-y-auto rounded-md border border-line bg-surface"
+          className="z-20 overflow-y-auto rounded-xl border border-line bg-surface"
         >
           {allLabel !== undefined && item('', allLabel)}
           {options.map((o) => item(o.value, o.label))}

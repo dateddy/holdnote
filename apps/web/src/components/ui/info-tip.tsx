@@ -85,7 +85,7 @@ export function InfoTip({ text, label, icon = '?' }: Props) {
           id={id}
           role="tooltip"
           style={style}
-          className="z-20 overflow-y-auto rounded-md border border-line bg-surface p-2 text-xs font-normal text-foreground"
+          className="z-20 overflow-y-auto rounded-xl border border-line bg-surface p-2 text-xs font-normal text-foreground"
         >
           {text}
         </span>

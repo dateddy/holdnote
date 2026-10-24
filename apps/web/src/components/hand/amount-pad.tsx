@@ -121,12 +121,12 @@ function AmountBody({
       )}
 
       {preview?.belowMin && (
-        <p role="status" className="rounded-md bg-warn/10 p-2 text-sm">
+        <p role="status" className="rounded-xl bg-warn/10 p-2 text-sm">
           {t('sheetBelowMin', { min: money(state.minRaiseTo) })}
         </p>
       )}
       {preview?.becomesAllIn && (
-        <p role="status" className="rounded-md bg-warn/10 p-2 text-sm">
+        <p role="status" className="rounded-xl bg-warn/10 p-2 text-sm">
           {t('warnAutoAllIn')}
         </p>
       )}

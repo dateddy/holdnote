@@ -4,7 +4,6 @@ import { HandForm } from '@/components/hand/hand-form';
 import { SyncStatus } from '@/components/hand/sync-status';
 import { HAND_SESSION_COLUMNS } from '@/lib/hands/build';
 import { sortOpponents } from '@/lib/hands/table';
-import { TopBar } from '@/components/ui/top-bar';
 import { createClient } from '@/lib/supabase/server';
 
 export default async function RecordPage({ params }: PageProps<'/sessions/[id]/record'>) {
@@ -13,7 +12,7 @@ export default async function RecordPage({ params }: PageProps<'/sessions/[id]/r
 
   const { data: session } = await supabase
     .from('sessions')
-    .select(`${HAND_SESSION_COLUMNS}, currency, venue, start_at, end_at`)
+    .select(`${HAND_SESSION_COLUMNS}, currency, venue, stake_label, start_at, end_at`)
     .eq('id', id)
     .maybeSingle();
   if (!session) notFound();
@@ -74,13 +73,14 @@ export default async function RecordPage({ params }: PageProps<'/sessions/[id]/r
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-3 px-3 py-6 lg:max-w-none lg:px-6">
-      <TopBar
-        title={t('screenTitle')}
-        back={{ href: `/sessions/${id}`, label: t('backToSession') }}
-        compact
-      />
-      <SyncStatus />
       <HandForm
+        notice={<SyncStatus />}
+        header={{
+          title: t('screenTitle'),
+          back: { href: `/sessions/${id}`, label: t('backToSession') },
+          context: [venue, session.stake_label].filter(Boolean).join(' · '),
+          compact: true,
+        }}
         sessionId={id}
         session={session}
         locale={locale}

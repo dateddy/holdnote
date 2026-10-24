@@ -149,7 +149,7 @@ export function ActionCard({
           )}
 
           {halted && (
-            <div role="status" className="space-y-2 rounded-md bg-loss/10 p-2 text-sm">
+            <div role="status" className="space-y-2 rounded-xl bg-loss/10 p-2 text-sm">
               <p>{halted.text}</p>
               <Button variant="secondary" onClick={halted.onDelete}>
                 {halted.deleteLabel}
