@@ -10,8 +10,8 @@ type Props = {
   /** Chosen value; `''` = none. */
   value: string;
   options: readonly { value: string; label: string }[];
-  /** Text of the entry that clears the choice. */
-  allLabel: string;
+  /** Text of the entry that clears the choice; leave out when one value must always be chosen. */
+  allLabel?: string;
   onChange: (value: string) => void;
   className?: string;
 };
@@ -77,7 +77,7 @@ export function ChipMenu({ label, value, options, allLabel, onChange, className 
           style={style}
           className="z-20 overflow-y-auto rounded-md border border-line bg-surface"
         >
-          {item('', allLabel)}
+          {allLabel !== undefined && item('', allLabel)}
           {options.map((o) => item(o.value, o.label))}
         </div>
       )}

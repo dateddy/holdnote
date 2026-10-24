@@ -7,6 +7,8 @@ type Props = {
   orientation?: 'row' | 'column';
   /** Name of the group for screen readers. */
   label: string;
+  /** Row only: from 1024px the controls wrap onto more lines instead of scrolling (desktop). */
+  wrapOnDesktop?: boolean;
   children: ReactNode;
 };
 
@@ -15,7 +17,7 @@ type Props = {
  * their width and the bar scrolls sideways with no scrollbar; the right edge fades out while more
  * controls are hidden past it. In a column they stack.
  */
-export function FilterBar({ orientation = 'row', label, children }: Props) {
+export function FilterBar({ orientation = 'row', label, wrapOnDesktop = false, children }: Props) {
   const row = useRef<HTMLDivElement>(null);
   const [more, setMore] = useState(false);
 
@@ -48,6 +50,8 @@ export function FilterBar({ orientation = 'row', label, children }: Props) {
       aria-label={label}
       data-hscroll
       className={`flex items-center gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&>*]:shrink-0 ${
+        wrapOnDesktop ? 'lg:flex-wrap lg:overflow-visible' : ''
+      } ${
         more ? '[mask-image:linear-gradient(to_right,black_calc(100%_-_2.5rem),transparent)]' : ''
       }`}
     >

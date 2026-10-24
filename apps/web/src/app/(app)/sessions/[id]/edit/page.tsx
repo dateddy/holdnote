@@ -20,7 +20,7 @@ export default async function EditSessionPage({ params }: PageProps<'/sessions/[
   const [t, tCommon] = await Promise.all([getTranslations('sessions'), getTranslations('common')]);
 
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 p-6">
+    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 p-6 lg:max-w-6xl">
       <TopBar title={t('editTitle')} back={{ href: `/sessions/${id}`, label: tCommon('back') }} />
       <SessionForm
         initial={editFormFrom(row, row.currency)}

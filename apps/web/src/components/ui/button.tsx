@@ -7,7 +7,7 @@ const VARIANT: Record<Variant, string> = {
   primary: 'bg-accent text-accent-foreground font-medium disabled:opacity-40',
   secondary: 'border border-line bg-surface disabled:opacity-40',
   danger: 'bg-loss text-background font-medium disabled:opacity-40',
-  ghost: 'underline underline-offset-4 disabled:opacity-40',
+  ghost: 'text-foreground hover:bg-surface disabled:opacity-40',
 };
 const SIZE: Record<Size, string> = {
   lg: 'h-14 text-lg',
@@ -20,9 +20,8 @@ export function buttonClass({
   size = 'md',
   full = true,
 }: { variant?: Variant; size?: Size; full?: boolean } = {}) {
-  const shape =
-    variant === 'ghost' ? '' : `flex items-center justify-center rounded-md px-4 ${SIZE[size]}`;
-  return `${shape} ${full && variant !== 'ghost' ? 'w-full' : ''} ${VARIANT[variant]}`.trim();
+  const shape = `flex items-center justify-center rounded-md px-4 ${SIZE[size]}`;
+  return `${shape} ${full ? 'w-full' : ''} ${VARIANT[variant]}`.trim();
 }
 
 type Props = ButtonHTMLAttributes<HTMLButtonElement> & {

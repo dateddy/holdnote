@@ -105,13 +105,15 @@ export function sessionNet(item: SessionListItem): Net | null {
 
 export const LIST_KINDS = ['all', 'cash', 'mtt'] as const;
 
+export const LIST_RESULTS = ['all', 'win', 'loss'] as const;
+
 export type ListFilter = {
   kind: (typeof LIST_KINDS)[number];
   /** `YYYY-MM`, or empty. */
   month: string;
   venue: string;
-  win: boolean;
-  loss: boolean;
+  /** One choice: every session, only winning ones, or only losing ones (open sessions are neither). */
+  result: (typeof LIST_RESULTS)[number];
   /** Only sessions with flagged hands that have no accepted review. */
   toReview: boolean;
   q: string;
@@ -121,15 +123,19 @@ export const EMPTY_FILTER: ListFilter = {
   kind: 'all',
   month: '',
   venue: '',
-  win: false,
-  loss: false,
+  result: 'all',
   toReview: false,
   q: '',
 };
 
 export function isFiltering(f: ListFilter): boolean {
   return (
-    f.kind !== 'all' || !!f.month || !!f.venue || f.win || f.loss || f.toReview || f.q.trim() !== ''
+    f.kind !== 'all' ||
+    !!f.month ||
+    !!f.venue ||
+    f.result !== 'all' ||
+    f.toReview ||
+    f.q.trim() !== ''
   );
 }
 
@@ -154,11 +160,11 @@ export function filterItems(items: readonly SessionListItem[], f: ListFilter): S
     if (f.month && monthOf(s) !== f.month) return false;
     if (venue && (s.venue ?? '').trim().toLowerCase() !== venue) return false;
     if (f.toReview && it.toReview === 0) return false;
-    if (f.win || f.loss) {
+    if (f.result !== 'all') {
       // A session with no result yet is neither a win nor a loss.
       const money = sessionResult(s)?.money;
       if (money == null) return false;
-      if (!((f.win && money > 0) || (f.loss && money < 0))) return false;
+      if (f.result === 'win' ? money <= 0 : money >= 0) return false;
     }
     if (q) {
       const hay = fold([s.venue, it.notes, it.tournamentName].filter(Boolean).join(' '));
@@ -194,12 +200,21 @@ const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v
 export function parseListFilter(q: Query): ListFilter {
   const kind = first(q.kind);
   const month = first(q.month) ?? '';
+  const result = first(q.result);
+  // Older addresses carried `win=1` and `loss=1`; both on together meant either, that is all.
+  const legacy =
+    first(q.win) === '1'
+      ? first(q.loss) === '1'
+        ? 'all'
+        : 'win'
+      : first(q.loss) === '1'
+        ? 'loss'
+        : 'all';
   return {
     kind: isOneOf(LIST_KINDS, kind) ? kind : 'all',
     month: /^\d{4}-\d{2}$/.test(month) ? month : '',
     venue: (first(q.venue) ?? '').trim().slice(0, 100),
-    win: first(q.win) === '1',
-    loss: first(q.loss) === '1',
+    result: isOneOf(LIST_RESULTS, result) ? result : legacy,
     toReview: first(q.review) === '1',
     q: (first(q.q) ?? '').slice(0, 100),
   };
@@ -211,8 +226,7 @@ export function serializeListFilter(f: ListFilter): string {
   if (f.kind !== 'all') p.set('kind', f.kind);
   if (f.month) p.set('month', f.month);
   if (f.venue) p.set('venue', f.venue);
-  if (f.win) p.set('win', '1');
-  if (f.loss) p.set('loss', '1');
+  if (f.result !== 'all') p.set('result', f.result);
   if (f.toReview) p.set('review', '1');
   if (f.q.trim()) p.set('q', f.q);
   return p.toString();
@@ -312,14 +326,35 @@ export type MoneyLine = {
   /** The same money in a real currency, when every chip session has the same rate. */
   converted?: { currency: string; money: number };
 };
-export type NetTile = { main: { bb: number } | MoneyLine | null; sub: MoneyLine[] };
+export type NetLine = { bb: number } | MoneyLine;
+export type NetTile = { lines: NetLine[]; sub: MoneyLine[] };
+
+const round2 = (n: number) => Math.round(n * 100) / 100;
 
 /**
- * The Net tile follows the kind filter: cash shows bb (money under it); all and MTT show money,
- * because bb of cash and prize money of MTT cannot be added.
+ * The Net tile follows the kind filter. Cash shows bb (money under it). MTT shows its money, one
+ * line per currency. All shows both on separate lines: bb of cash can never be added to the prize
+ * money of MTT, and a cash session in chips is read as bb, with the chips under it. No line = no
+ * session has a result yet.
  */
 export function netTile(totals: SessionTotals, kind: ListFilter['kind']): NetTile {
-  if (kind === 'cash') return { main: { bb: totals.netBb }, sub: totals.netMoney };
-  const [first, ...rest] = totals.netMoney;
-  return { main: first ?? null, sub: rest };
+  if (kind === 'cash') {
+    return { lines: totals.netMoney.length ? [{ bb: totals.netBb }] : [], sub: totals.netMoney };
+  }
+  if (kind === 'mtt') return { lines: totals.netMoney, sub: [] };
+  const mtt = new Map(totals.mttMoney.map((m) => [m.currency, m.money]));
+  // Cash money = all money minus what the MTTs made in the same currency.
+  const cash = totals.netMoney.flatMap<MoneyLine>((m) => {
+    const inMtt = mtt.get(m.currency);
+    if (inMtt == null) return [m];
+    const rest = round2(m.money - inMtt);
+    return rest === 0 ? [] : [{ currency: m.currency, money: rest }];
+  });
+  const hasCash = totals.netBb !== 0 || cash.length > 0;
+  const hasMtt = totals.mttMoney.length > 0;
+  const lines: NetLine[] = [
+    ...(hasCash || (!hasMtt && totals.netMoney.length > 0) ? [{ bb: totals.netBb }] : []),
+    ...totals.mttMoney,
+  ];
+  return { lines, sub: hasCash ? cash : [] };
 }

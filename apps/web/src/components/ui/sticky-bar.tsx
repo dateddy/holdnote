@@ -15,6 +15,6 @@ export function StickyBar({ className, ...rest }: HTMLAttributes<HTMLDivElement>
   );
 }
 
-export function StickyBarSpacer() {
-  return <div aria-hidden className="h-24 shrink-0" />;
+export function StickyBarSpacer({ className }: { className?: string }) {
+  return <div aria-hidden className={`h-24 shrink-0 ${className ?? ''}`.trim()} />;
 }

@@ -3,14 +3,16 @@
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { X } from 'lucide-react';
 import { useMemo, useState, useTransition } from 'react';
 import { sessionTotals, type SessionTotals } from 'poker-core';
 import { deleteSession } from '@/app/(app)/sessions/actions';
-import { Button, buttonClass } from '@/components/ui/button';
+import { buttonClass } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
 import { ChipMenu } from '@/components/ui/chip-menu';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { Fab } from '@/components/ui/fab';
 import { FilterBar } from '@/components/ui/filter-bar';
 import { Input } from '@/components/ui/input';
 import { Result } from '@/components/ui/result';
@@ -28,8 +30,10 @@ import {
   sortItems,
   EMPTY_FILTER,
   LIST_KINDS,
+  LIST_RESULTS,
   type ListFilter,
   type MoneyLine,
+  type NetLine,
   type SessionListItem,
   type SortColumn,
   type SortDir,
@@ -102,10 +106,11 @@ export function SessionList({
 
   const monthOptions = options.months.map((m) => ({ value: m, label: formatMonth(m, locale) }));
   const venueOptions = options.venues.map((v) => ({ value: v, label: v }));
+  // The only "Xóa lọc" on the screen: the last control of the filter row, there only while filtering.
   const clear = filtering && (
-    <Button variant="ghost" full={false} onClick={() => update(EMPTY_FILTER)}>
+    <Chip on={false} icon={X} onClick={() => update(EMPTY_FILTER)}>
       {t('clear')}
-    </Button>
+    </Chip>
   );
 
   const search = (
@@ -129,18 +134,21 @@ export function SessionList({
       }))}
     />
   );
-  const toggles = (
-    <>
-      <Chip on={filter.win} onClick={() => update({ win: !filter.win })}>
-        {t('win')}
-      </Chip>
-      <Chip on={filter.loss} onClick={() => update({ loss: !filter.loss })}>
-        {t('loss')}
-      </Chip>
-      <Chip on={filter.toReview} onClick={() => update({ toReview: !filter.toReview })}>
-        {t('toReview')}
-      </Chip>
-    </>
+  const result = (
+    <Segmented
+      label={t('result')}
+      value={filter.result}
+      onChange={(r) => update({ result: r })}
+      options={LIST_RESULTS.map((r) => ({
+        value: r,
+        label: t(r === 'all' ? 'resultAll' : r),
+      }))}
+    />
+  );
+  const toReview = (
+    <Chip on={filter.toReview} onClick={() => update({ toReview: !filter.toReview })}>
+      {t('toReview')}
+    </Chip>
   );
 
   const net = netTile(totals, filter.kind);
@@ -153,9 +161,12 @@ export function SessionList({
       ? `${sign(m.converted.money)}${formatMoney(m.converted.money, m.converted.currency, locale)}`
       : null;
   const moneyText = (m: MoneyLine) => [ownText(m), worthText(m)].filter(Boolean).join(' · ');
-  // The big number is one figure; the money the chips are worth goes to the small line.
-  const mainMoney = net.main != null && !('bb' in net.main) ? net.main : null;
-  const netSub = [mainMoney ? worthText(mainMoney) : null, ...net.sub.map(moneyText)]
+  const isBb = (l: NetLine): l is { bb: number } => 'bb' in l;
+  // Under the figure: what chips are worth, then money under bb (cash).
+  const netSub = [
+    ...net.lines.filter((l): l is MoneyLine => !isBb(l)).map(worthText),
+    ...net.sub.map(moneyText),
+  ]
     .filter(Boolean)
     .join(' · ');
 
@@ -182,13 +193,17 @@ export function SessionList({
         }}
         sub={netSub || undefined}
       >
-        {net.main == null ? (
-          '—'
-        ) : 'bb' in net.main ? (
-          <Result value={net.main.bb}>{signedNumber(net.main.bb, locale)} bb</Result>
-        ) : (
-          <Result value={net.main.money}>{ownText(net.main)}</Result>
-        )}
+        {net.lines.length === 0
+          ? '—'
+          : net.lines.map((l, i) => (
+              <div key={i}>
+                {isBb(l) ? (
+                  <Result value={l.bb}>{signedNumber(l.bb, locale)} bb</Result>
+                ) : (
+                  <Result value={l.money}>{ownText(l)}</Result>
+                )}
+              </div>
+            ))}
       </StatTile>
       <StatTile
         label={t('tileRate')}
@@ -205,12 +220,6 @@ export function SessionList({
         )}
       </StatTile>
     </>
-  );
-
-  const newSession = (
-    <Link href="/sessions/new" className={buttonClass({ full: false })}>
-      {t('newSession')}
-    </Link>
   );
 
   const monthNet = (g: SessionTotals) =>
@@ -235,43 +244,47 @@ export function SessionList({
     ) : (
       <Card>
         <p className="text-sm text-muted">{t('noMatch')}</p>
-        {clear}
       </Card>
     );
 
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 p-6 lg:max-w-none">
-      <TopBar title={t('title')} action={newSession} />
+    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 p-6 pb-28 lg:max-w-none">
+      <TopBar title={t('title')} />
       <StaleSessions entries={stale} />
 
-      {/* Phone */}
-      <div className="flex flex-col gap-3 lg:hidden">
-        {search}
-        <FilterBar label={t('filters')}>
-          {kind}
-          <ChipMenu
-            label={t('month')}
-            value={filter.month}
-            options={monthOptions}
-            allLabel={t('all')}
-            onChange={(month) => update({ month })}
-          />
-          <ChipMenu
-            label={t('venue')}
-            value={filter.venue}
-            options={venueOptions}
-            allLabel={t('all')}
-            onChange={(venue) => update({ venue })}
-          />
-          {toggles}
-          {clear}
-        </FilterBar>
-        <div className="grid grid-cols-3 gap-2">{tiles}</div>
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:gap-2">
+        <div className="lg:w-72 lg:shrink-0">{search}</div>
+        <div className="min-w-0 lg:flex-1">
+          <FilterBar label={t('filters')} wrapOnDesktop>
+            {kind}
+            <ChipMenu
+              label={t('month')}
+              value={filter.month}
+              options={monthOptions}
+              allLabel={t('all')}
+              onChange={(month) => update({ month })}
+            />
+            <ChipMenu
+              label={t('venue')}
+              value={filter.venue}
+              options={venueOptions}
+              allLabel={t('all')}
+              onChange={(venue) => update({ venue })}
+            />
+            {result}
+            {toReview}
+            {clear}
+          </FilterBar>
+        </div>
+      </div>
+      <div className="grid grid-cols-3 gap-2 lg:gap-4">{tiles}</div>
 
-        {filtered.length === 0 ? (
-          empty
-        ) : (
-          <div className="flex flex-col gap-6">
+      {filtered.length === 0 ? (
+        empty
+      ) : (
+        <>
+          {/* Phone: by month */}
+          <div className="flex flex-col gap-6 lg:hidden">
             {groups.months.map((g) => (
               <section key={g.month} className="space-y-2">
                 <div className="flex items-baseline justify-between gap-3">
@@ -296,42 +309,19 @@ export function SessionList({
               </section>
             ))}
           </div>
-        )}
-      </div>
-
-      {/* Desktop */}
-      <div className="hidden gap-6 lg:grid lg:grid-cols-[16rem_1fr] lg:items-start">
-        <aside className="space-y-4">
-          {search}
-          <FilterBar orientation="column" label={t('filters')}>
-            {kind}
-            <ChipMenu
-              className="w-full"
-              label={t('month')}
-              value={filter.month}
-              options={monthOptions}
-              allLabel={t('all')}
-              onChange={(month) => update({ month })}
+          {/* Desktop: one sortable table */}
+          <div className="hidden lg:block">
+            <SessionTable
+              items={tableRows}
+              sort={sort}
+              onSort={onSort}
+              explain={explain}
+              onDelete={setToDelete}
             />
-            <ChipMenu
-              className="w-full"
-              label={t('venue')}
-              value={filter.venue}
-              options={venueOptions}
-              allLabel={t('all')}
-              onChange={(venue) => update({ venue })}
-            />
-            <div className="flex flex-wrap gap-2">{toggles}</div>
-            {clear}
-          </FilterBar>
-          <div className="grid grid-cols-1 gap-2">{tiles}</div>
-        </aside>
-        {filtered.length === 0 ? (
-          empty
-        ) : (
-          <SessionTable items={tableRows} sort={sort} onSort={onSort} explain={explain} />
-        )}
-      </div>
+          </div>
+        </>
+      )}
+      <Fab href="/sessions/new" label={t('newSession')} />
 
       <ConfirmDialog
         open={toDelete !== null}

@@ -170,10 +170,10 @@ describe('filterItems', () => {
     expect(ids(filterItems(all, f({ month: '2026-09' })))).toEqual(['m']);
     expect(ids(filterItems(all, f({ venue: 'ggpoker' })))).toEqual(['m']);
   });
-  it('win and loss are separate chips; both on means either; open sessions are neither', () => {
-    expect(ids(filterItems(all, f({ win: true })))).toEqual(['w']);
-    expect(ids(filterItems(all, f({ loss: true })))).toEqual(['l', 'm']);
-    expect(ids(filterItems(all, f({ win: true, loss: true })))).toEqual(['w', 'l', 'm']);
+  it('result is one choice: all keeps open sessions, win and loss drop them', () => {
+    expect(ids(filterItems(all, f({ result: 'all' })))).toEqual(['w', 'l', 'm', 'o']);
+    expect(ids(filterItems(all, f({ result: 'win' })))).toEqual(['w']);
+    expect(ids(filterItems(all, f({ result: 'loss' })))).toEqual(['l', 'm']);
   });
   it('to review', () => {
     const r = item({ s: { id: 'r' }, toReview: 2 });
@@ -187,7 +187,7 @@ describe('filterItems', () => {
     expect(ids(filterItems(all, f({ q: 'chill' })))).toEqual(['w', 'l', 'o']);
   });
   it('filters combine with AND', () => {
-    expect(ids(filterItems(all, f({ kind: 'cash', loss: true })))).toEqual(['l']);
+    expect(ids(filterItems(all, f({ kind: 'cash', result: 'loss' })))).toEqual(['l']);
   });
 });
 
@@ -260,17 +260,25 @@ describe('filter in the URL', () => {
       kind: 'cash',
       month: '2026-10',
       venue: 'Chill',
-      loss: true,
+      result: 'loss',
       toReview: true,
       q: 'abc',
     });
     const qs = serializeListFilter(filter);
-    expect(qs).toBe('kind=cash&month=2026-10&venue=Chill&loss=1&review=1&q=abc');
+    expect(qs).toBe('kind=cash&month=2026-10&venue=Chill&result=loss&review=1&q=abc');
     expect(parseListFilter(Object.fromEntries(new URLSearchParams(qs)))).toEqual(filter);
     expect(serializeListFilter(f())).toBe('');
   });
   it('ignores junk', () => {
-    expect(parseListFilter({ kind: 'sng', month: 'last', win: 'yes' })).toEqual(f());
+    expect(parseListFilter({ kind: 'sng', month: 'last', win: 'yes', result: 'draw' })).toEqual(
+      f(),
+    );
+  });
+  it('reads the old win/loss keys: one of them is that result, both together mean all', () => {
+    expect(parseListFilter({ win: '1' }).result).toBe('win');
+    expect(parseListFilter({ loss: '1' }).result).toBe('loss');
+    expect(parseListFilter({ win: '1', loss: '1' }).result).toBe('all');
+    expect(parseListFilter({ win: '1', result: 'loss' }).result).toBe('loss');
   });
 });
 
@@ -307,26 +315,64 @@ describe('netTile', () => {
     ...over,
   });
 
-  it('cash: the big number is bb, money goes under it', () => {
+  it('cash: one line of bb, money under it', () => {
     expect(netTile(totals(), 'cash')).toEqual({
-      main: { bb: 40 },
+      lines: [{ bb: 40 }],
       sub: [{ currency: 'VND', money: 2000 }],
     });
   });
-  it('all and MTT: the big number is money, other currencies go under it', () => {
-    const two = totals({
+  it('all with cash only: bb, not the chips or money of the session', () => {
+    const chips = totals({
+      netMoney: [
+        { currency: 'CHIP', money: 2000, converted: { currency: 'VND', money: 2_000_000 } },
+      ],
+    });
+    expect(netTile(chips, 'all')).toEqual({
+      lines: [{ bb: 40 }],
+      sub: [{ currency: 'CHIP', money: 2000, converted: { currency: 'VND', money: 2_000_000 } }],
+    });
+  });
+  it('all with cash and MTT: two lines, bb for cash and money for MTT', () => {
+    const mixed = totals({
+      netMoney: [{ currency: 'VND', money: 5000 }],
+      mttMoney: [{ currency: 'VND', money: 3000 }],
+    });
+    expect(netTile(mixed, 'all')).toEqual({
+      lines: [{ bb: 40 }, { currency: 'VND', money: 3000 }],
+      sub: [{ currency: 'VND', money: 2000 }],
+    });
+  });
+  it('all with MTT only: money lines, one per currency', () => {
+    const mtt = totals({
+      netBb: 0,
       netMoney: [
         { currency: 'USD', money: 5 },
         { currency: 'VND', money: -1000 },
       ],
+      mttMoney: [
+        { currency: 'USD', money: 5 },
+        { currency: 'VND', money: -1000 },
+      ],
     });
-    expect(netTile(two, 'all')).toEqual({
-      main: { currency: 'USD', money: 5 },
-      sub: [{ currency: 'VND', money: -1000 }],
+    expect(netTile(mtt, 'all')).toEqual({
+      lines: [
+        { currency: 'USD', money: 5 },
+        { currency: 'VND', money: -1000 },
+      ],
+      sub: [],
     });
-    expect(netTile(two, 'mtt').main).toEqual({ currency: 'USD', money: 5 });
+    expect(netTile(mtt, 'mtt').lines).toEqual([
+      { currency: 'USD', money: 5 },
+      { currency: 'VND', money: -1000 },
+    ]);
   });
-  it('no result yet: no main figure', () => {
-    expect(netTile(totals({ netMoney: [] }), 'all')).toEqual({ main: null, sub: [] });
+  it('a cash result of exactly zero still shows a figure', () => {
+    expect(
+      netTile(totals({ netBb: 0, netMoney: [{ currency: 'VND', money: 0 }] }), 'all').lines,
+    ).toEqual([{ bb: 0 }]);
+  });
+  it('no result yet: no line', () => {
+    expect(netTile(totals({ netBb: 0, netMoney: [] }), 'all')).toEqual({ lines: [], sub: [] });
+    expect(netTile(totals({ netBb: 0, netMoney: [] }), 'mtt')).toEqual({ lines: [], sub: [] });
   });
 });

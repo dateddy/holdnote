@@ -59,3 +59,26 @@ export function resolveTimes(
   }
   return { startAt, endAt: end, error: false };
 }
+
+/**
+ * What the edit form shows for a saved session: the date, start time and end time on the
+ * browser's clock. The date is the local day of the start when there is one, so saving without
+ * touching anything gives the same moments back. Nothing here reads the current time.
+ */
+export function editTimesFrom(row: {
+  date: string;
+  start_at: string | null;
+  end_at: string | null;
+}): { date: string; startTime: string; endTime: string } {
+  const clock = (iso: string | null) => {
+    const d = iso ? new Date(iso) : null;
+    return d && !Number.isNaN(d.getTime()) ? d : null;
+  };
+  const start = clock(row.start_at);
+  const end = clock(row.end_at);
+  return {
+    date: start ? localDate(start) : row.date,
+    startTime: start ? localTime(start) : '',
+    endTime: end ? localTime(end) : '',
+  };
+}
