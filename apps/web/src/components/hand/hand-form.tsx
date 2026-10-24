@@ -878,7 +878,7 @@ export function HandForm({
         {banners}
         {levelHint}
         <EntryLayout
-          left={tablePanel}
+          left={<Panel>{tablePanel}</Panel>}
           aside={
             <>
               {warningsEl}

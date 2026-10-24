@@ -1,8 +1,8 @@
-import type { ButtonHTMLAttributes } from 'react';
+import type { ButtonHTMLAttributes, ReactNode } from 'react';
 
 type Props = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children' | 'aria-label'> & {
-  /** One or two characters such as `<>`, `‹`, `›`. */
-  glyph: string;
+  /** One or two characters such as `<>`, `‹`, `›`, or an `<Icon>`. */
+  glyph: ReactNode;
   /** Required: the glyph alone says nothing to a screen reader. */
   label: string;
 };

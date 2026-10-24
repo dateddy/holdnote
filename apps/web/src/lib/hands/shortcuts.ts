@@ -36,6 +36,17 @@ export type GlobalShortcut =
   | { kind: 'street'; delta: -1 | 1 }
   | { kind: 'help' };
 
+/** The key of each action button, shown on the button on desktop ("F Fold"). */
+export const BUTTON_KEY: Record<ButtonKind, string> = {
+  fold: 'F',
+  call: 'C',
+  check: 'X',
+  bet: 'B',
+  raise: 'R',
+  open: 'O',
+  'all-in': 'A',
+};
+
 const BUTTON_KEYS: Record<string, ButtonKind> = {
   f: 'fold',
   c: 'call',

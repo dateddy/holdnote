@@ -17,6 +17,7 @@ Dùng qua class Tailwind: `bg-*`, `text-*`, `border-*`.
 | ------------------- | ------- | ------- | ----------------------------------------- |
 | `background`        | #0c0f0d | #f6f8f6 | Nền trang                                 |
 | `foreground`        | #ecf0ed | #101612 | Chữ chính                                 |
+| `panel`             | #111612 | #eef2ef | Thẻ lớn bao trang và cột menu (desktop)   |
 | `surface`           | #141a16 | #ffffff | Card, input, chip, thanh dưới             |
 | `line`              | #27322b | #d6ded8 | Viền, đường kẻ                            |
 | `muted`             | #8d9a91 | #5d6b62 | Chữ phụ, placeholder, tab không chọn      |
@@ -133,7 +134,7 @@ Bộ chọn bài, bàn phím số và bàn mini **trượt ra trong luồng tran
 | `Segmented`                | Chọn một trong vài mục đặt cạnh nhau (Tất cả / Cash / MTT), cao 44px                                                         |
 | `ChipMenu`                 | Chip `Tháng ▾` mở danh sách ngắn (vị trí `fixed`, không bị cắt bởi vùng cuộn ngang); có `allLabel` thì mục đầu xóa lựa chọn, bỏ `allLabel` khi bắt buộc chọn một (tiền tệ) |
 | `SortHeader`               | `<th>` mà tên cột là nút sắp xếp (`aria-sort`); `InfoTip` đặt bên cạnh, ngoài nút                                           |
-| `AppShell`                 | Khung mọi màn đăng nhập từ 1024px (5.1d-4): thanh trên ngang (nút ☰ thu/mở menu + chữ HoldNote) và menu trái; thay `SideNav`. Mở `w-56` (icon + chữ), thu `w-16` (chỉ icon, vẫn bấm được, có `title`). Trang chủ, Thống kê ở trên, Cài đặt ghim đáy. Nhớ trạng thái trong `localStorage` (`lib/nav-state.ts`, bọc try/catch; lỗi thì mặc định mở). Đặt biến `--nav-w` cho nội dung. Ẩn ở onboarding. `BottomNav` ẩn từ 1024px |
+| `AppShell`                 | Khung mọi màn đăng nhập từ 1024px (theo GTO Wizard): thanh trên có chữ HoldNote đứng riêng bên trái (không nằm trong thẻ nào) và nút tài khoản bên phải (menu: Cài đặt · Đăng xuất); cột menu trái luôn mở, không thu/mở, mỗi mục icon trên + tên dưới (Trang chủ, Thống kê), nằm trong thẻ `bg-panel` bo `rounded-xl`; cả trang nằm trong một thẻ lớn `bg-panel rounded-xl`, card của trang nằm trong đó, rộng tối đa 1800px. `--nav-w` = 8rem cho thanh dính đáy. Điện thoại không đổi: Cài đặt vẫn là tab ở thanh dưới. Ẩn ở onboarding |
 | `EntryLayout`              | Khung màn nhập liệu (form phiên, Ghi hand, Sửa hand) từ 1024px: [cột trái] · nội dung · cột phải dính (`lg:sticky lg:top-32`) chứa tóm tắt và nút chính; điện thoại: các phần nối nhau một cột (`contents`) |
 | `Fab`                      | Nút nổi góc dưới phải cho việc bắt đầu của một màn danh sách ("Phiên mới"); điện thoại nổi phía trên thanh tab, desktop cách mép 32px |
 | `ShortcutsDialog`          | Bảng phím tắt (phím `?`), `<dialog>` modal; Esc và nền đóng                                                                    |
@@ -157,7 +158,7 @@ Sẽ thêm trong các task 5.1b-x: `Screen` (khung trang). `Icon`, `TopBar` tab/
 
 ## 7. Điều hướng
 
-- 3 tab gốc (DEC-062): **Trang chủ** `/` · **Thống kê** `/stats` · **Cài đặt** `/settings`. Không còn tab Ghi hand: ghi hand từ chi tiết phiên, hoặc nút "+ Hand" ở hàng phiên gần nhất trên trang chủ. Điện thoại: thanh dưới; từ 1024px: `AppShell` (thanh trên + menu trái thu/mở được, Cài đặt ghim đáy menu), cùng 3 mục.
+- 3 tab gốc (DEC-062): **Trang chủ** `/` · **Thống kê** `/stats` · **Cài đặt** `/settings`. Không còn tab Ghi hand: ghi hand từ chi tiết phiên, hoặc nút "+ Hand" ở hàng phiên gần nhất trên trang chủ. Điện thoại: thanh dưới 3 tab; từ 1024px: `AppShell` (cột menu Trang chủ · Thống kê, Cài đặt nằm trong menu tài khoản góc phải trên).
 - Màn gốc của tab: không có nút back.
 - Màn con: thanh trên dính với `<` ở góc trái (không có link chữ "Quay lại"/"Về phiên"). `<` đi qua lịch sử trình duyệt; mọi link vào màn con là `push`, nên nút back Android và `<` đồng nhất. Vuốt từ mép trái (≤20px, ngang ≥60px) làm cùng việc khi app cài trên iOS (Safari thường và Android đã có cử chỉ hệ thống); không bắt vuốt bắt đầu trong vùng `data-hscroll`.
 - Tab cha vẫn sáng cho màn con (`lib/nav.ts`, `activeTab`); mọi màn `/sessions/**` và `/hands/**` thuộc Trang chủ:
@@ -185,10 +186,11 @@ Sẽ thêm trong các task 5.1b-x: `Screen` (khung trang). `Icon`, `TopBar` tab/
 
 ## 10. Khung desktop (từ 1024px, 5.1d-4)
 
-- **Khung:** `AppShell` (thanh trên 56px + menu trái). Thanh dưới của màn con (`TopBar` có back) dính ở `top-14` để nằm dưới thanh trên.
-- **Trang chủ:** thẻ phiên còn mở là một dải ngang (mô tả · ô giờ kết thúc · "Kết thúc phiên" · "Để sau"). Một hàng lọc: Tìm · Tất cả|Cash|MTT · Tháng ▾ · Địa điểm ▾ · Mọi kết quả|Thắng|Thua (chọn một) · Cần xem lại · "✕ Xóa lọc" (chip có icon, chỉ khi đang lọc, và là nơi duy nhất có "Xóa lọc"). Dưới hàng lọc là 3 ô chỉ số ngang rồi bảng; cả hàng bảng bấm được (hover sáng, Enter mở), cột cuối `⋯` (Sửa · Xóa). "Phiên mới" là `Fab`.
+- **Khung:** `AppShell` (thanh trên 56px với HoldNote + nút tài khoản, cột menu icon + tên, trang trong một thẻ lớn `bg-panel`). Thanh của màn con (`TopBar` có back) dính ở `top-14`, nền `bg-panel` ở desktop. Form phiên và Ghi/Sửa hand không giới hạn bề rộng ở desktop: chạy hết thẻ lớn (thẻ lớn dừng ở 1800px); các màn khác vẫn cột hẹp, nằm giữa thẻ lớn.
+- **Form phiên (desktop):** ngày · giờ vào · giờ ra một hàng; SB · BB · Straddle một hàng; cột phải là thẻ "Tóm tắt" và nút Tạo/Lưu. Nhãn vẫn đặt trên ô (không để chữ trong ô) để ô đã điền vẫn đọc được tên.
+- **Trang chủ:** thẻ phiên còn mở là một dải ngang viền `warn` (`ring-1 ring-warn/60`) (mô tả · ô giờ kết thúc · "Kết thúc phiên" · "Để sau"). Một hàng lọc: Tìm · Tất cả|Cash|MTT · Tháng ▾ · Địa điểm ▾ · Mọi kết quả|Thắng|Thua (chọn một) · Cần xem lại · "✕ Xóa lọc" (chip có icon, chỉ khi đang lọc, và là nơi duy nhất có "Xóa lọc"). Dưới hàng lọc là 3 ô chỉ số ngang rồi bảng; cả hàng bảng bấm được (hover sáng, Enter mở), cột cuối `⋯` (Sửa · Xóa). "Phiên mới" là `Fab`.
 - **Ô Net:** cash hiện bb (phiên Chip chưa quy đổi cũng hiện bb), MTT hiện tiền; trộn hai loại thì hai dòng (bb cho cash, tiền cho MTT). "—" chỉ khi chưa phiên nào có kết quả.
-- **Ghi hand / Sửa hand:** `EntryLayout`. Từ 1280px: 3 cột `22rem | còn lại | 22rem`. 1024–1279px (còn menu bên trái, ba cột không vừa): 2 cột, khối 1 nằm trên khối 2 trong cột trái, cột Kết quả dính bên phải `20rem`.
+- **Ghi hand / Sửa hand:** `EntryLayout`; bàn mini và thiết lập nằm trong một `Card`; ô bài 56×80px từ 1024px; nút action ghi phím đứng trước ("F Fold"), dưới nút có dòng nhắc phím tắt, dưới thẻ bài có "Gõ phím: Ah Kd… hoặc bấm ô". Từ 1280px: 3 cột `22rem | còn lại | 22rem`. 1024–1279px (còn menu bên trái, ba cột không vừa): 2 cột, khối 1 nằm trên khối 2 trong cột trái, cột Kết quả dính bên phải `20rem`.
   1. Bàn mini lớn (288px) với số người, stack, đối thủ, straddle, chế độ nhập (`TablePanel` mở sẵn, không có thanh ngữ cảnh trượt).
   2. Thẻ bài 7 ô và thẻ Action.
   3. Cột Kết quả dính: cảnh báo và gợi ý thiếu dữ liệu, showdown (pot, "Nhận về", "Lời/lỗ"), Một câu suy nghĩ, ⚑, thanh Lưu, nút "Phím tắt (?)". Không còn dòng cảnh báo nhỏ ở góc dưới trái.

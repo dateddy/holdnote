@@ -244,6 +244,7 @@ async function main() {
   };
 
   for (const [width, height] of [
+    [1920, 1080],
     [1440, 900],
     [1024, 768],
   ]) {
@@ -251,21 +252,28 @@ async function main() {
     const { context, page } = await open(width, height);
     const shot = (name) => page.screenshot({ path: `${OUT}/${tag}-${name}.png` });
 
-    // ---- home: shell, menu open and collapsed ----
+    // ---- home: shell (rail, account menu) ----
     await page.goto(`${BASE}/`);
     await page.getByRole('heading', { name: 'Phiên', exact: true }).waitFor();
     await noOverflow(page, `${tag} home`, width);
     const nav = page.getByRole('navigation', { name: 'Điều hướng chính' });
-    check((await nav.getByRole('link').count()) === 3, `${tag}: three menu entries`);
+    check((await nav.getByRole('link').count()) === 2, `${tag}: rail has Trang chủ and Thống kê`);
+    const home = await nav.getByRole('link', { name: 'Trang chủ' }).boundingBox();
     check(
-      (await nav.getByRole('link').last().innerText()).includes('Cài đặt'),
-      `${tag}: menu open shows text`,
+      home != null && home.width <= 96,
+      `${tag}: rail entry is icon + name below (${home?.width}px)`,
     );
-    const settingsBox = await nav.getByRole('link').last().boundingBox();
+    await page.getByRole('button', { name: 'Tài khoản' }).click();
+    await page.waitForTimeout(150);
+    const items = await page.getByRole('menuitem').allTextContents();
     check(
-      settingsBox != null && settingsBox.y > height - 140,
-      `${tag}: Cài đặt pinned to the bottom of the menu`,
+      items.join('|') === 'Cài đặt|Đăng xuất',
+      `${tag}: account menu has Cài đặt and Đăng xuất (${items.join('|')})`,
     );
+    await shot('home-account-menu');
+    await page.keyboard.press('Escape');
+    const panel = await page.locator('main').boundingBox();
+    check(panel != null && panel.x + panel.width > width - 40, `${tag}: page fills the width`);
     check(
       (await page.getByText('HoldNote').first().isVisible()) === true,
       `${tag}: bar has HoldNote`,
@@ -301,27 +309,7 @@ async function main() {
       /bb/.test(net) && /₫|VND|đ/.test(net) && !/^—/m.test(net.split('\n')[1] ?? ''),
       `${tag}: Net shows bb and money (${net.replace(/\n/g, ' | ')})`,
     );
-    await shot('home-menu-open');
-
-    await page.getByRole('button', { name: 'Thu gọn menu' }).click();
-    await page.waitForTimeout(150);
-    const widthCollapsed = (await nav.boundingBox()).width;
-    check(
-      widthCollapsed <= 72,
-      `${tag}: collapsed menu is a column of icons (${widthCollapsed}px)`,
-    );
-    check(
-      (await nav.getByRole('link', { name: 'Thống kê' }).isVisible()) === true,
-      `${tag}: collapsed entries still clickable`,
-    );
-    await shot('home-menu-collapsed');
-    await page.reload();
-    await page.getByRole('heading', { name: 'Phiên', exact: true }).waitFor();
-    check(
-      (await nav.boundingBox()).width <= 72,
-      `${tag}: collapsed state is remembered after reload`,
-    );
-    await page.getByRole('button', { name: 'Mở rộng menu' }).click();
+    await shot('home');
 
     // ---- filter: one-choice result; clear chip ----
     const rowsBefore = await page.locator('tbody tr').count();
@@ -364,6 +352,7 @@ async function main() {
 
   // ---- forms and the hand screen, both desktop widths ----
   for (const [width, height] of [
+    [1920, 1080],
     [1440, 900],
     [1024, 768],
   ]) {

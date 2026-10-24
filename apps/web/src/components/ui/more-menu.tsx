@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { IconButton } from './icon-button';
 import { useFloatingStyle } from './use-floating';
 
@@ -17,7 +17,16 @@ export type MoreMenuItem = {
 };
 
 /** The "⋯" button of a screen header: a short list of actions that do not fit on the page. */
-export function MoreMenu({ label, items }: { label: string; items: readonly MoreMenuItem[] }) {
+export function MoreMenu({
+  label,
+  items,
+  glyph = '⋯',
+}: {
+  label: string;
+  items: readonly MoreMenuItem[];
+  /** What the button shows; `⋯` by default (the profile menu shows a person icon). */
+  glyph?: ReactNode;
+}) {
   const [open, setOpen] = useState(false);
   const anchor = useRef<HTMLSpanElement>(null);
   const panel = useRef<HTMLDivElement>(null);
@@ -44,7 +53,12 @@ export function MoreMenu({ label, items }: { label: string; items: readonly More
 
   return (
     <span ref={anchor} className="inline-flex">
-      <IconButton glyph="⋯" label={label} aria-expanded={open} onClick={() => setOpen((o) => !o)} />
+      <IconButton
+        glyph={glyph}
+        label={label}
+        aria-expanded={open}
+        onClick={() => setOpen((o) => !o)}
+      />
       {open && (
         <div
           ref={panel}

@@ -47,7 +47,7 @@ export default async function NewSessionPage({ searchParams }: PageProps<'/sessi
   const t = await getTranslations('sessions');
 
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 p-6 lg:max-w-6xl">
+    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 p-6 lg:max-w-none">
       <TopBar
         title={t('newTitle')}
         back={{ href: '/', label: (await getTranslations('common'))('back') }}

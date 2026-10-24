@@ -160,7 +160,10 @@ export function CardsCard({ slots, check, blocked, highlight, onChange, onPickin
         {group(t('turn'), [5])}
         {group(t('river'), [6])}
       </div>
-      <p className="text-xs text-muted">{tr('cardsHint')}</p>
+      <p className="text-xs text-muted">
+        {tr('cardsHint')}
+        <span className="hidden lg:inline"> · {tr('cardsKeysHint')}</span>
+      </p>
       <Collapse open={active !== null}>
         <div ref={pickerArea}>
           {active !== null && (

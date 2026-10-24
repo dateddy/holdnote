@@ -131,9 +131,14 @@ export function SessionForm({ initial, edit, profileCurrency }: Props) {
 
   const aside = (
     <>
-      <p className="text-sm text-muted" aria-live="polite">
-        {summary}
-      </p>
+      <div className="space-y-1 lg:rounded-md lg:border lg:border-line lg:bg-surface lg:p-4">
+        <p className="hidden text-xs font-medium tracking-[0.06em] text-muted uppercase lg:block">
+          {t('summaryTitle')}
+        </p>
+        <p className="text-sm text-muted lg:text-base lg:text-foreground" aria-live="polite">
+          {summary}
+        </p>
+      </div>
       {state.failed && (
         <p role="alert" className="text-center text-sm text-loss">
           {t('saveFailed')}
@@ -212,28 +217,30 @@ export function SessionForm({ initial, edit, profileCurrency }: Props) {
 
             <Group title={t('groupPlace')}>
               {text('venue', t('venue'))}
-              <Field label={t('dateField')} error={err('date')}>
-                <Input
-                  type="date"
-                  value={inBrowser ? v.date : ''}
-                  onChange={(e) => set({ date: e.target.value })}
-                />
-              </Field>
-              <div className="grid grid-cols-2 gap-3">
-                <Field label={t('startTime')}>
+              <div className="flex flex-col gap-3 lg:grid lg:grid-cols-3 lg:items-start">
+                <Field label={t('dateField')} error={err('date')}>
                   <Input
-                    type="time"
-                    value={inBrowser ? startTime : ''}
-                    onChange={(e) => setStartTime(e.target.value)}
+                    type="date"
+                    value={inBrowser ? v.date : ''}
+                    onChange={(e) => set({ date: e.target.value })}
                   />
                 </Field>
-                <Field label={t('endTime')} hint={t('endTimeHint')}>
-                  <Input
-                    type="time"
-                    value={inBrowser ? endTime : ''}
-                    onChange={(e) => setEndTime(e.target.value)}
-                  />
-                </Field>
+                <div className="grid grid-cols-2 gap-3 lg:col-span-2">
+                  <Field label={t('startTime')}>
+                    <Input
+                      type="time"
+                      value={inBrowser ? startTime : ''}
+                      onChange={(e) => setStartTime(e.target.value)}
+                    />
+                  </Field>
+                  <Field label={t('endTime')} hint={t('endTimeHint')}>
+                    <Input
+                      type="time"
+                      value={inBrowser ? endTime : ''}
+                      onChange={(e) => setEndTime(e.target.value)}
+                    />
+                  </Field>
+                </div>
               </div>
               {state.timeError && (
                 <p role="alert" className="text-sm text-loss">
@@ -307,11 +314,15 @@ export function SessionForm({ initial, edit, profileCurrency }: Props) {
               ) : (
                 <>
                   {isMtt && <p className="text-base font-medium">{t('mttBlinds')}</p>}
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className={`grid grid-cols-2 gap-3 ${isMtt ? '' : 'lg:grid-cols-3'}`}>
                     {text('sb', t('sb'), true)}
                     {text('bb', t('bb'), true)}
+                    {!isMtt && (
+                      <div className="col-span-2 lg:col-span-1">
+                        {text('straddle', t('straddle'), true)}
+                      </div>
+                    )}
                   </div>
-                  {!isMtt && text('straddle', t('straddle'), true)}
                   <div className="space-y-1">
                     <p className="text-sm">{t('ante')}</p>
                     <div className="flex flex-wrap gap-2" role="group" aria-label={t('ante')}>

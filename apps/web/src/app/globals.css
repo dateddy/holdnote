@@ -4,6 +4,7 @@
 :root {
   --background: #0c0f0d;
   --foreground: #ecf0ed;
+  --panel: #111612;
   --surface: #141a16;
   --line: #27322b;
   --muted: #8d9a91;
@@ -23,6 +24,7 @@
   :root {
     --background: #f6f8f6;
     --foreground: #101612;
+    --panel: #eef2ef;
     --surface: #ffffff;
     --line: #d6ded8;
     --muted: #5d6b62;
@@ -42,6 +44,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-panel: var(--panel);
   --color-surface: var(--surface);
   --color-line: var(--line);
   --color-muted: var(--muted);

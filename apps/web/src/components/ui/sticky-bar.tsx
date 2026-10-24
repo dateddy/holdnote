@@ -7,7 +7,7 @@ import type { HTMLAttributes } from 'react';
 export function StickyBar({ className, ...rest }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={`fixed inset-x-0 bottom-0 z-20 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] ${
+      className={`fixed inset-x-0 bottom-0 z-20 lg:left-(--nav-w) border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] ${
         className ?? ''
       }`.trim()}
       {...rest}

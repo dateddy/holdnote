@@ -35,7 +35,7 @@ export function TopBar({ title, subtitle, back, action, compact = false }: Props
   return (
     <header
       data-back-href={back.href}
-      className={`border-b border-line bg-background px-2 pt-[env(safe-area-inset-top)] ${
+      className={`border-b border-line bg-background px-2 lg:bg-panel pt-[env(safe-area-inset-top)] ${
         compact ? '-mx-3 -mt-6' : 'sticky top-0 z-10 -mx-6 -mt-6 lg:top-14'
       }`}
     >

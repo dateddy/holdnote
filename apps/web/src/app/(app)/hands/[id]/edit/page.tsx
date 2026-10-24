@@ -34,7 +34,7 @@ export default async function EditHandPage({ params }: PageProps<'/hands/[id]/ed
   ]);
 
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 p-6 lg:max-w-7xl">
+    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 p-6 lg:max-w-none">
       <TopBar
         title={t('editHand')}
         back={{ href: `/hands/${id}`, label: t('detailTitle', { num: hand.num }) }}

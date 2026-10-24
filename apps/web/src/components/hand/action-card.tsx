@@ -9,6 +9,7 @@ import { Card } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
 import { Collapse } from '@/components/ui/collapse';
 import { IconButton } from '@/components/ui/icon-button';
+import { BUTTON_KEY } from '@/lib/hands/shortcuts';
 import { Tab } from '@/components/ui/tab';
 import { revealAboveBar } from '@/lib/hands/reveal';
 import type { PillData } from './pill-data';
@@ -181,10 +182,17 @@ export function ActionCard({
                             onButton(k);
                           }}
                         >
+                          <span
+                            aria-hidden
+                            className="mr-1.5 hidden font-mono text-muted lg:inline"
+                          >
+                            {BUTTON_KEY[k]}
+                          </span>
                           {label(k)}
                         </Button>
                       ))}
                     </div>
+                    <p className="hidden text-xs text-muted lg:block">{t('keysHint')}</p>
                   </div>
                 )}
           </div>

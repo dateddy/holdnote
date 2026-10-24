@@ -42,7 +42,7 @@ function StaleCard({ entry, onLater }: { entry: StaleEntry; onLater: () => void 
   const href = `/sessions/${item.session.id}/end${iso ? `?endAt=${encodeURIComponent(iso)}` : ''}`;
 
   return (
-    <Card className="lg:flex lg:flex-wrap lg:items-center lg:gap-x-6 lg:gap-y-2 lg:space-y-0 lg:py-3">
+    <Card className="ring-1 ring-warn/60 lg:flex lg:flex-wrap lg:items-center lg:gap-x-6 lg:gap-y-2 lg:space-y-0 lg:py-3">
       <div className="space-y-1 lg:min-w-0 lg:flex-1">
         <h2 className="text-base font-medium">{t('staleTitle')}</h2>
         <p className="text-sm text-muted">

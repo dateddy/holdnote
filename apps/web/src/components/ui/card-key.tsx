@@ -47,7 +47,7 @@ type SlotProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'aria-pressed'> &
   state?: 'missing' | 'extra' | 'need' | 'duplicate';
   /** Slot belongs to the street tab that is selected. */
   highlight?: boolean;
-  /** `card`: 41×57px tile of the card row. Default: fills its grid cell, 56px high. */
+  /** `card`: 41×57px tile of the card row (56×80px from 1024px). Default: fills its grid cell, 56px high. */
   size?: 'card' | 'fill';
 };
 
@@ -83,7 +83,7 @@ export function CardSlot({
       type={type}
       aria-pressed={on}
       className={`flex shrink-0 flex-col items-center justify-center rounded-md border text-lg motion-reduce:animate-none disabled:opacity-40 ${
-        size === 'card' ? 'h-[57px] w-[41px]' : 'h-14'
+        size === 'card' ? 'h-[57px] w-[41px] lg:h-20 lg:w-14 lg:text-xl' : 'h-14'
       } ${border} ${className ?? ''}`.trim()}
       {...rest}
     />
